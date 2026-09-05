@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A.I. FOR DESIGNERS — Brian Lau</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050608;
+  --card:#101318;
+  --text:#f3f4f6;
+  --muted:#a1a1aa;
+  --line:#2a2f3a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Atkinson Hyperlegible Next',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:96px 20px 230px;
+}
+.container{
+  max-width:900px;
+  margin:0 auto;
+  text-align:center;
+}
+h1{
+  font-size:clamp(2rem,5vw,3.5rem);
+  line-height:1.1;
+  margin-bottom:10px;
+}
+.subtitle,
+.email{
+  font-size:1.1rem;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.email a{
+  color:var(--text);
+  text-decoration:none;
+}
+.email a:hover{ text-decoration:underline; }
+h2{
+  margin:40px 0 16px;
+  font-size:1.4rem;
+}
+.work-list{
+  list-style:none;
+  border:1px solid var(--line);
+  border-radius:14px;
+  overflow:hidden;
+}
+.work-list li+li{ border-top:1px solid var(--line); }
+.work-list a{
+  display:flex;
+  justify-content:center;
+  gap:18px;
+  padding:18px 20px;
+  color:var(--text);
+  text-decoration:none;
+  background:var(--card);
+  font-size:1.15rem;
+}
+.work-list a{
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+.work-list a:hover{
+  background:#1d2230;
+  transform: translateY(-1px);
+}
+.work-list a span{
+  transition:transform .18s ease;
+}
+.work-list a:hover span{
+  transform:scale(1.25);
+}
+.num{
+  min-width:2.5rem;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.pixel-moon{
+  position:absolute;
+  top:22px;
+  right:24px;
+  width:56px;
+  height:56px;
+  pointer-events:none;
+  z-index:2;
+  filter:drop-shadow(0 0 7px rgba(255,244,190,.65)) drop-shadow(0 0 20px rgba(245,232,174,.35));
+}
+.pixel-moon::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:#f5e8ae;
+  clip-path:polygon(
+    29% 0,72% 0,72% 7%,86% 7%,86% 14%,93% 14%,93% 29%,100% 29%,
+    100% 72%,93% 72%,93% 86%,86% 86%,86% 93%,72% 93%,72% 100%,
+    29% 100%,29% 93%,14% 93%,14% 86%,7% 86%,7% 72%,0 72%,0 29%,
+    7% 29%,7% 14%,14% 14%,14% 7%,29% 7%
+  );
+}
+@media (max-width:600px){
+  body{padding-top:78px;}
+  .pixel-moon{
+    top:16px;
+    right:16px;
+    width:42px;
+    height:42px;
+  }
+  }
+
+.pixel-moon{
+  isolation:isolate;
+}
+.pixel-moon .moon-light{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:150px;
+  height:150px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,244,190,.16) 0%,rgba(245,232,174,.08) 38%,transparent 72%);
+  filter:blur(5px);
+  z-index:-1;
+}
+@media (max-width:600px){
+  .pixel-moon .moon-light{
+    width:110px;
+    height:110px;
+  }
+}
+
+.sky{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.stars{position:absolute;inset:0}
+.star{position:absolute;width:4px;height:4px;background:#dbe7ef;box-shadow:4px 0 #dbe7ef,-4px 0 #dbe7ef,0 4px #dbe7ef,0 -4px #dbe7ef;animation:twinkle 3.8s steps(2) infinite}
+.star.tiny{width:2px;height:2px;box-shadow:none;opacity:.45;animation-duration:5.5s}
+.star.soft{background:#9fb5c4;box-shadow:3px 0 #9fb5c4,-3px 0 #9fb5c4,0 3px #9fb5c4,0 -3px #9fb5c4;opacity:.55;animation-duration:4.7s}
+@keyframes twinkle{0%,100%{opacity:.28}50%{opacity:.9}}
+.cloud{position:absolute;left:-35vw;background:#26303a;opacity:.34;clip-path:polygon(0 55%,12% 55%,12% 38%,25% 38%,25% 20%,45% 20%,45% 31%,64% 31%,64% 43%,82% 43%,82% 55%,100% 55%,100% 100%,0 100%);animation:cloud-drift linear infinite;will-change:transform}
+.cloud.far{top:8%;width:150px;height:46px;opacity:.16;animation-duration:82s}
+.cloud.mid{top:18%;width:250px;height:72px;opacity:.24;animation-duration:58s;animation-delay:-24s}
+.cloud.near{top:34%;width:390px;height:108px;opacity:.31;animation-duration:42s;animation-delay:-12s}
+.cloud.reverse{left:auto;right:-45vw;transform:scaleX(-1);animation-name:cloud-drift-reverse;animation-duration:69s;top:25%;width:210px;height:62px;opacity:.19}
+@keyframes cloud-drift{from{transform:translateX(-10vw)}to{transform:translateX(145vw)}}
+@keyframes cloud-drift-reverse{from{transform:scaleX(-1) translateX(-10vw)}to{transform:scaleX(-1) translateX(150vw)}}
+@media(prefers-reduced-motion:reduce){.cloud,.star{animation:none}}
+@media(max-width:600px){.cloud.far{width:105px;height:34px}.cloud.mid{width:175px;height:54px}.cloud.near{width:270px;height:82px}}
+
+
+/* Theme controls */
+:root{--sky:#050608;--ground-top:#315f4b;--ground-mid:#1f453b;--ground-bottom:#142f2b;--cloud:#26303a;--moon:#f5e8ae}
+body{background:var(--sky);transition:background-color .45s ease,color .45s ease}
+
+
+body.light-mode{--sky:#bcdcf0;--ground-top:#65a95f;--ground-mid:#43834c;--ground-bottom:#2e603c;--cloud:#f3f6f7;--moon:#fff3b0;--text:#17212a;--muted:#435563;--card:rgba(245,249,251,.82);--line:#88a7b8}
+body.light-mode .body.light-mode .work-list a:hover,body.light-mode .work-list a:hover{background:#d9e8ef}.light-mode .star{opacity:.18}.light-mode .moon-light{opacity:.55}
+/* Flat grass */
+.pixel-hill{position:fixed;left:0;right:0;bottom:0;height:118px;pointer-events:none;z-index:1;background:linear-gradient(180deg,var(--ground-top),var(--ground-mid) 42%,var(--ground-bottom));clip-path:none;filter:drop-shadow(0 -6px 18px rgba(103,142,130,.10));transition:background .45s ease}
+.pixel-hill::before{content:"";position:absolute;left:0;right:0;top:-10px;height:14px;background:var(--ground-top);clip-path:polygon(0 72%,2% 72%,2% 38%,3% 38%,3% 66%,5% 66%,5% 22%,6% 22%,6% 70%,9% 70%,9% 45%,10% 45%,10% 72%,14% 72%,14% 28%,15% 28%,15% 62%,18% 62%,18% 18%,19% 18%,19% 70%,23% 70%,23% 42%,24% 42%,24% 72%,29% 72%,29% 25%,30% 25%,30% 64%,34% 64%,34% 12%,35% 12%,35% 70%,40% 70%,40% 38%,41% 38%,41% 72%,47% 72%,47% 20%,48% 20%,48% 66%,53% 66%,53% 30%,54% 30%,54% 72%,60% 72%,60% 16%,61% 16%,61% 68%,66% 68%,66% 36%,67% 36%,67% 72%,73% 72%,73% 24%,74% 24%,74% 64%,79% 64%,79% 14%,80% 14%,80% 70%,85% 70%,85% 34%,86% 34%,86% 72%,91% 72%,91% 20%,92% 20%,92% 66%,96% 66%,96% 38%,97% 38%,97% 72%,100% 72%,100% 100%,0 100%)}
+.pixel-hill::after{content:"";position:absolute;inset:18px 0 0;background:linear-gradient(90deg,transparent,rgba(151,190,180,.06) 48%,transparent 72%)}
+.cloud{background:var(--cloud)}.pixel-moon::before{background:var(--moon)}
+/* Flowers across the grass */
+.pixel-flowers{position:fixed;left:0;right:0;bottom:0;height:150px;z-index:2;pointer-events:none;overflow:hidden}
+.flower{position:absolute;left:var(--x);bottom:var(--y);width:4px;height:var(--stem,22px);background:#284f3d;image-rendering:pixelated;transform-origin:center bottom;animation:flower-sway var(--speed,3.8s) ease-in-out var(--delay,0s) infinite alternate}
+.flower::before{content:"";position:absolute;left:-6px;top:-7px;width:6px;height:6px;background:var(--petal);box-shadow:6px -6px var(--petal),12px 0 var(--petal),6px 6px var(--petal),6px 0 var(--center)}
+.flower::after{content:"";position:absolute;left:-5px;top:10px;width:6px;height:5px;background:#35654d;box-shadow:9px 5px #35654d}.flower.far{scale:.55;opacity:.52}.flower.mid{scale:.78;opacity:.74}.flower.near{scale:1;opacity:.92}
+@keyframes flower-sway{0%{transform:rotate(-2deg) translateX(-1px)}50%{transform:rotate(1deg)}100%{transform:rotate(3deg) translateX(1px)}}
+.stars{
+  opacity:1;
+  visibility:visible;
+  transition:opacity .4s ease,visibility .4s ease;
+}
+body.light-mode .stars{
+  opacity:0;
+  visibility:hidden;
+}
+
+
+.work-list a{
+  display:grid;
+  grid-template-columns:3rem minmax(0,1fr) 3rem;
+  align-items:center;
+  column-gap:18px;
+}
+.work-list .num{
+  grid-column:1;
+  min-width:0;
+  text-align:right;
+  transform-origin:right center;
+}
+.work-list a span:last-child{
+  grid-column:2;
+  text-align:center;
+  transform-origin:center;
+}
+
+/* Project availability: unfinished placeholder links are dimmed. */
+.work-list a[href="#"]{
+  opacity:.48;
+  cursor:default;
+}
+.work-list a[href="#"]:hover{
+  opacity:.62;
+}
+.work-list a:not([href="#"]){
+  opacity:1;
+  box-shadow:inset 3px 0 0 rgba(245,232,174,.65);
+}
+body.light-mode .work-list a:not([href="#"]){
+  box-shadow:inset 3px 0 0 rgba(48,105,75,.55);
+}
+
+.theme-toggle{
+  position:fixed;
+  top:24px;
+  left:24px;
+  z-index:100;
+  width:44px;
+  height:44px;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:rgba(16,19,24,.72);
+  color:var(--text);
+  cursor:pointer;
+  backdrop-filter:blur(8px);
+  transition:background .35s ease,border-color .35s ease,transform .25s ease,box-shadow .35s ease;
+}
+.theme-toggle:hover{
+  transform:scale(1.06);
+  background:rgba(29,34,48,.88);
+}
+.theme-toggle:active{transform:scale(.94)}
+.theme-toggle:focus-visible{outline:2px solid #f5e8ae;outline-offset:3px}
+.theme-icon{
+  position:absolute;
+  font-size:1.1rem;
+  line-height:1;
+  transition:opacity .35s ease,transform .5s cubic-bezier(.2,.8,.2,1);
+}
+.theme-icon.sun{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}
+.theme-icon.moon{opacity:0;transform:translateY(24px) rotate(-90deg) scale(.55)}
+body.light-mode .theme-toggle{
+  background:rgba(247,250,252,.78);
+  border-color:#88a7b8;
+  color:#17212a;
+  box-shadow:0 5px 18px rgba(66,105,128,.14);
+}
+body.light-mode .theme-icon.sun{opacity:0;transform:translateY(-24px) rotate(90deg) scale(.55)}
+body.light-mode .theme-icon.moon{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}
+@media(max-width:600px){.theme-toggle{top:14px;left:14px;width:40px;height:40px}}
+/* Keep the work content above all decorative landscape layers. */
+
+.container{
+  position:relative;
+  z-index:10;
+}
+.pixel-hill{
+  z-index:0;
+}
+.pixel-flowers{
+  z-index:1;
+}
+.sky,
+.pixel-moon{
+  z-index:0;
+}
+
+.work-list{
+  width:min(100%,760px);
+  margin-inline:auto;
+}
+
+/* The daytime sky uses visible animated pixel butterflies instead of stars. */
+.butterflies{position:fixed;inset:0;z-index:5;overflow:hidden;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s ease}
+body:not(.light-mode) .butterflies{opacity:0;visibility:hidden}
+body.light-mode .butterflies{opacity:1;visibility:visible}
+.butterfly{position:absolute;left:0;top:var(--top);width:6px;height:14px;background:#33283c;image-rendering:pixelated;animation:butterfly-flight var(--duration) linear var(--delay) infinite;will-change:transform}
+.butterfly::before,.butterfly::after{left:7px;transform-origin:left center;clip-path:polygon(0 0,62% 0,62% 10%,82% 10%,82% 28%,100% 28%,100% 82%,75% 82%,75% 100%,38% 100%,38% 72%,18% 72%,18% 50%,0 50%);animation-name:wing-right}
+.butterfly::before{right:7px;transform-origin:right center;clip-path:polygon(38% 0,100% 0,100% 50%,82% 50%,82% 72%,62% 72%,62% 100%,25% 100%,25% 82%,0 82%,0 28%,18% 28%,18% 10%,38% 10%);animation-name:wing-left}
+.butterfly::after{left:7px;transform-origin:left center;clip-path:polygon(0 0,75% 0,75% 25%,100% 25%,100% 75%,75% 75%,75% 100%,25% 100%,25% 55%,0 55%);animation-name:wing-right}
+.butterfly.far{scale:.7;opacity:.72}.butterfly.mid{scale:.9;opacity:.86}.butterfly.near{scale:1.15;opacity:1}
+@keyframes wing-left{0%{transform:scaleX(.18) translateY(4px)}48%{transform:scaleX(.58) translateY(1px)}100%{transform:scaleX(1) translateY(-2px)}}50%{transform:scaleX(.65)}100%{transform:scaleX(1) translateY(-2px)}}
+@keyframes wing-right{0%{transform:scaleX(.18) translateY(4px)}48%{transform:scaleX(.58) translateY(1px)}100%{transform:scaleX(1) translateY(-2px)}}50%{transform:scaleX(.65)}100%{transform:scaleX(1) translateY(-2px)}}
+@keyframes butterfly-flight{0%{transform:translate(-50px,10px)}20%{transform:translate(22vw,-18px)}40%{transform:translate(45vw,12px)}60%{transform:translate(68vw,-22px)}80%{transform:translate(92vw,8px)}100%{transform:translate(calc(100vw + 50px),-12px)}}
+@media(max-width:600px){.butterfly.near{scale:.95}.butterfly.mid{scale:.78}.butterfly.far{scale:.62}}
+@media(prefers-reduced-motion:reduce){.butterfly,.butterfly::before,.butterfly::after{animation:none}}}.butterfly::before,.butterfly::after{animation:none}}
+
+
+.container{position:relative!important;z-index:10!important}
+.butterflies{z-index:5!important;display:block!important}
+body.light-mode .butterflies{opacity:1!important;visibility:visible!important}
+body.light-mode .butterfly{display:block!important}
+
+/* Refined pixel butterfly wings: broad upper wings and tapered lower wings. */
+.butterfly::before,.butterfly::after{
+  content:"";
+  position:absolute;
+  top:-5px;
+  width:19px;
+  height:24px;
+  background:var(--wing);
+  box-shadow:0 5px var(--wing),4px 5px var(--wing-dark),0 16px var(--wing-dark);
+  animation-duration:.38s;
+  animation-timing-function:steps(3,end);
+  animation-iteration-count:infinite;
+  animation-direction:alternate;
+}
+.butterfly::before{
+  left:auto;
+  right:7px;
+  transform-origin:right center;
+  clip-path:polygon(38% 0,100% 0,100% 50%,82% 50%,82% 72%,62% 72%,62% 100%,25% 100%,25% 82%,0 82%,0 28%,18% 28%,18% 10%,38% 10%);
+  animation-name:wing-left;
+}
+.butterfly::after{
+  right:auto;
+  left:7px;
+  transform-origin:left center;
+  clip-path:polygon(0 0,62% 0,62% 10%,82% 10%,82% 28%,100% 28%,100% 82%,75% 82%,75% 100%,38% 100%,38% 72%,18% 72%,18% 50%,0 50%);
+  animation-name:wing-right;
+}
+@keyframes wing-left{
+  0%{transform:scaleX(.18) translateY(4px)}
+  48%{transform:scaleX(.58) translateY(1px)}
+  100%{transform:scaleX(1) translateY(-2px)}
+}
+@keyframes wing-right{
+  0%{transform:scaleX(.18) translateY(4px)}
+  48%{transform:scaleX(.58) translateY(1px)}
+  100%{transform:scaleX(1) translateY(-2px)}
+}
+
+/* Pixel butterfly wings with a number-3-shaped outer edge. */
+.butterfly::before{
+  left:auto;
+  right:7px;
+  transform-origin:right center;
+  clip-path:polygon(
+    38% 0,78% 0,78% 8%,94% 8%,94% 18%,100% 18%,100% 38%,
+    94% 38%,94% 46%,78% 46%,94% 54%,94% 62%,100% 62%,
+    100% 82%,94% 82%,94% 92%,78% 92%,78% 100%,38% 100%,
+    38% 90%,20% 90%,20% 76%,0 76%,0 24%,20% 24%,20% 10%,38% 10%
+  );
+  animation-name:wing-left;
+}
+.butterfly::after{
+  right:auto;
+  left:7px;
+  transform-origin:left center;
+  clip-path:polygon(
+    62% 0,22% 0,22% 8%,6% 8%,6% 18%,0 18%,0 38%,
+    6% 38%,6% 46%,22% 46%,6% 54%,6% 62%,0 62%,
+    0 82%,6% 82%,6% 92%,22% 92%,22% 100%,62% 100%,
+    62% 90%,80% 90%,80% 76%,100% 76%,100% 24%,80% 24%,80% 10%,62% 10%
+  );
+  animation-name:wing-right;
+}
+
+/* Corrected pixel wings: the double-lobed "3" curve is on the outer edge. */
+.butterfly::before{
+  left:auto;
+  right:7px;
+  transform-origin:right center;
+  clip-path:polygon(
+    100% 0,44% 0,44% 8%,24% 8%,24% 18%,8% 18%,8% 38%,
+    24% 38%,24% 46%,44% 46%,24% 54%,24% 62%,8% 62%,
+    8% 82%,24% 82%,24% 92%,44% 92%,44% 100%,100% 100%
+  );
+  animation-name:wing-left;
+}
+.butterfly::after{
+  right:auto;
+  left:7px;
+  transform-origin:left center;
+  clip-path:polygon(
+    0 0,56% 0,56% 8%,76% 8%,76% 18%,92% 18%,92% 38%,
+    76% 38%,76% 46%,56% 46%,76% 54%,76% 62%,92% 62%,
+    92% 82%,76% 82%,76% 92%,56% 92%,56% 100%,0 100%
+  );
+  animation-name:wing-right;
+}
+/* Use viewport-based horizontal movement so butterflies cross the whole screen. */
+@keyframes butterfly-flight{
+  0%{left:-60px;transform:translateY(8px) rotate(-4deg)}
+  18%{left:18vw;transform:translateY(-18px) rotate(3deg)}
+  38%{left:40vw;transform:translateY(9px) rotate(-2deg)}
+  58%{left:63vw;transform:translateY(-24px) rotate(4deg)}
+  78%{left:86vw;transform:translateY(6px) rotate(-3deg)}
+  100%{left:calc(100vw + 60px);transform:translateY(-12px) rotate(2deg)}
+}
+
+/* Dark-mode pixel fireflies surround all four sides of a hovered work box. */
+.work-list{overflow:visible!important}
+.work-list li{position:relative;overflow:visible}
+.firefly-layer{
+  position:absolute;
+  inset:-7px;
+  z-index:4;
+  pointer-events:none;
+  opacity:0;
+  overflow:visible;
+  transition:opacity .16s ease;
+}
+body:not(.light-mode) .work-list li:hover .firefly-layer{opacity:1}
+body.light-mode .firefly-layer{display:none}
+.firefly{
+  position:absolute;
+  left:0;
+  top:0;
+  width:4px;
+  height:4px;
+  background:#f5e76d;
+  box-shadow:0 0 4px #fff59b,0 0 10px #d9ef63;
+  image-rendering:pixelated;
+  offset-path:inset(0 round 1px);
+  offset-rotate:0deg;
+  animation:firefly-outline 7s linear infinite,firefly-blink 1.2s steps(2,end) infinite;
+}
+.firefly:nth-child(1){animation-delay:0s,-.1s}
+.firefly:nth-child(2){animation-delay:-.58s,-.4s}
+.firefly:nth-child(3){animation-delay:-1.16s,-.8s}
+.firefly:nth-child(4){animation-delay:-1.74s,-.2s}
+.firefly:nth-child(5){animation-delay:-2.32s,-.7s}
+.firefly:nth-child(6){animation-delay:-2.9s,-.5s}
+.firefly:nth-child(7){animation-delay:-3.48s,-.9s}
+.firefly:nth-child(8){animation-delay:-4.06s,-.3s}
+.firefly:nth-child(9){animation-delay:-4.64s,-.6s}
+.firefly:nth-child(10){animation-delay:-5.22s,-1s}
+.firefly:nth-child(11){animation-delay:-5.8s,-.15s}
+.firefly:nth-child(12){animation-delay:-6.38s,-.75s}
+@keyframes firefly-outline{from{offset-distance:0%}to{offset-distance:100%}}
+@keyframes firefly-blink{0%,100%{opacity:.28}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){
+  .firefly{animation:firefly-blink 1.6s steps(2,end) infinite;offset-distance:var(--rest,0%)}
+}}
+
+/* Light-mode bees use the same full-outline motion system as the fireflies. */
+.bee-layer{
+  position:absolute;
+  inset:-7px;
+  z-index:4;
+  pointer-events:none;
+  opacity:0;
+  overflow:visible;
+  transition:opacity .16s ease;
+}
+body.light-mode .work-list > li:hover > .bee-layer{opacity:1}
+body:not(.light-mode) .bee-layer{display:none}
+.bee{
+  position:absolute;
+  left:0;
+  top:0;
+  width:8px;
+  height:5px;
+  background:#f4c542;
+  box-shadow:3px 0 #2e2a25,6px 0 #f4c542,9px 0 #2e2a25;
+  image-rendering:pixelated;
+  offset-path:inset(0 round 1px);
+  offset-rotate:auto;
+  animation:bee-outline 7s linear infinite,bee-bob 1.2s steps(2,end) infinite;
+}
+.bee::before,.bee::after{
+  content:"";
+  position:absolute;
+  top:-4px;
+  width:5px;
+  height:4px;
+  background:#edfaff;
+  opacity:.9;
+  animation:bee-wings .24s steps(2,end) infinite alternate;
+}
+.bee::before{left:1px;transform-origin:right bottom}
+.bee::after{left:7px;transform-origin:left bottom}
+.bee:nth-child(1){animation-delay:0s,-.1s}
+.bee:nth-child(2){animation-delay:-.58s,-.4s}
+.bee:nth-child(3){animation-delay:-1.16s,-.8s}
+.bee:nth-child(4){animation-delay:-1.74s,-.2s}
+.bee:nth-child(5){animation-delay:-2.32s,-.7s}
+.bee:nth-child(6){animation-delay:-2.9s,-.5s}
+.bee:nth-child(7){animation-delay:-3.48s,-.9s}
+.bee:nth-child(8){animation-delay:-4.06s,-.3s}
+.bee:nth-child(9){animation-delay:-4.64s,-.6s}
+.bee:nth-child(10){animation-delay:-5.22s,-1s}
+.bee:nth-child(11){animation-delay:-5.8s,-.15s}
+.bee:nth-child(12){animation-delay:-6.38s,-.75s}
+@keyframes bee-outline{from{offset-distance:0%}to{offset-distance:100%}}
+@keyframes bee-bob{0%,100%{translate:0 -1px}50%{translate:0 1px}}
+@keyframes bee-wings{from{transform:rotate(-18deg) scaleY(.65)}to{transform:rotate(18deg) scaleY(1)}}
+@media(prefers-reduced-motion:reduce){
+  .bee{animation:bee-bob 1.6s steps(2,end) infinite;offset-distance:var(--rest,0%)}
+  .bee::before,.bee::after{animation:none}
+}
+
+/* Final per-row bee visibility control. */
+.work-list > li > .bee-layer{
+  display:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+body.light-mode .work-list > li.bee-hovered > .bee-layer{
+  display:block !important;
+  opacity:1 !important;
+  visibility:visible !important;
+}
+</style>
+</head>
+<body><button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light mode"><span class="theme-icon sun" aria-hidden="true">☀</span><span class="theme-icon moon" aria-hidden="true">☾</span></button>
+<div class="butterflies" aria-hidden="true">
+  <span class="butterfly far" style="--top:12%;--duration:28s;--delay:-8s;--wing:#d99ac5;--wing-dark:#b873a2"></span>
+  <span class="butterfly mid" style="--top:22%;--duration:22s;--delay:-16s;--wing:#f0b66f;--wing-dark:#cc8748"></span>
+  <span class="butterfly near" style="--top:34%;--duration:18s;--delay:-4s;--wing:#8ebed6;--wing-dark:#6094ad"></span>
+  <span class="butterfly far" style="--top:46%;--duration:31s;--delay:-21s;--wing:#b9a1dc;--wing-dark:#8972b0"></span>
+  <span class="butterfly mid" style="--top:58%;--duration:24s;--delay:-11s;--wing:#e5a2a9;--wing-dark:#ba747d"></span>
+  <span class="butterfly near" style="--top:18%;--duration:20s;--delay:-14s;--wing:#a4cf91;--wing-dark:#72a65e"></span>
+  <span class="butterfly far" style="--top:66%;--duration:33s;--delay:-2s;--wing:#d7c47c;--wing-dark:#aa984f"></span>
+</div>
+<div class="sky" aria-hidden="true"><div class="stars">
+<span class="star tiny" style="left:7%;top:13%"></span><span class="star soft" style="left:16%;top:25%"></span><span class="star tiny" style="left:27%;top:10%"></span><span class="star" style="left:38%;top:20%"></span><span class="star tiny" style="left:48%;top:8%"></span><span class="star soft" style="left:59%;top:29%"></span><span class="star tiny" style="left:69%;top:14%"></span><span class="star" style="left:79%;top:31%"></span><span class="star tiny" style="left:91%;top:18%"></span><span class="star soft" style="left:11%;top:47%"></span><span class="star tiny" style="left:31%;top:42%"></span><span class="star" style="left:52%;top:46%"></span><span class="star tiny" style="left:73%;top:51%"></span><span class="star soft" style="left:88%;top:43%"></span>
+</div><div class="cloud far"></div><div class="cloud mid"></div><div class="cloud near"></div><div class="cloud reverse"></div></div>
+<div class="pixel-moon" aria-hidden="true"><span class="moon-light"></span></div>
+<div class="container">
+  <h1>A.I. FOR DESIGNERS — Brian Lau</h1>
+  <div class="subtitle">ART 3041 · Fall 2026</div>
+  <div class="email"><a href="mailto:brian.lau79@stu-mail.baruch.cuny.edu">brian.lau79@stu-mail.baruch.cuny.edu</a></div>
+
+  <h2>Work</h2>
+  <ol class="work-list">
+    <li><a href="#"><span class="num">1</span><span>Custom Instructions</span></a><span class="firefly-layer" aria-hidden="true"><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i></span><span class="bee-layer" aria-hidden="true"><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i></span></li>
+    <li><a href="#"><span class="num">2</span><span>A Style Guide for Your AI</span></a><span class="firefly-layer" aria-hidden="true"><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i></span><span class="bee-layer" aria-hidden="true"><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i></span></li>
+    <li><a href="#"><span class="num">3</span><span>Design a ___</span></a><span class="firefly-layer" aria-hidden="true"><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i></span><span class="bee-layer" aria-hidden="true"><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i></span></li>
+    <li><a href="#"><span class="num">4</span><span>Commute Story</span></a><span class="firefly-layer" aria-hidden="true"><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i></span><span class="bee-layer" aria-hidden="true"><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i></span></li>
+    <li><a href="#"><span class="num">5</span><span>Become a Crea(i)tive Director</span></a><span class="firefly-layer" aria-hidden="true"><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i></span><span class="bee-layer" aria-hidden="true"><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i></span></li>
+    <li><a href="#"><span class="num">6</span><span>Experimental AI Interface</span></a><span class="firefly-layer" aria-hidden="true"><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i></span><span class="bee-layer" aria-hidden="true"><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i></span></li>
+    <li><a href="#"><span class="num">7</span><span>Open</span></a><span class="firefly-layer" aria-hidden="true"><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i><i class="firefly"></i></span><span class="bee-layer" aria-hidden="true"><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i><i class="bee"></i></span></li>
+  </ol>
+</div>
+<div class="pixel-hill" aria-hidden="true"></div><div class="pixel-flowers" aria-hidden="true"><span class="flower far" style="--x:3%;--y:78px;--stem:18px;--petal:#8fa7d8;--center:#e8c96b;--speed:3.5s;--delay:-0.50s"></span><span class="flower mid" style="--x:7%;--y:75px;--stem:21px;--petal:#d49ac7;--center:#e8c96b;--speed:3.9s;--delay:-0.95s"></span><span class="flower near" style="--x:12%;--y:74px;--stem:24px;--petal:#b8a6dc;--center:#e8c96b;--speed:4.3s;--delay:-1.40s"></span><span class="flower far" style="--x:18%;--y:80px;--stem:27px;--petal:#8fb9c6;--center:#e8c96b;--speed:4.7s;--delay:-1.85s"></span><span class="flower mid" style="--x:23%;--y:77px;--stem:30px;--petal:#d9a4b3;--center:#e8c96b;--speed:5.1s;--delay:-2.30s"></span><span class="flower near" style="--x:29%;--y:76px;--stem:18px;--petal:#9caed8;--center:#e8c96b;--speed:5.5s;--delay:-2.75s"></span><span class="flower far" style="--x:35%;--y:82px;--stem:21px;--petal:#c49bd4;--center:#e8c96b;--speed:3.5s;--delay:-3.20s"></span><span class="flower mid" style="--x:41%;--y:79px;--stem:24px;--petal:#86b3bd;--center:#e8c96b;--speed:3.9s;--delay:-0.50s"></span><span class="flower near" style="--x:47%;--y:75px;--stem:27px;--petal:#d19dac;--center:#e8c96b;--speed:4.3s;--delay:-0.95s"></span><span class="flower far" style="--x:53%;--y:81px;--stem:30px;--petal:#a697d4;--center:#e8c96b;--speed:4.7s;--delay:-1.40s"></span><span class="flower mid" style="--x:59%;--y:78px;--stem:18px;--petal:#8fa7d8;--center:#e8c96b;--speed:5.1s;--delay:-1.85s"></span><span class="flower near" style="--x:65%;--y:74px;--stem:21px;--petal:#d49ac7;--center:#e8c96b;--speed:5.5s;--delay:-2.30s"></span><span class="flower far" style="--x:71%;--y:83px;--stem:24px;--petal:#b8a6dc;--center:#e8c96b;--speed:3.5s;--delay:-2.75s"></span><span class="flower mid" style="--x:76%;--y:77px;--stem:27px;--petal:#8fb9c6;--center:#e8c96b;--speed:3.9s;--delay:-3.20s"></span><span class="flower near" style="--x:82%;--y:75px;--stem:30px;--petal:#d9a4b3;--center:#e8c96b;--speed:4.3s;--delay:-0.50s"></span><span class="flower far" style="--x:88%;--y:80px;--stem:18px;--petal:#9caed8;--center:#e8c96b;--speed:4.7s;--delay:-0.95s"></span><span class="flower mid" style="--x:93%;--y:76px;--stem:21px;--petal:#c49bd4;--center:#e8c96b;--speed:5.1s;--delay:-1.40s"></span><span class="flower near" style="--x:97%;--y:74px;--stem:24px;--petal:#86b3bd;--center:#e8c96b;--speed:5.5s;--delay:-1.85s"></span><span class="flower mid" style="--x:5%;--y:48px;--stem:27px;--petal:#d19dac;--center:#e8c96b;--speed:3.5s;--delay:-2.30s"></span><span class="flower near" style="--x:15%;--y:17px;--stem:30px;--petal:#a697d4;--center:#e8c96b;--speed:3.9s;--delay:-2.75s"></span><span class="flower mid" style="--x:26%;--y:57px;--stem:18px;--petal:#8fa7d8;--center:#e8c96b;--speed:4.3s;--delay:-3.20s"></span><span class="flower near" style="--x:34%;--y:23px;--stem:21px;--petal:#d49ac7;--center:#e8c96b;--speed:4.7s;--delay:-0.50s"></span><span class="flower mid" style="--x:44%;--y:44px;--stem:24px;--petal:#b8a6dc;--center:#e8c96b;--speed:5.1s;--delay:-0.95s"></span><span class="flower near" style="--x:55%;--y:12px;--stem:27px;--petal:#8fb9c6;--center:#e8c96b;--speed:5.5s;--delay:-1.40s"></span><span class="flower mid" style="--x:63%;--y:60px;--stem:30px;--petal:#d9a4b3;--center:#e8c96b;--speed:3.5s;--delay:-1.85s"></span><span class="flower near" style="--x:72%;--y:26px;--stem:18px;--petal:#9caed8;--center:#e8c96b;--speed:3.9s;--delay:-2.30s"></span><span class="flower mid" style="--x:83%;--y:52px;--stem:21px;--petal:#c49bd4;--center:#e8c96b;--speed:4.3s;--delay:-2.75s"></span><span class="flower near" style="--x:91%;--y:15px;--stem:24px;--petal:#86b3bd;--center:#e8c96b;--speed:4.7s;--delay:-3.20s"></span></div><script>
+// Switch between the default night theme and the optional light theme.
+const themeButton = document.querySelector('.theme-toggle');
+themeButton.addEventListener('click', () => {
+  const lightModeIsOn = document.body.classList.toggle('light-mode');
+  themeButton.setAttribute('aria-pressed', String(lightModeIsOn));
+  themeButton.setAttribute('aria-label', lightModeIsOn ? 'Switch to night mode' : 'Switch to light mode');
+});
+
+// Show bees only on the exact work box currently under the pointer.
+const beeRows = Array.from(document.querySelectorAll('.work-list > li'));
+
+function clearHoveredBeeRows() {
+  beeRows.forEach((row) => row.classList.remove('bee-hovered'));
+}
+
+beeRows.forEach((row) => {
+  row.addEventListener('pointerenter', () => {
+    clearHoveredBeeRows();
+    row.classList.add('bee-hovered');
+  });
+
+  row.addEventListener('pointerleave', () => {
+    row.classList.remove('bee-hovered');
+  });
+});
+
+themeButton.addEventListener('click', clearHoveredBeeRows);
+</script></body>
+</html>
