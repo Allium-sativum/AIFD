@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Structural Typography — Generative Poster Engine</title>
+  <!-- Google Fonts: Jost, League Spartan, Syne -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;0,700;1,400&family=League+Spartan:wght@400;500;600;700;800&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ui-bg: #141416;
+      --ui-panel: #1e1e22;
+      --ui-panel-border: #2c2c34;
+      --ui-accent: #ffffff;
+      --ui-muted: #8e8e9c;
+      --ui-field-bg: #121214;
+      --ui-highlight: #ff3355;
+
+      /* Poster Canvas Variables */
+      --poster-bg: #E6E6E6;
+      --poster-ink: #050505;
+      --poster-line: #050505;
+      --poster-accent: #ff3355;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--ui-bg);
+      color: var(--ui-accent);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- Left Canvas Stage --- */
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: radial-gradient(circle at center, #222228 0%, #0d0d10 100%);
+      position: relative;
+    }
+
+    .poster-container {
+      width: min(520px, 86vw);
+      aspect-ratio: 2 / 3;
+      background-color: var(--poster-bg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 35px 90px rgba(0, 0, 0, 0.85);
+      user-select: none;
+      cursor: crosshair;
+    }
+
+    /* Photographic Background Layer */
+    .poster-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .poster-image.mode-framed {
+      top: 18%;
+      bottom: 18%;
+      left: 10%;
+      width: 80%;
+      height: 64%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .filter-grayscale { filter: grayscale(100%) contrast(135%); }
+    .filter-duotone { filter: grayscale(100%) contrast(160%); mix-blend-mode: multiply; }
+    .filter-inverted { filter: invert(100%) contrast(130%); }
+
+    /* SVG Vector Engine (Grid, Connectors, Focal Masks) */
+    .poster-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .grid-line {
+      stroke: rgba(0, 0, 0, 0.12);
+      stroke-width: 0.8;
+      display: none;
+    }
+
+    .vector-connector {
+      stroke: var(--poster-line);
+      fill: none;
+      stroke-linecap: square;
+      transition: stroke 0.2s ease;
+    }
+
+    /* Typographic Hierarchy Blocks */
+    .text-block {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 4;
+      color: var(--poster-ink);
+      text-transform: uppercase;
+      font-weight: 600;
+      font-family: 'Jost', sans-serif;
+      font-size: 1.15rem;
+      pointer-events: none;
+      transition: top 0.25s ease, bottom 0.25s ease, transform 0.25s ease;
+    }
+
+    .text-block span {
+      display: inline-block;
+      text-align: center;
+    }
+
+    .metadata-block {
+      position: absolute;
+      width: 100%;
+      padding: 0 6%;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.5rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--poster-ink);
+      z-index: 4;
+      pointer-events: none;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    .metadata-top { top: 3.5%; }
+    .metadata-bottom { bottom: 3.5%; }
+
+    /* Layout Preset Modifications */
+    .layout-asymmetric #blockPrimary { justify-content: flex-start; padding-left: 9%; }
+    .layout-asymmetric #blockSecondary { justify-content: flex-end; padding-right: 9%; }
+
+    .layout-stacked #blockPrimary { top: 20% !important; }
+    .layout-stacked #blockSecondary { top: 32% !important; bottom: auto !important; }
+
+    /* Difference Blend Mode for Typographic Legibility */
+    .blend-difference {
+      mix-blend-mode: difference;
+      color: #FFFFFF !important;
+    }
+
+    /* Physical Specular Sheen Simulation */
+    .surface-glaze {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+      background: 
+        linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 6%),
+        linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 4%);
+    }
+
+    /* Focal Target Indicator */
+    .focal-target {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--ui-highlight);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      pointer-events: none;
+      display: none;
+    }
+
+    .focal-target::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      background: var(--ui-highlight);
+      border-radius: 50%;
+    }
+
+    /* --- Right Control Sidebar --- */
+    .sidebar {
+      width: 400px;
+      background-color: var(--ui-panel);
+      border-left: 1px solid var(--ui-panel-border);
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.3rem;
+    }
+
+    .sidebar h2 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--ui-muted);
+      border-bottom: 1px solid var(--ui-panel-border);
+      padding-bottom: 0.35rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .control-group label {
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ui-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    input[type="text"], select {
+      background-color: var(--ui-field-bg);
+      border: 1px solid var(--ui-panel-border);
+      color: #fff;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      outline: none;
+      width: 100%;
+    }
+
+    input[type="range"] {
+      accent-color: #ffffff;
+      width: 100%;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button {
+      flex: 1;
+      background-color: #2b2b32;
+      color: #fff;
+      border: 1px solid var(--ui-panel-border);
+      padding: 0.65rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+
+    button:hover {
+      background-color: #383842;
+      border-color: #4a4a58;
+    }
+
+    button.accent {
+      background-color: #3b3b47;
+      border-color: #626278;
+    }
+
+    .hint-text {
+      font-size: 0.7rem;
+      color: var(--ui-muted);
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left: Live Poster Stage -->
+  <main class="stage">
+    <div class="poster-container" id="poster">
+      <!-- Background Artwork -->
+      <img id="bgImage" class="poster-image" alt="Artwork Substrate">
+      
+      <!-- SVG Procedural Geometry -->
+      <svg class="poster-svg" id="posterSvg" viewBox="0 0 100 150" preserveAspectRatio="none">
+        <g id="gridOverlay"></g>
+        <path id="spineVector" class="vector-connector" d=""></path>
+      </svg>
+
+      <!-- Target Focal Marker -->
+      <div id="focalMarker" class="focal-target"></div>
+
+      <!-- Metadata Headers/Footers -->
+      <div class="metadata-block metadata-top">
+        <span id="metaDate">VOL. 04 / ED. 26</span>
+        <span id="metaId">MODULAR ARCHIVE</span>
+      </div>
+
+      <!-- Generative Typography -->
+      <div id="blockPrimary" class="text-block"></div>
+      <div id="blockSecondary" class="text-block"></div>
+
+      <div class="metadata-block metadata-bottom">
+        <span>ARCHITECTURAL ANATOMY</span>
+        <span id="metaCoords">9x9 MATRIX</span>
+      </div>
+
+      <!-- Specular Reflection Sheen -->
+      <div id="surfaceGlaze" class="surface-glaze"></div>
+    </div>
+  </main>
+
+  <!-- Right: Generative Parameter Dashboard -->
+  <aside class="sidebar">
+    <div class="control-group">
+      <h2>1. Architectural Typography</h2>
+      <label>Heading 1 (Primary)</label>
+      <input type="text" id="inputTop" value="SYNTACTIC">
+
+      <label>Heading 2 (Secondary)</label>
+      <input type="text" id="inputBottom" value="STRUCTURE">
+
+      <label>Layout Topology</label>
+      <select id="selectLayout">
+        <option value="perimeter" selected>Perimeter Centered (High Tension)</option>
+        <option value="asymmetric">Asymmetric Off-Center Alignment</option>
+        <option value="stacked">Stacked Top Block (Extruded Void)</option>
+      </select>
+
+      <div class="button-group">
+        <button id="btnInvert">Invert Positions</button>
+        <button id="btnRandomize" class="accent">Randomize Rules</button>
+      </div>
+
+      <label style="margin-top: 0.3rem;">Typeface Selection</label>
+      <select id="selectFont">
+        <option value="'Jost', sans-serif" selected>Jost (Sharp Geometric Apex A / V)</option>
+        <option value="'League Spartan', sans-serif">League Spartan (Rigid Architectural)</option>
+        <option value="'Syne', sans-serif">Syne (Brutalist Display Contrast)</option>
+      </select>
+
+      <label>Font Weight</label>
+      <select id="selectWeight">
+        <option value="500">Medium (500)</option>
+        <option value="600" selected>SemiBold (600)</option>
+        <option value="700">Bold (700)</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <h2>2. Spatial Metrics & Tracking</h2>
+      <label>Letter-Spacing (Tracking) <span id="valTracking">0.38em</span></label>
+      <input type="range" id="rangeTracking" min="0.0" max="0.85" step="0.01" value="0.38">
+
+      <label>Vertical Tension (Negative Space) <span id="valDistance">85%</span></label>
+      <input type="range" id="rangeDistance" min="18" max="88" step="1" value="85">
+    </div>
+
+    <div class="control-group">
+      <h2>3. Procedural Vector Spine</h2>
+      <label>Connector Algorithm</label>
+      <select id="selectConnector">
+        <option value="auto" selected>Procedural Shared-Stem Match</option>
+        <option value="center">Central Grid Axis Divider</option>
+        <option value="cross">Cross Wireframe Intersection</option>
+        <option value="dual">Dual Margin Pillars</option>
+        <option value="none">Void (No Connecting Vector)</option>
+      </select>
+
+      <label>Focal Subject Interaction</label>
+      <select id="selectFocalMode">
+        <option value="straight" selected>Direct Straight Rule</option>
+        <option value="mask">Negative-Space Subject Cutout</option>
+        <option value="bend">Bézier Magnetic Curve</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <h2>4. Background Substrate & Focal Imagery</h2>
+      <label>Background Mode</label>
+      <select id="selectBgMode">
+        <option value="solid" selected>Solid Substrate</option>
+        <option value="full">Full Canvas Photographic Plate</option>
+        <option value="framed">Framed Negative-Space Plate</option>
+      </select>
+
+      <label>Colorway Substrate</label>
+      <select id="selectPalette">
+        <option value="gallery" selected>Neutral Gallery Gray (#E6E6E6 / #050505)</option>
+        <option value="brutalist">Brutalist Black (#0D0D10 / #F5F5F5)</option>
+        <option value="cream">Warm Concrete / Newsprint (#DFDAD2 / #141416)</option>
+      </select>
+
+      <label>Custom Image Upload</label>
+      <input type="file" id="fileImage" accept="image/*">
+
+      <label>Image Contrast Treatment</label>
+      <select id="selectFilter">
+        <option value="none">Original Photographic Tone</option>
+        <option value="grayscale" selected>High-Contrast Monolith Grayscale</option>
+        <option value="duotone">Duotone Multiply Shading</option>
+        <option value="inverted">Inverted Solarization</option>
+      </select>
+
+      <label>Focal Center Y-Anchor <span id="valFocalY">50%</span></label>
+      <input type="range" id="rangeFocalY" min="20" max="80" step="1" value="50">
+      <span class="hint-text">Tip: Click anywhere directly on the poster to snap the focal subject anchor point.</span>
+    </div>
+
+    <div class="control-group">
+      <h2>5. Structural Overlays</h2>
+      <label>Grid Division Matrix</label>
+      <select id="selectGridMode">
+        <option value="9x9" selected>9×9 Modular Matrix (Müller-Brockmann)</option>
+        <option value="12col">12-Column Swiss Division</option>
+      </select>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkGrid"> Display Structural Grid Guidelines
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkGlaze" checked> Physical Specular Glaze (Exhibition Sheen)
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkDifference"> Difference Contrast Blend Mode
+      </label>
+    </div>
+  </aside>
+
+  <script>
+    // Canvas References
+    const poster = document.getElementById('poster');
+    const blockPrimary = document.getElementById('blockPrimary');
+    const blockSecondary = document.getElementById('blockSecondary');
+    const spineVector = document.getElementById('spineVector');
+    const gridOverlay = document.getElementById('gridOverlay');
+    const bgImage = document.getElementById('bgImage');
+    const surfaceGlaze = document.getElementById('surfaceGlaze');
+    const focalMarker = document.getElementById('focalMarker');
+
+    // Controls
+    const inputTop = document.getElementById('inputTop');
+    const inputBottom = document.getElementById('inputBottom');
+    const selectLayout = document.getElementById('selectLayout');
+    const selectFont = document.getElementById('selectFont');
+    const selectWeight = document.getElementById('selectWeight');
+    const rangeTracking = document.getElementById('rangeTracking');
+    const rangeDistance = document.getElementById('rangeDistance');
+    const selectConnector = document.getElementById('selectConnector');
+    const selectFocalMode = document.getElementById('selectFocalMode');
+    const selectBgMode = document.getElementById('selectBgMode');
+    const selectPalette = document.getElementById('selectPalette');
+    const fileImage = document.getElementById('fileImage');
+    const selectFilter = document.getElementById('selectFilter');
+    const rangeFocalY = document.getElementById('rangeFocalY');
+    const selectGridMode = document.getElementById('selectGridMode');
+    const chkGrid = document.getElementById('chkGrid');
+    const chkGlaze = document.getElementById('chkGlaze');
+    const chkDifference = document.getElementById('chkDifference');
+    const btnInvert = document.getElementById('btnInvert');
+    const btnRandomize = document.getElementById('btnRandomize');
+
+    let focalPoint = { x: 50, y: 50 }; // in percentage (0 - 100)
+
+    // Render Grid Systems
+    function renderGridSystem() {
+      gridOverlay.innerHTML = '';
+      const mode = selectGridMode.value;
+      const cols = mode === '9x9' ? 9 : 12;
+      const rows = mode === '9x9' ? 9 : 18;
+
+      // Vertical Columns
+      for (let i = 1; i < cols; i++) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", (i * 100 / cols).toFixed(2));
+        line.setAttribute("y1", "0");
+        line.setAttribute("x2", (i * 100 / cols).toFixed(2));
+        line.setAttribute("y2", "150");
+        line.setAttribute("class", "grid-line");
+        gridOverlay.appendChild(line);
+      }
+
+      // Horizontal Rows
+      for (let j = 1; j < rows; j++) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", "0");
+        line.setAttribute("y1", (j * 150 / rows).toFixed(2));
+        line.setAttribute("x2", "100");
+        line.setAttribute("y2", (j * 150 / rows).toFixed(2));
+        line.setAttribute("class", "grid-line");
+        gridOverlay.appendChild(line);
+      }
+      toggleGridVisibility();
+    }
+
+    function toggleGridVisibility() {
+      const show = chkGrid.checked;
+      gridOverlay.querySelectorAll('.grid-line').forEach(el => {
+        el.style.display = show ? 'block' : 'none';
+      });
+    }
+
+    // Build letter span architecture
+    function formatTypography(el, text) {
+      el.innerHTML = '';
+      for (let char of text.toUpperCase()) {
+        const span = document.createElement('span');
+        span.textContent = char;
+        el.appendChild(span);
+      }
+    }
+
+    // Main Generative Draw Routine
+    function drawPoster() {
+      const topText = inputTop.value.trim() || ' ';
+      const bottomText = inputBottom.value.trim() || ' ';
+
+      formatTypography(blockPrimary, topText);
+      formatTypography(blockSecondary, bottomText);
+
+      // Layout topology class
+      poster.className = 'poster-container';
+      if (selectLayout.value === 'asymmetric') poster.classList.add('layout-asymmetric');
+      if (selectLayout.value === 'stacked') poster.classList.add('layout-stacked');
+
+      // Font attributes
+      const tracking = rangeTracking.value;
+      const font = selectFont.value;
+      const weight = selectWeight.value;
+
+      [blockPrimary, blockSecondary].forEach(b => {
+        b.style.fontFamily = font;
+        b.style.fontWeight = weight;
+        b.style.letterSpacing = `${tracking}em`;
+      });
+
+      // Spatial Tension / Distance calculation
+      const gap = parseFloat(rangeDistance.value);
+      const margin = (100 - gap) / 2;
+
+      if (selectLayout.value !== 'stacked') {
+        blockPrimary.style.top = `${margin}%`;
+        blockSecondary.style.bottom = `${margin}%`;
+      }
+
+      // Sync live control labels
+      document.getElementById('valTracking').textContent = `${tracking}em`;
+      document.getElementById('valDistance').textContent = `${gap}%`;
+      document.getElementById('valFocalY').textContent = `${focalPoint.y.toFixed(0)}%`;
+
+      // Update focal marker position
+      focalMarker.style.left = `${focalPoint.x}%`;
+      focalMarker.style.top = `${focalPoint.y}%`;
+
+      // Procedural Vector Math
+      requestAnimationFrame(() => calculateVectorAnatomy(topText, bottomText, margin));
+    }
+
+    function calculateVectorAnatomy(topText, bottomText, margin) {
+      const mode = selectConnector.value;
+      if (mode === 'none') {
+        spineVector.setAttribute('d', '');
+        return;
+      }
+
+      const rect = poster.getBoundingClientRect();
+      const topSpans = blockPrimary.querySelectorAll('span');
+      const bottomSpans = blockSecondary.querySelectorAll('span');
+
+      const y1 = (margin / 100) * 150 + 4.5;
+      const y2 = 150 - ((margin / 100) * 150) - 4.5;
+      const focalSvgY = (focalPoint.y / 100) * 150;
+      const focalSvgX = focalPoint.x;
+      const behavior = selectFocalMode.value;
+
+      let paths = [];
+
+      if (mode === 'center') {
+        paths.push(generatePathSegment(50, y1, y2, focalSvgX, focalSvgY, behavior));
+      } else if (mode === 'dual') {
+        paths.push(generatePathSegment(15, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(generatePathSegment(85, y1, y2, focalSvgX, focalSvgY, behavior));
+      } else if (mode === 'cross') {
+        paths.push(generatePathSegment(50, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(`M 12 ${focalSvgY} L 88 ${focalSvgY}`);
+      } else {
+        // Auto Procedural Stem Detection (Searching for I, T, L, H, E, F)
+        let anchorIndex = -1;
+        const stemPriority = ['I', 'T', 'L', 'H', 'E', 'F'];
+
+        // Phase 1: Shared character match
+        for (let i = 0; i < Math.min(topText.length, bottomText.length); i++) {
+          if (topText[i].toUpperCase() === bottomText[i].toUpperCase()) {
+            anchorIndex = i;
+            break;
+          }
+        }
+        // Phase 2: Priority vertical stem fallback
+        if (anchorIndex === -1) {
+          for (let i = 0; i < topText.length; i++) {
+            if (stemPriority.includes(topText[i].toUpperCase())) {
+              anchorIndex = i;
+              break;
+            }
+          }
+        }
+        // Phase 3: Center fallback
+        if (anchorIndex === -1) anchorIndex = Math.floor(topSpans.length / 2);
+
+        const targetSpan = topSpans[anchorIndex] || topSpans[0];
+        const spanRect = targetSpan.getBoundingClientRect();
+        const midX = ((spanRect.left + spanRect.width / 2) - rect.left) / rect.width * 100;
+
+        paths.push(generatePathSegment(midX, y1, y2, focalSvgX, focalSvgY, behavior));
+      }
+
+      spineVector.setAttribute('d', paths.join(' '));
+
+      // Link vector stroke width directly to font weight
+      const weight = selectWeight.value;
+      const strokeWidth = weight === '700' ? 0.8 : (weight === '600' ? 0.6 : 0.42);
+      spineVector.setAttribute('stroke-width', strokeWidth);
+    }
+
+    function generatePathSegment(x, y1, y2, fx, fy, behavior) {
+      if (behavior === 'mask' && fy > y1 && fy < y2) {
+        // Negative-space breakout mask around focal point
+        const maskRadius = 11;
+        return `M ${x} ${y1} L ${x} ${fy - maskRadius} M ${x} ${fy + maskRadius} L ${x} ${y2}`;
+      } else if (behavior === 'bend' && fy > y1 && fy < y2) {
+        // Dynamic magnetic curve towards focal coordinate
+        return `M ${x} ${y1} Q ${fx} ${fy} ${x} ${y2}`;
+      }
+      return `M ${x} ${y1} L ${x} ${y2}`;
+    }
+
+    // --- Interactive Focal Point Picker on Poster ---
+    poster.addEventListener('click', (e) => {
+      const rect = poster.getBoundingClientRect();
+      focalPoint.x = ((e.clientX - rect.left) / rect.width) * 100;
+      focalPoint.y = ((e.clientY - rect.top) / rect.height) * 100;
+      rangeFocalY.value = focalPoint.y;
+
+      focalMarker.style.display = 'block';
+      setTimeout(() => { focalMarker.style.display = 'none'; }, 1600);
+
+      drawPoster();
+    });
+
+    rangeFocalY.addEventListener('input', () => {
+      focalPoint.y = parseFloat(rangeFocalY.value);
+      drawPoster();
+    });
+
+    // Colorway Palettes
+    selectPalette.addEventListener('change', () => {
+      const p = selectPalette.value;
+      if (p === 'gallery') {
+        document.documentElement.style.setProperty('--poster-bg', '#E6E6E6');
+        document.documentElement.style.setProperty('--poster-ink', '#050505');
+        document.documentElement.style.setProperty('--poster-line', '#050505');
+      } else if (p === 'brutalist') {
+        document.documentElement.style.setProperty('--poster-bg', '#0D0D10');
+        document.documentElement.style.setProperty('--poster-ink', '#F5F5F5');
+        document.documentElement.style.setProperty('--poster-line', '#F5F5F5');
+      } else if (p === 'cream') {
+        document.documentElement.style.setProperty('--poster-bg', '#DFDAD2');
+        document.documentElement.style.setProperty('--poster-ink', '#141416');
+        document.documentElement.style.setProperty('--poster-line', '#141416');
+      }
+      drawPoster();
+    });
+
+    // Invert Positions
+    btnInvert.addEventListener('click', () => {
+      const t = inputTop.value;
+      inputTop.value = inputBottom.value;
+      inputBottom.value = t;
+      drawPoster();
+    });
+
+    // Generative Randomizer
+    const generativeDictionary = [
+      ['MODULAR', 'TENSION'],
+      ['SYSTEMIC', 'ANOMALY'],
+      ['CONCRETE', 'MEMBRANE'],
+      ['SPATIAL', 'RHYTHM'],
+      ['RAW', 'SIGNAL'],
+      ['RADICAL', 'METRICS'],
+      ['WHITE', 'STATIC'],
+      ['AXIAL', 'ORDER']
+    ];
+
+    btnRandomize.addEventListener('click', () => {
+      const pair = generativeDictionary[Math.floor(Math.random() * generativeDictionary.length)];
+      inputTop.value = pair[0];
+      inputBottom.value = pair[1];
+
+      rangeTracking.value = (Math.random() * 0.55 + 0.1).toFixed(2);
+      rangeDistance.value = Math.floor(Math.random() * 50 + 35);
+      selectConnector.value = ['auto', 'center', 'cross', 'dual'][Math.floor(Math.random() * 4)];
+      selectLayout.value = ['perimeter', 'asymmetric'][Math.floor(Math.random() * 2)];
+      selectFont.value = ["'Jost', sans-serif", "'League Spartan', sans-serif", "'Syne', sans-serif"][Math.floor(Math.random() * 3)];
+
+      drawPoster();
+    });
+
+    // Background & Image handling
+    selectBgMode.addEventListener('change', () => {
+      const mode = selectBgMode.value;
+      bgImage.style.display = mode === 'solid' ? 'none' : 'block';
+      bgImage.classList.toggle('mode-framed', mode === 'framed');
+    });
+
+    selectFilter.addEventListener('change', () => {
+      bgImage.className = 'poster-image ' + (selectBgMode.value === 'framed' ? 'mode-framed ' : '');
+      const filter = selectFilter.value;
+      if (filter !== 'none') bgImage.classList.add(`filter-${filter}`);
+    });
+
+    fileImage.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          bgImage.src = evt.target.result;
+          if (selectBgMode.value === 'solid') {
+            selectBgMode.value = 'full';
+            bgImage.style.display = 'block';
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Structural Toggles
+    selectGridMode.addEventListener('change', renderGridSystem);
+    chkGrid.addEventListener('change', toggleGridVisibility);
+    chkGlaze.addEventListener('change', () => surfaceGlaze.style.display = chkGlaze.checked ? 'block' : 'none');
+    chkDifference.addEventListener('change', () => {
+      [blockPrimary, blockSecondary].forEach(w => w.classList.toggle('blend-difference', chkDifference.checked));
+      document.documentElement.style.setProperty('--poster-line', chkDifference.checked ? '#FFFFFF' : '#050505');
+    });
+
+    // Live Event Listeners
+    [inputTop, inputBottom, selectLayout, selectFont, selectWeight, rangeTracking, 
+     rangeDistance, selectConnector, selectFocalMode].forEach(el => {
+      el.addEventListener('input', drawPoster);
+    });
+
+    window.addEventListener('resize', drawPoster);
+
+    // Initial Bootstrap
+    renderGridSystem();
+    drawPoster();
+  </script>
+</body>
+</html>
