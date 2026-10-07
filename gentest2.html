@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playful Poster Studio</title>
+  <!-- Google Fonts: Jost, League Spartan, Syne -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;0,700;1,400&family=League+Spartan:wght@400;500;600;700;800&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- html2canvas for High-Res PNG Exporting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <style>
+    :root {
+      /* Dark Mode Default */
+      --ui-bg: #141416;
+      --ui-panel: #1e1e22;
+      --ui-panel-border: #2c2c34;
+      --ui-accent: #ffffff;
+      --ui-muted: #8e8e9c;
+      --ui-field-bg: #121214;
+      --ui-highlight: #ff3355;
+      --stage-bg: radial-gradient(circle at center, #222228 0%, #0d0d10 100%);
+
+      /* Poster Canvas Variables */
+      --poster-bg: #E6E6E6;
+      --poster-ink: #050505;
+      --poster-line: #050505;
+      --poster-accent: #ff3355;
+    }
+
+    body.light-theme {
+      --ui-bg: #f4f4f6;
+      --ui-panel: #ffffff;
+      --ui-panel-border: #e2e2e8;
+      --ui-accent: #111116;
+      --ui-muted: #666675;
+      --ui-field-bg: #f9f9fb;
+      --stage-bg: #e9e9ee;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--ui-bg);
+      color: var(--ui-accent);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* --- Left Canvas Stage (Edit Mode) --- */
+    .stage {
+      flex: 1;
+      position: relative;
+      background: var(--stage-bg);
+      overflow: hidden; /* We manage pan/zoom via inner container */
+      transition: background 0.2s;
+    }
+    
+    .stage-pan-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      cursor: grab;
+    }
+    .stage-pan-container:active {
+      cursor: grabbing;
+    }
+
+    .poster-container {
+      width: 480px; /* Base Fixed width for zoom scaling */
+      aspect-ratio: 2 / 3;
+      background-color: var(--poster-bg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      user-select: none;
+      cursor: crosshair;
+      transition: aspect-ratio 0.3s ease;
+    }
+
+    /* Photographic Background Layer */
+    .poster-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .poster-image.mode-framed {
+      top: 18%;
+      bottom: 18%;
+      left: 10%;
+      width: 80%;
+      height: 64%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .filter-grayscale { filter: grayscale(100%) contrast(135%); }
+    .filter-duotone { filter: grayscale(100%) contrast(160%); mix-blend-mode: multiply; }
+    .filter-inverted { filter: invert(100%) contrast(130%); }
+
+    /* SVG Vector Engine (Grid, Connectors, Focal Masks) */
+    .poster-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .grid-line {
+      stroke-width: 0.8;
+      display: none;
+    }
+
+    .vector-connector {
+      fill: none;
+      stroke-linecap: square;
+      transition: stroke 0.2s ease;
+    }
+
+    /* Typographic Hierarchy Blocks */
+    .text-block {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 4;
+      text-transform: uppercase;
+      font-weight: 600;
+      font-family: 'Jost', sans-serif;
+      font-size: 1.15rem;
+      pointer-events: none;
+      transition: top 0.25s ease, bottom 0.25s ease, transform 0.25s ease;
+    }
+
+    .text-inner {
+      display: inline-flex;
+      justify-content: center;
+    }
+
+    .text-block span span {
+      display: inline-block;
+      text-align: center;
+    }
+
+    /* Layout Preset Modifications */
+    .layout-asymmetric #blockPrimary { justify-content: flex-start; padding-left: 9%; }
+    .layout-asymmetric #blockSecondary { justify-content: flex-end; padding-right: 9%; }
+
+    .layout-stacked #blockPrimary { top: 20% !important; }
+    .layout-stacked #blockSecondary { top: 32% !important; bottom: auto !important; }
+
+    /* Difference Blend Mode for Typographic Legibility */
+    .blend-difference {
+      mix-blend-mode: difference;
+      color: #FFFFFF !important;
+    }
+
+    /* Physical Specular Sheen Simulation */
+    .surface-glaze {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+      background: 
+        linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 6%),
+        linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 4%);
+    }
+
+    /* FX Overlays Layering */
+    .fx-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      display: none;
+    }
+
+    .fx-grain {
+      background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+      mix-blend-mode: overlay;
+    }
+
+    .fx-halftone {
+      background-image: radial-gradient(circle, #000 1px, transparent 1.5px);
+      background-size: 6px 6px;
+      mix-blend-mode: overlay;
+    }
+
+    .fx-scanlines {
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.6) 3px);
+      mix-blend-mode: overlay;
+    }
+
+    .fx-vignette {
+      box-shadow: inset 0 0 150px rgba(0,0,0,1);
+    }
+
+    .fx-texture {
+      mix-blend-mode: multiply;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Focal Target Indicator */
+    .focal-target {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--ui-highlight);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      pointer-events: none;
+      display: none;
+    }
+
+    .focal-target::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      background: var(--ui-highlight);
+      border-radius: 50%;
+    }
+
+    /* UI Stage Zoom Overlay */
+    .stage-zoom-controls {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      background: var(--ui-panel);
+      border: 1px solid var(--ui-panel-border);
+      padding: 0.8rem 1.2rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .stage-zoom-controls label { font-size: 0.75rem; font-weight: 600; }
+    .stage-zoom-controls input[type="range"] { width: 120px; }
+
+    /* --- Variations Grid View --- */
+    .variants-view {
+      position: fixed;
+      inset: 0;
+      background: var(--ui-bg);
+      z-index: 500;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    .variants-view.active { display: flex; }
+    
+    .variants-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .variants-header h2 { font-size: 1.5rem; font-family: 'Jost', sans-serif; }
+    .btn-close-variants {
+      background: var(--ui-panel);
+      border: 1px solid var(--ui-panel-border);
+      color: var(--ui-accent);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2.5rem;
+      padding-bottom: 4rem;
+    }
+    .variant-card {
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .variant-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+    }
+    .variant-card .poster-container {
+      width: 100%;
+      pointer-events: none; 
+    }
+
+    /* --- Crop Preview Modal --- */
+    .crop-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .crop-modal.active {
+      display: flex;
+    }
+    .crop-modal-content {
+      background: var(--ui-panel);
+      border: 1px solid var(--ui-panel-border);
+      padding: 1.5rem;
+      border-radius: 12px;
+      width: min(440px, 95vw);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
+    .crop-modal-content h3 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ui-accent);
+      font-weight: 700;
+    }
+    .crop-viewport {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      border-radius: 8px;
+      border: 1px solid var(--ui-panel-border);
+      transition: aspect-ratio 0.3s ease;
+    }
+    .crop-viewport:active {
+      cursor: grabbing;
+    }
+    .crop-image-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #cropImage {
+      max-width: none;
+      max-height: none;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* --- Right Control Sidebar --- */
+    .sidebar {
+      width: 440px;
+      background-color: var(--ui-panel);
+      border-left: 1px solid var(--ui-panel-border);
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      box-shadow: -5px 0 20px rgba(0,0,0,0.05);
+      transition: background-color 0.2s, border-color 0.2s;
+      z-index: 200; /* Ensure sidebar is above stage */
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--ui-panel-border);
+    }
+
+    .sidebar-header h1 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ui-accent);
+      font-weight: 700;
+    }
+
+    .theme-toggle-btn {
+      background: var(--ui-field-bg);
+      border: 1px solid var(--ui-panel-border);
+      color: var(--ui-accent);
+      padding: 0.35rem 0.7rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      flex: 0 0 auto;
+      width: auto;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .theme-toggle-btn:hover {
+      opacity: 0.85;
+    }
+
+    /* Export Row Elements */
+    .export-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .export-row button, .export-row select {
+      flex: 1;
+      padding: 0.6rem;
+      font-size: 0.75rem;
+    }
+
+    .sidebar h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ui-accent);
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .control-group {
+      background: var(--ui-field-bg);
+      border: 1px solid var(--ui-panel-border);
+      padding: 1rem;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .control-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--ui-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    input[type="text"], input[type="number"], select {
+      background-color: var(--ui-panel);
+      border: 1px solid var(--ui-panel-border);
+      color: var(--ui-accent);
+      padding: 0.6rem 0.8rem;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      outline: none;
+      width: 100%;
+    }
+
+    input[type="range"] {
+      accent-color: var(--ui-accent);
+      width: 100%;
+      cursor: pointer;
+    }
+
+    /* Custom Color Picker Swatches */
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: 1px solid var(--ui-panel-border);
+      width: 100%;
+      height: 38px;
+      background: none;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+
+    .palette-swatch-btn {
+      display: inline-flex;
+      padding: 4px;
+      border: 1px solid var(--ui-panel-border);
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--ui-panel);
+      gap: 2px;
+      transition: transform 0.1s;
+    }
+    .palette-swatch-btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--ui-muted);
+    }
+    .palette-swatch-btn div {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--ui-accent);
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button {
+      flex: 1;
+      background-color: var(--ui-accent);
+      color: var(--ui-panel);
+      border: none;
+      padding: 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--ui-panel);
+      color: var(--ui-accent);
+      border: 1px solid var(--ui-panel-border);
+    }
+    
+    .btn-variant {
+      background-color: transparent;
+      border: 1px solid var(--ui-highlight);
+      color: var(--ui-highlight);
+    }
+
+    .hint-text {
+      font-size: 0.72rem;
+      color: var(--ui-muted);
+      line-height: 1.4;
+    }
+
+    /* Embedded SVG definitions for procedural textures */
+    .svg-defs { position: absolute; width: 0; height: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Hidden SVG Defs for Textures -->
+  <svg class="svg-defs">
+    <defs>
+      <filter id="tex-watercolor">
+        <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="4" result="noise" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.3 0" />
+      </filter>
+      <filter id="tex-cardboard">
+        <feTurbulence type="fractalNoise" baseFrequency="0.05 0.005" numOctaves="3" result="noise" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.4 0" />
+      </filter>
+      <filter id="tex-crumpled">
+        <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="5" result="noise" />
+        <feDiffuseLighting in="noise" lighting-color="#fff" surfaceScale="3">
+          <feDistantLight azimuth="45" elevation="60" />
+        </feDiffuseLighting>
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.8 0" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Left: Live Poster Stage -->
+  <main class="stage" id="stageMain">
+    <div class="stage-pan-container" id="stagePanContainer">
+      <div class="poster-container" id="poster">
+        <!-- Background Artwork -->
+        <img id="bgImage" class="poster-image" alt="Artwork Substrate">
+        
+        <!-- SVG Procedural Geometry -->
+        <svg class="poster-svg" id="posterSvg" viewBox="0 0 100 150" preserveAspectRatio="none">
+          <g id="gridOverlay"></g>
+          <path id="spineVector" class="vector-connector" d=""></path>
+        </svg>
+
+        <!-- Target Focal Marker -->
+        <div id="focalMarker" class="focal-target"></div>
+
+        <!-- Generative Typography -->
+        <div id="blockPrimary" class="text-block"></div>
+        <div id="blockSecondary" class="text-block"></div>
+
+        <!-- Specular Reflection Sheen -->
+        <div id="surfaceGlaze" class="surface-glaze"></div>
+
+        <!-- Finishing FX Layers -->
+        <div id="fxGrain" class="fx-layer fx-grain"></div>
+        <div id="fxHalftone" class="fx-layer fx-halftone"></div>
+        <div id="fxScanlines" class="fx-layer fx-scanlines"></div>
+        <div id="fxVignette" class="fx-layer fx-vignette"></div>
+        <div id="fxTexture" class="fx-layer fx-texture"></div>
+      </div>
+    </div>
+    
+    <!-- Stage Zoom Controls -->
+    <div class="stage-zoom-controls">
+      <label>Canvas Zoom</label>
+      <input type="range" id="rangeStageZoom" min="0.2" max="3" step="0.05" value="1">
+      <label id="valStageZoom">100%</label>
+    </div>
+  </main>
+
+  <!-- Variations Explorer Grid View -->
+  <div class="variants-view" id="variantsView">
+    <div class="variants-header">
+      <h2>Select a Variation</h2>
+      <button class="btn-close-variants" id="btnCloseVariants">Cancel / Go Back</button>
+    </div>
+    <div class="variants-grid" id="variantsGrid"></div>
+  </div>
+
+  <!-- Right: Minimalist Beginner-Friendly Dashboard -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Poster Studio</h1>
+      <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle Appearance">☀️ Light Mode</button>
+    </div>
+
+    <!-- EXPORT CONTROLS -->
+    <div class="export-row">
+      <button id="btnExportSVG">SVG</button>
+      <button id="btnExportPNG">PNG</button>
+      <select id="selectExportRes" title="Resolution Multiplier">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="3" selected>3x</option>
+        <option value="4">4x</option>
+      </select>
+      <button id="btnCopyImage" class="btn-secondary">Copy</button>
+    </div>
+
+    <!-- MAGIC SEED & VARIANTS -->
+    <div class="control-group">
+      <h2>✨ Magic Seed</h2>
+      <button id="btnExploreVariants" class="btn-variant" style="margin-bottom: 0.5rem;">Explore Variants (×9)</button>
+      <label>Current Seed <span id="valSeed" style="font-weight:700; color:var(--ui-accent);">42</span></label>
+      <input type="range" id="rangeSeed" min="1" max="100" step="1" value="42">
+      <div class="button-group" style="margin-top: 0.4rem;">
+        <button id="btnRandomizeSeed">🎲 Randomize Seed</button>
+      </div>
+    </div>
+
+    <!-- ADVANCED COLOR PALETTE -->
+    <div class="control-group">
+      <h2>🎨 Color Palette</h2>
+      <label style="margin-bottom: -0.3rem;">Preset Palettes</label>
+      <div id="paletteGrid" style="display:flex; flex-wrap:wrap; gap:6px;">
+        <!-- Injected by JS -->
+      </div>
+      
+      <div class="color-grid" style="margin-top: 0.4rem;">
+        <div>
+          <label>Background</label>
+          <input type="color" id="pickerBg" value="#E6E6E6">
+        </div>
+        <div>
+          <label>Shape</label>
+          <input type="color" id="pickerLine" value="#050505">
+        </div>
+        <div>
+          <label>Dark Text</label>
+          <input type="color" id="pickerTextDark" value="#050505">
+        </div>
+        <div>
+          <label>Light Text</label>
+          <input type="color" id="pickerTextLight" value="#ffffff">
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <button id="btnRandomizeColors" class="btn-secondary">Randomize</button>
+        <button id="btnSwapBgShape" class="btn-secondary">Swap BG / Shape</button>
+      </div>
+
+      <hr style="border:0; border-top:1px solid var(--ui-panel-border); margin: 0.2rem 0;">
+
+      <label class="checkbox-row" style="font-weight: 700;">
+        <input type="checkbox" id="chkGradient"> Gradient background
+      </label>
+      
+      <div id="gradientControls" class="color-grid" style="display: none;">
+        <div>
+          <label>Gradient End</label>
+          <input type="color" id="pickerBgEnd" value="#ff3355">
+        </div>
+        <div>
+          <label>Angle <span id="valAngle">245</span></label>
+          <input type="range" id="rangeAngle" min="0" max="360" step="1" value="245">
+        </div>
+      </div>
+    </div>
+
+    <!-- EFFECTS & TEXTURE -->
+    <div class="control-group">
+      <h2>🪄 Effects & Texture</h2>
+      <span class="hint-text">Poster-wide finishing passes — applied over everything for a printed / risograph feel. Stack freely; all are baked into SVG & PNG export.</span>
+      
+      <div class="color-grid" style="margin-top: 0.4rem;">
+        <div><label>Paper Grain <span id="valGrain">0</span></label><input type="range" id="rangeGrain" min="0" max="100" value="0"></div>
+        <div><label>Vignette <span id="valVignette">0</span></label><input type="range" id="rangeVignette" min="0" max="100" value="0"></div>
+        <div><label>Halftone Screen <span id="valHalftone">0</span></label><input type="range" id="rangeHalftone" min="0" max="100" value="0"></div>
+        <div><label>Scanlines <span id="valScanlines">0</span></label><input type="range" id="rangeScanlines" min="0" max="100" value="0"></div>
+      </div>
+      
+      <hr style="border:0; border-top:1px solid var(--ui-panel-border); margin: 0.2rem 0;">
+      
+      <div class="color-grid">
+        <div>
+          <label>Paper Texture</label>
+          <select id="selectTexture">
+            <option value="none">None</option>
+            <option value="tex-watercolor">Watercolor</option>
+            <option value="tex-cardboard">Cardboard</option>
+            <option value="tex-crumpled">Crumpled</option>
+          </select>
+        </div>
+        <div>
+          <label>Paper Strength <span id="valTextureStr">33</span></label>
+          <input type="range" id="rangeTextureStr" min="0" max="100" value="33">
+        </div>
+      </div>
+      
+      <div class="button-group" style="margin-top: 0.4rem;">
+        <button id="btnResetEffects" class="btn-secondary">Reset Effects</button>
+      </div>
+    </div>
+
+    <!-- YOUR WORDS -->
+    <div class="control-group">
+      <h2>✍️ Your Words</h2>
+      <label>Top Word</label>
+      <input type="text" id="inputTop" value="SYNTACTIC">
+      <label>Bottom Word</label>
+      <input type="text" id="inputBottom" value="STRUCTURE">
+      <div class="button-group" style="margin-top: 0.4rem;">
+        <button id="btnInvert" class="btn-secondary">🔄 Swap Words</button>
+      </div>
+
+      <label style="margin-top: 0.4rem;">Font Style</label>
+      <select id="selectFont">
+        <option value="'Jost', sans-serif" selected>Jost (Clean Modern)</option>
+        <option value="'League Spartan', sans-serif">League Spartan (Bold & Solid)</option>
+        <option value="'Syne', sans-serif">Syne (Fun & Unique)</option>
+      </select>
+
+      <label>Font Thickness</label>
+      <select id="selectWeight">
+        <option value="500">Regular</option>
+        <option value="600" selected>Thick</option>
+        <option value="700">Extra Thick</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <h2>📐 Layout & Spacing</h2>
+      <label>How words are arranged</label>
+      <select id="selectLayout">
+        <option value="perimeter" selected>Spaced Out (Top & Bottom)</option>
+        <option value="asymmetric">Playful Corners</option>
+        <option value="stacked">Stacked Together</option>
+      </select>
+
+      <label>Letter Spacing <span id="valTracking">0.38em</span></label>
+      <input type="range" id="rangeTracking" min="0.0" max="0.85" step="0.01" value="0.38">
+
+      <label>Vertical Gap <span id="valDistance">85%</span></label>
+      <input type="range" id="rangeDistance" min="18" max="88" step="1" value="85">
+    </div>
+
+    <div class="control-group">
+      <h2>⚡ Connecting Line</h2>
+      <label>Line Style</label>
+      <select id="selectConnector">
+        <option value="auto" selected>Smart Connect</option>
+        <option value="center">Right Down the Middle</option>
+        <option value="cross">Cross Hair</option>
+        <option value="dual">Double Lines (Parallel)</option>
+        <option value="triple">Triple Columns</option>
+        <option value="stepped">Stepped Stair-Step</option>
+        <option value="zigzag">Zig-Zag Rhythm</option>
+        <option value="diagonal">Diagonal Slash</option>
+        <option value="segmented">Dashed / Segmented</option>
+        <option value="scurve">S-Curve Wave</option>
+        <option value="chevron">V-Chevron Angle</option>
+        <option value="x-slash">Double Diagonal X</option>
+        <option value="brackets">Architectural Brackets</option>
+        <option value="none">No Line</option>
+      </select>
+
+      <label>Line Effect on Picture</label>
+      <select id="selectFocalMode">
+        <option value="straight" selected>Straight Through</option>
+        <option value="mask">Jump Around Subject</option>
+        <option value="bend">Wavy Curve</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <h2>📏 Canvas Size</h2>
+      <label>Format</label>
+      <select id="selectCanvasSize">
+        <option value="2/3" selected>Classic Poster (2:3)</option>
+        <option value="1/1">Square / IG Post (1:1)</option>
+        <option value="4/5">IG Portrait (4:5)</option>
+        <option value="9/16">IG Story / Reels (9:16)</option>
+        <option value="16/9">YouTube Thumbnail (16:9)</option>
+        <option value="1.91/1">Facebook Post (1.91:1)</option>
+        <option value="custom">Custom Ratio...</option>
+      </select>
+
+      <div id="customRatioInputs" style="display: none; gap: 0.5rem; align-items: center; margin-top: 0.2rem;">
+        <input type="number" id="inputCustomW" value="2" min="0.1" step="0.1" title="Width Ratio">
+        <span style="color: var(--ui-accent); font-weight: bold;">:</span>
+        <input type="number" id="inputCustomH" value="3" min="0.1" step="0.1" title="Height Ratio">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h2>🖼️ Pictures & Background</h2>
+      <label>Picture Mode</label>
+      <select id="selectBgMode">
+        <option value="solid" selected>Plain Background</option>
+        <option value="full">Fill Whole Poster</option>
+        <option value="framed">Framed in the Center</option>
+      </select>
+
+      <label>Upload a Photo</label>
+      <input type="file" id="fileImage" accept="image/*">
+
+      <label>Photo Look</label>
+      <select id="selectFilter">
+        <option value="none">Normal Colors</option>
+        <option value="grayscale" selected>Black & White</option>
+        <option value="duotone">High Contrast Dark</option>
+        <option value="inverted">Neon Inverted</option>
+      </select>
+
+      <label>Focus Spot Height <span id="valFocalY">50%</span></label>
+      <input type="range" id="rangeFocalY" min="20" max="80" step="1" value="50">
+      
+      <div class="button-group" style="margin-top: 0.4rem;">
+        <button id="btnResetFocal" class="btn-secondary">Reset Focal Point</button>
+      </div>
+
+      <span class="hint-text">💡 Tip: Click anywhere directly on your poster canvas to place the focus point!</span>
+    </div>
+
+    <div class="control-group">
+      <h2>✨ Fun Extras</h2>
+      <label>Grid Lines Style</label>
+      <select id="selectGridMode">
+        <option value="9x9" selected>9x9 Squares</option>
+        <option value="12col">12 Columns</option>
+      </select>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkGrid"> Show Grid Lines
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkGlaze" checked> Glossy Poster Shine
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkDifference"> Smart Color Invert (Difference)
+      </label>
+    </div>
+  </aside>
+
+  <!-- Photo Crop Preview Modal -->
+  <div id="cropModal" class="crop-modal">
+    <div class="crop-modal-content">
+      <h3>Adjust Photo Canvas</h3>
+      <div class="crop-viewport" id="cropViewport">
+        <div class="crop-image-wrap">
+          <img id="cropImage" alt="Crop Preview">
+        </div>
+      </div>
+      <label>Zoom <span id="valCropZoom">1.00x</span></label>
+      <input type="range" id="rangeCropZoom" min="1" max="4" step="0.01" value="1">
+      <label class="checkbox-row" style="margin-top: 0.2rem;">
+        <input type="checkbox" id="chkUsePhotoAspect"> Match canvas size to image dimensions (Fill)
+      </label>
+      <span class="hint-text">💡 By default, images are styled as a center inset. Check the box above to perfectly fill the canvas. Click and drag to pan.</span>
+      <div class="button-group" style="margin-top: 0.5rem;">
+        <button id="btnCancelCrop" style="background: var(--ui-panel-border); color: var(--ui-accent);">Cancel</button>
+        <button id="btnApplyCrop">Apply to Poster</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Canvas References
+    const poster = document.getElementById('poster');
+    const blockPrimary = document.getElementById('blockPrimary');
+    const blockSecondary = document.getElementById('blockSecondary');
+    const spineVector = document.getElementById('spineVector');
+    const gridOverlay = document.getElementById('gridOverlay');
+    const bgImage = document.getElementById('bgImage');
+    const surfaceGlaze = document.getElementById('surfaceGlaze');
+    const focalMarker = document.getElementById('focalMarker');
+
+    // Stage Zoom & Pan Elements
+    const stageMain = document.getElementById('stageMain');
+    const stagePanContainer = document.getElementById('stagePanContainer');
+    const rangeStageZoom = document.getElementById('rangeStageZoom');
+    const valStageZoom = document.getElementById('valStageZoom');
+
+    // FX Layers
+    const fxGrain = document.getElementById('fxGrain');
+    const fxVignette = document.getElementById('fxVignette');
+    const fxHalftone = document.getElementById('fxHalftone');
+    const fxScanlines = document.getElementById('fxScanlines');
+    const fxTexture = document.getElementById('fxTexture');
+
+    // Controls
+    const inputTop = document.getElementById('inputTop');
+    const inputBottom = document.getElementById('inputBottom');
+    const selectLayout = document.getElementById('selectLayout');
+    const selectFont = document.getElementById('selectFont');
+    const selectWeight = document.getElementById('selectWeight');
+    const rangeTracking = document.getElementById('rangeTracking');
+    const rangeDistance = document.getElementById('rangeDistance');
+    const selectConnector = document.getElementById('selectConnector');
+    const selectFocalMode = document.getElementById('selectFocalMode');
+    const selectCanvasSize = document.getElementById('selectCanvasSize');
+    const customRatioInputs = document.getElementById('customRatioInputs');
+    const inputCustomW = document.getElementById('inputCustomW');
+    const inputCustomH = document.getElementById('inputCustomH');
+    const selectBgMode = document.getElementById('selectBgMode');
+    const fileImage = document.getElementById('fileImage');
+    const selectFilter = document.getElementById('selectFilter');
+    const rangeFocalY = document.getElementById('rangeFocalY');
+    const btnResetFocal = document.getElementById('btnResetFocal');
+    const selectGridMode = document.getElementById('selectGridMode');
+    const chkGrid = document.getElementById('chkGrid');
+    const chkGlaze = document.getElementById('chkGlaze');
+    const chkDifference = document.getElementById('chkDifference');
+    const btnInvert = document.getElementById('btnInvert');
+    const rangeSeed = document.getElementById('rangeSeed');
+    const valSeed = document.getElementById('valSeed');
+    const btnRandomizeSeed = document.getElementById('btnRandomizeSeed');
+    
+    // Color Palette Controls
+    const pickerBg = document.getElementById('pickerBg');
+    const pickerLine = document.getElementById('pickerLine');
+    const pickerTextDark = document.getElementById('pickerTextDark');
+    const pickerTextLight = document.getElementById('pickerTextLight');
+    const btnRandomizeColors = document.getElementById('btnRandomizeColors');
+    const btnSwapBgShape = document.getElementById('btnSwapBgShape');
+    const chkGradient = document.getElementById('chkGradient');
+    const gradientControls = document.getElementById('gradientControls');
+    const pickerBgEnd = document.getElementById('pickerBgEnd');
+    const rangeAngle = document.getElementById('rangeAngle');
+
+    // Effects Controls
+    const rangeGrain = document.getElementById('rangeGrain');
+    const rangeVignette = document.getElementById('rangeVignette');
+    const rangeHalftone = document.getElementById('rangeHalftone');
+    const rangeScanlines = document.getElementById('rangeScanlines');
+    const selectTexture = document.getElementById('selectTexture');
+    const rangeTextureStr = document.getElementById('rangeTextureStr');
+    const btnResetEffects = document.getElementById('btnResetEffects');
+
+    // Export Controls
+    const btnExportSVG = document.getElementById('btnExportSVG');
+    const btnExportPNG = document.getElementById('btnExportPNG');
+    const selectExportRes = document.getElementById('selectExportRes');
+    const btnCopyImage = document.getElementById('btnCopyImage');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+    // Variants Explorer
+    const variantsView = document.getElementById('variantsView');
+    const variantsGrid = document.getElementById('variantsGrid');
+    const btnExploreVariants = document.getElementById('btnExploreVariants');
+    const btnCloseVariants = document.getElementById('btnCloseVariants');
+
+    // Random Color Gen Helper
+    const randColorGen = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+
+    let focalPoint = { x: 50, y: 50 }; // in percentage (0 - 100)
+
+    let cropState = {
+      zoom: 1,
+      posX: 0,
+      posY: 0,
+      isDragging: false,
+      startX: 0,
+      startY: 0,
+      naturalW: 0,
+      naturalH: 0
+    };
+
+    // Stage Zoom & Pan State
+    let stageState = {
+      zoom: 1,
+      posX: 0,
+      posY: 0,
+      isDragging: false,
+      startX: 0,
+      startY: 0
+    };
+
+    // Initialize Preset Color Palettes
+    const palettes = [
+      ['#E6E6E6', '#050505', '#ff3355', '#050505'],
+      ['#1B1B1D', '#E2D9C5', '#FF4E00', '#E2D9C5'],
+      ['#F1F1F1', '#1B1B1D', '#0047FF', '#1B1B1D'],
+      ['#0D1321', '#FFD400', '#FF3355', '#FFD400'],
+      ['#E3DAC9', '#2E3532', '#9818D6', '#2E3532'],
+      ['#ff3355', '#050505', '#ffffff', '#050505'],
+      ['#0047FF', '#ffffff', '#FFD400', '#ffffff'],
+      ['#FFD400', '#050505', '#0047FF', '#050505']
+    ];
+
+    const paletteGrid = document.getElementById('paletteGrid');
+    palettes.forEach(pal => {
+      const btn = document.createElement('div');
+      btn.className = 'palette-swatch-btn';
+      pal.forEach(color => {
+        const c = document.createElement('div');
+        c.style.backgroundColor = color;
+        btn.appendChild(c);
+      });
+      btn.addEventListener('click', () => {
+        pickerBg.value = pal[0];
+        pickerLine.value = pal[1];
+        pickerTextDark.value = pal[2];
+        pickerTextLight.value = pal[3];
+        drawPoster();
+      });
+      paletteGrid.appendChild(btn);
+    });
+
+    // Dark Mode Toggle
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-theme');
+      if (document.body.classList.contains('light-theme')) {
+        themeToggleBtn.textContent = '🌙 Dark Mode';
+      } else {
+        themeToggleBtn.textContent = '☀️ Light Mode';
+      }
+    });
+
+    // Seeded Random Helper (Mulberry32 PRNG)
+    function seededRandom(seed) {
+      let t = seed += 0x6D2B79F5;
+      let data = Math.imul(t ^ (t >>> 15), t | 1);
+      data ^= data + Math.imul(data ^ (data >>> 7), data | 61);
+      return ((data ^ (data >>> 14)) >>> 0) / 4294967296;
+    }
+
+    function applySeed(seedVal, simulateOnly = false) {
+      const fontsList = ["'Jost', sans-serif", "'League Spartan', sans-serif", "'Syne', sans-serif"];
+      const layoutsList = ['perimeter', 'asymmetric', 'stacked'];
+      const connectorsList = ['auto', 'center', 'cross', 'dual', 'triple', 'stepped', 'zigzag', 'diagonal', 'segmented', 'scurve', 'chevron', 'x-slash', 'brackets'];
+      const focalModesList = ['straight', 'mask', 'bend'];
+      
+      const r1 = seededRandom(seedVal * 13);
+      const r2 = seededRandom(seedVal * 19);
+      const r3 = seededRandom(seedVal * 23);
+      const r4 = seededRandom(seedVal * 29);
+      const r5 = seededRandom(seedVal * 37);
+      const r6 = seededRandom(seedVal * 43);
+
+      const config = {
+        font: fontsList[Math.floor(r1 * fontsList.length)],
+        layout: layoutsList[Math.floor(r2 * layoutsList.length)],
+        connector: connectorsList[Math.floor(r3 * connectorsList.length)],
+        focalMode: focalModesList[Math.floor(r4 * focalModesList.length)],
+        tracking: (0.1 + r5 * 0.65).toFixed(2),
+        distance: Math.floor(30 + r6 * 55)
+      };
+
+      if (!simulateOnly) {
+        valSeed.textContent = seedVal;
+        selectFont.value = config.font;
+        selectLayout.value = config.layout;
+        selectConnector.value = config.connector;
+        selectFocalMode.value = config.focalMode;
+        rangeTracking.value = config.tracking;
+        rangeDistance.value = config.distance;
+      }
+      return config;
+    }
+
+    rangeSeed.addEventListener('input', () => {
+      applySeed(parseInt(rangeSeed.value));
+      drawPoster();
+    });
+    
+    // The main Randomize Seed button completely scrambles both structural layout AND colors.
+    btnRandomizeSeed.addEventListener('click', () => {
+      const randomSeedVal = Math.floor(Math.random() * 100) + 1;
+      rangeSeed.value = randomSeedVal;
+      applySeed(randomSeedVal);
+      pickerBg.value = randColorGen();
+      pickerLine.value = randColorGen();
+      pickerTextDark.value = randColorGen();
+      pickerTextLight.value = randColorGen();
+      if(chkGradient.checked) pickerBgEnd.value = randColorGen();
+      drawPoster();
+    });
+
+    // --- Explore Variants Grid ---
+    btnExploreVariants.addEventListener('click', () => {
+      variantsGrid.innerHTML = '';
+      
+      // Store current base state
+      const currentSeed = parseInt(rangeSeed.value);
+
+      for (let i = 0; i < 9; i++) {
+        const variantSeed = (currentSeed + i * 7) % 100 + 1; 
+        const randomPalette = palettes[Math.floor(Math.random() * palettes.length)];
+        
+        // Build isolated container
+        const card = document.createElement('div');
+        card.className = 'variant-card';
+        
+        // Clone the master poster DOM temporarily
+        const clone = poster.cloneNode(true);
+        clone.id = `poster-variant-${i}`;
+        clone.style.width = '100%';
+        clone.style.boxShadow = 'none';
+        
+        // Generate isolated config
+        const config = applySeed(variantSeed, true);
+        
+        // Pass everything to the draw engine specifically for this clone
+        drawPosterForVariant(clone, config, randomPalette, inputTop.value.trim() || ' ', inputBottom.value.trim() || ' ');
+
+        // Apply grid selection listener to port settings BACK to the main UI
+        card.appendChild(clone);
+        card.addEventListener('click', () => {
+          // Sync Structural Seed UI
+          rangeSeed.value = variantSeed;
+          applySeed(variantSeed);
+          
+          // Sync Color Palette UI
+          pickerBg.value = randomPalette[0];
+          pickerLine.value = randomPalette[1];
+          pickerTextDark.value = randomPalette[2];
+          pickerTextLight.value = randomPalette[3];
+          if(chkGradient.checked) pickerBgEnd.value = randomPalette[2];
+          
+          drawPoster();
+          variantsView.classList.remove('active');
+        });
+
+        variantsGrid.appendChild(card);
+      }
+      
+      variantsView.classList.add('active');
+    });
+
+    btnCloseVariants.addEventListener('click', () => {
+      variantsView.classList.remove('active');
+    });
+
+    // --- Stage Zoom & Pan ---
+    function updateStagePanZoom() {
+      stagePanContainer.style.transform = `translate(${stageState.posX}px, ${stageState.posY}px) scale(${stageState.zoom})`;
+      valStageZoom.textContent = `${Math.round(stageState.zoom * 100)}%`;
+      rangeStageZoom.value = stageState.zoom;
+    }
+
+    rangeStageZoom.addEventListener('input', () => {
+      stageState.zoom = parseFloat(rangeStageZoom.value);
+      updateStagePanZoom();
+    });
+
+    stageMain.addEventListener('wheel', (e) => {
+      if(e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const zoomDelta = e.deltaY * -0.01;
+        stageState.zoom = Math.min(Math.max(0.2, stageState.zoom + zoomDelta), 3);
+        updateStagePanZoom();
+      }
+    });
+
+    stagePanContainer.addEventListener('mousedown', (e) => {
+      // Don't pan if clicking directly on the canvas to set focal point
+      if(e.target.closest('#poster')) return;
+      stageState.isDragging = true;
+      stageState.startX = e.clientX - stageState.posX;
+      stageState.startY = e.clientY - stageState.posY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!stageState.isDragging) return;
+      stageState.posX = e.clientX - stageState.startX;
+      stageState.posY = e.clientY - stageState.startY;
+      updateStagePanZoom();
+    });
+
+    window.addEventListener('mouseup', () => {
+      stageState.isDragging = false;
+    });
+
+    // General Canvas Aspect Ratio Update Logic
+    function updateCanvasAspect() {
+      let ratio;
+      if (selectCanvasSize.value === 'custom') {
+        customRatioInputs.style.display = 'flex';
+        ratio = `${inputCustomW.value || 1} / ${inputCustomH.value || 1}`;
+      } else {
+        customRatioInputs.style.display = 'none';
+        ratio = selectCanvasSize.value;
+      }
+      poster.style.aspectRatio = ratio;
+      drawPoster();
+    }
+
+    selectCanvasSize.addEventListener('change', updateCanvasAspect);
+    inputCustomW.addEventListener('input', updateCanvasAspect);
+    inputCustomH.addEventListener('input', updateCanvasAspect);
+
+    // Color Palette Controls
+    chkGradient.addEventListener('change', () => {
+      gradientControls.style.display = chkGradient.checked ? 'grid' : 'none';
+      drawPoster();
+    });
+    
+    btnSwapBgShape.addEventListener('click', () => {
+      let temp = pickerBg.value;
+      pickerBg.value = pickerLine.value;
+      pickerLine.value = temp;
+      drawPoster();
+    });
+
+    btnRandomizeColors.addEventListener('click', () => {
+      pickerBg.value = randColorGen();
+      pickerLine.value = randColorGen();
+      pickerTextDark.value = randColorGen();
+      pickerTextLight.value = randColorGen();
+      if(chkGradient.checked) pickerBgEnd.value = randColorGen();
+      drawPoster();
+    });
+
+    // Effects Reset Control
+    btnResetEffects.addEventListener('click', () => {
+      rangeGrain.value = 0;
+      rangeVignette.value = 0;
+      rangeHalftone.value = 0;
+      rangeScanlines.value = 0;
+      selectTexture.value = 'none';
+      drawPoster();
+    });
+
+    // Render Grid Systems
+    function renderGridSystem() {
+      gridOverlay.innerHTML = '';
+      const mode = selectGridMode.value;
+      const cols = mode === '9x9' ? 9 : 12;
+      const rows = mode === '9x9' ? 9 : 18;
+
+      for (let i = 1; i < cols; i++) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", (i * 100 / cols).toFixed(2));
+        line.setAttribute("y1", "0");
+        line.setAttribute("x2", (i * 100 / cols).toFixed(2));
+        line.setAttribute("y2", "150");
+        line.setAttribute("class", "grid-line");
+        line.setAttribute("stroke", pickerLine.value);
+        gridOverlay.appendChild(line);
+      }
+
+      for (let j = 1; j < rows; j++) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", "0");
+        line.setAttribute("y1", (j * 150 / rows).toFixed(2));
+        line.setAttribute("x2", "100");
+        line.setAttribute("y2", (j * 150 / rows).toFixed(2));
+        line.setAttribute("class", "grid-line");
+        line.setAttribute("stroke", pickerLine.value);
+        gridOverlay.appendChild(line);
+      }
+      toggleGridVisibility();
+    }
+
+    function toggleGridVisibility() {
+      const show = chkGrid.checked;
+      gridOverlay.querySelectorAll('.grid-line').forEach(el => {
+        el.style.display = show ? 'block' : 'none';
+        el.style.opacity = show ? '0.35' : '0';
+      });
+    }
+
+    // Typographic Formatter
+    function formatTypography(el, text, tracking) {
+      el.innerHTML = '';
+      const inner = document.createElement('div');
+      inner.className = 'text-inner';
+      inner.style.letterSpacing = `${tracking}em`;
+      inner.style.marginRight = `-${tracking}em`;
+
+      for (let char of text.toUpperCase()) {
+        const span = document.createElement('span');
+        span.textContent = char;
+        inner.appendChild(span);
+      }
+      el.appendChild(inner);
+    }
+
+    // Isolated render function for Variant clones
+    function drawPosterForVariant(cloneDOM, config, palette, topText, bottomText) {
+      const primary = cloneDOM.querySelector('#blockPrimary');
+      const secondary = cloneDOM.querySelector('#blockSecondary');
+      const spine = cloneDOM.querySelector('.vector-connector');
+      
+      formatTypography(primary, topText, config.tracking);
+      formatTypography(secondary, bottomText, config.tracking);
+
+      // Colors
+      if (chkGradient.checked) {
+        cloneDOM.style.background = `linear-gradient(${rangeAngle.value}deg, ${palette[0]}, ${palette[2]})`;
+      } else {
+        cloneDOM.style.background = palette[0];
+      }
+      primary.style.color = palette[2];
+      secondary.style.color = palette[3];
+      spine.setAttribute('stroke', palette[1]);
+      cloneDOM.querySelectorAll('.grid-line').forEach(l => l.setAttribute('stroke', palette[1]));
+
+      // Layout
+      cloneDOM.className = 'poster-container';
+      if (config.layout === 'asymmetric') cloneDOM.classList.add('layout-asymmetric');
+      if (config.layout === 'stacked') cloneDOM.classList.add('layout-stacked');
+
+      const weight = selectWeight.value;
+      [primary, secondary].forEach(b => {
+        b.style.fontFamily = config.font;
+        b.style.fontWeight = weight;
+      });
+
+      const margin = (100 - config.distance) / 2;
+      if (config.layout !== 'stacked') {
+        primary.style.top = `${margin}%`;
+        secondary.style.bottom = `${margin}%`;
+      }
+
+      // Draw Vector Spine
+      calculateVectorAnatomyForTarget(cloneDOM, topText, bottomText, margin, config, weight, spine);
+    }
+
+    // Main Generative Draw Routine (For the live interactive stage)
+    function drawPoster() {
+      const topText = inputTop.value.trim() || ' ';
+      const bottomText = inputBottom.value.trim() || ' ';
+      const tracking = rangeTracking.value;
+
+      formatTypography(blockPrimary, topText, tracking);
+      formatTypography(blockSecondary, bottomText, tracking);
+
+      // Apply Colors & Gradients
+      if(chkGradient.checked) {
+        poster.style.background = `linear-gradient(${rangeAngle.value}deg, ${pickerBg.value}, ${pickerBgEnd.value})`;
+      } else {
+        poster.style.background = pickerBg.value;
+      }
+
+      blockPrimary.style.color = pickerTextDark.value;
+      blockSecondary.style.color = pickerTextLight.value;
+      spineVector.setAttribute('stroke', pickerLine.value);
+      
+      gridOverlay.querySelectorAll('.grid-line').forEach(line => line.setAttribute('stroke', pickerLine.value));
+
+      // Layout topology class
+      poster.className = 'poster-container';
+      if (selectLayout.value === 'asymmetric') poster.classList.add('layout-asymmetric');
+      if (selectLayout.value === 'stacked') poster.classList.add('layout-stacked');
+
+      // Font attributes
+      const font = selectFont.value;
+      const weight = selectWeight.value;
+      [blockPrimary, blockSecondary].forEach(b => {
+        b.style.fontFamily = font;
+        b.style.fontWeight = weight;
+      });
+
+      // Spatial Tension / Distance calculation
+      const gap = parseFloat(rangeDistance.value);
+      const margin = (100 - gap) / 2;
+
+      if (selectLayout.value !== 'stacked') {
+        blockPrimary.style.top = `${margin}%`;
+        blockSecondary.style.bottom = `${margin}%`;
+      }
+
+      // Sync live control labels
+      document.getElementById('valTracking').textContent = `${tracking}em`;
+      document.getElementById('valDistance').textContent = `${gap}%`;
+      document.getElementById('valFocalY').textContent = `${focalPoint.y.toFixed(0)}%`;
+      document.getElementById('valAngle').textContent = rangeAngle.value;
+
+      // Sync FX labels and values
+      document.getElementById('valGrain').textContent = rangeGrain.value;
+      document.getElementById('valVignette').textContent = rangeVignette.value;
+      document.getElementById('valHalftone').textContent = rangeHalftone.value;
+      document.getElementById('valScanlines').textContent = rangeScanlines.value;
+      document.getElementById('valTextureStr').textContent = rangeTextureStr.value;
+
+      // Apply FX
+      fxGrain.style.display = rangeGrain.value > 0 ? 'block' : 'none';
+      fxGrain.style.opacity = rangeGrain.value / 100;
+      
+      fxVignette.style.display = rangeVignette.value > 0 ? 'block' : 'none';
+      fxVignette.style.opacity = rangeVignette.value / 100;
+      
+      fxHalftone.style.display = rangeHalftone.value > 0 ? 'block' : 'none';
+      fxHalftone.style.opacity = rangeHalftone.value / 100;
+      
+      fxScanlines.style.display = rangeScanlines.value > 0 ? 'block' : 'none';
+      fxScanlines.style.opacity = rangeScanlines.value / 100;
+
+      if (selectTexture.value !== 'none') {
+        fxTexture.style.display = 'block';
+        fxTexture.style.opacity = rangeTextureStr.value / 100;
+        // Inject SVG procedural texture via backdrop filter URL
+        fxTexture.style.backdropFilter = `url(#${selectTexture.value})`;
+      } else {
+        fxTexture.style.display = 'none';
+      }
+
+      // Update focal marker position
+      focalMarker.style.left = `${focalPoint.x}%`;
+      focalMarker.style.top = `${focalPoint.y}%`;
+
+      // Build Config object for main rendering
+      const config = {
+        connector: selectConnector.value,
+        focalMode: selectFocalMode.value,
+        layout: selectLayout.value
+      };
+
+      // Procedural Vector Math
+      requestAnimationFrame(() => calculateVectorAnatomyForTarget(poster, topText, bottomText, margin, config, weight, spineVector));
+    }
+
+    // Shared Vector Math Engine for both Main UI and Variants
+    function calculateVectorAnatomyForTarget(targetContainer, topText, bottomText, margin, config, weight, vectorPathEl) {
+      const mode = config.connector;
+      if (mode === 'none') {
+        vectorPathEl.setAttribute('d', '');
+        return;
+      }
+
+      const rect = targetContainer.getBoundingClientRect();
+      const y1 = (margin / 100) * 150 + 4.5;
+      const y2 = 150 - ((margin / 100) * 150) - 4.5;
+      const focalSvgY = (focalPoint.y / 100) * 150;
+      const focalSvgX = focalPoint.x;
+      const behavior = config.focalMode;
+
+      let paths = [];
+
+      if (mode === 'center') {
+        paths.push(generatePathSegment(50, y1, y2, focalSvgX, focalSvgY, behavior));
+      } else if (mode === 'dual') {
+        paths.push(generatePathSegment(25, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(generatePathSegment(75, y1, y2, focalSvgX, focalSvgY, behavior));
+      } else if (mode === 'triple') {
+        paths.push(generatePathSegment(20, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(generatePathSegment(50, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(generatePathSegment(80, y1, y2, focalSvgX, focalSvgY, behavior));
+      } else if (mode === 'cross') {
+        paths.push(generatePathSegment(50, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(`M 12 ${focalSvgY} L 88 ${focalSvgY}`);
+      } else if (mode === 'stepped') {
+        const midY = (y1 + y2) / 2;
+        paths.push(`M 30 ${y1} L 30 ${midY} L 70 ${midY} L 70 ${y2}`);
+      } else if (mode === 'zigzag') {
+        const step = (y2 - y1) / 4;
+        paths.push(`M 50 ${y1} L 30 ${y1 + step} L 70 ${y1 + step * 2} L 30 ${y1 + step * 3} L 50 ${y2}`);
+      } else if (mode === 'diagonal') {
+        paths.push(`M 15 ${y1} L 85 ${y2}`);
+      } else if (mode === 'segmented') {
+        const segLen = 6;
+        const gapLen = 4;
+        let currY = y1;
+        while (currY < y2) {
+          let nextY = Math.min(currY + segLen, y2);
+          paths.push(`M 50 ${currY} L 50 ${nextY}`);
+          currY += segLen + gapLen;
+        }
+      } else if (mode === 'scurve') {
+        const midY = (y1 + y2) / 2;
+        paths.push(`M 50 ${y1} C 25 ${midY - 20}, 75 ${midY + 20}, 50 ${y2}`);
+      } else if (mode === 'chevron') {
+        const midY = (y1 + y2) / 2;
+        paths.push(`M 25 ${y1} L 50 ${midY} L 75 ${y1}`);
+        paths.push(`M 25 ${y2} L 50 ${midY} L 75 ${y2}`);
+      } else if (mode === 'x-slash') {
+        paths.push(`M 20 ${y1} L 80 ${y2}`);
+        paths.push(`M 80 ${y1} L 20 ${y2}`);
+      } else if (mode === 'brackets') {
+        paths.push(`M 50 ${y1} L 50 ${y2}`);
+        paths.push(`M 40 ${y1} L 60 ${y1}`);
+        paths.push(`M 40 ${y2} L 60 ${y2}`);
+      } else {
+        // Auto Procedural Stem Detection (Searching for I, T, L, H, E, F)
+        let anchorIndex = -1;
+        const stemPriority = ['I', 'T', 'L', 'H', 'E', 'F'];
+        const topSpans = targetContainer.querySelectorAll('#blockPrimary span span');
+
+        for (let i = 0; i < Math.min(topText.length, bottomText.length); i++) {
+          if (topText[i].toUpperCase() === bottomText[i].toUpperCase()) {
+            anchorIndex = i;
+            break;
+          }
+        }
+        if (anchorIndex === -1) {
+          for (let i = 0; i < topText.length; i++) {
+            if (stemPriority.includes(topText[i].toUpperCase())) {
+              anchorIndex = i;
+              break;
+            }
+          }
+        }
+        if (anchorIndex === -1) anchorIndex = Math.floor(topSpans.length / 2);
+
+        const targetSpan = topSpans[anchorIndex] || topSpans[0];
+        let midX = 50;
+        
+        // Wait for DOM layout to calculate bounding boxes accurately
+        if (targetSpan && rect.width > 0) {
+          const spanRect = targetSpan.getBoundingClientRect();
+          if (spanRect.width > 0) {
+            midX = ((spanRect.left + spanRect.width / 2) - rect.left) / rect.width * 100;
+          }
+        }
+
+        paths.push(generatePathSegment(midX, y1, y2, focalSvgX, focalSvgY, behavior));
+      }
+
+      vectorPathEl.setAttribute('d', paths.join(' '));
+
+      const strokeWidth = weight === '700' ? 0.8 : (weight === '600' ? 0.6 : 0.42);
+      vectorPathEl.setAttribute('stroke-width', strokeWidth);
+    }
+
+    function generatePathSegment(x, y1, y2, fx, fy, behavior) {
+      if (behavior === 'mask' && fy > y1 && fy < y2) {
+        const maskRadius = 11;
+        return `M ${x} ${y1} L ${x} ${fy - maskRadius} M ${x} ${fy + maskRadius} L ${x} ${y2}`;
+      } else if (behavior === 'bend' && fy > y1 && fy < y2) {
+        return `M ${x} ${y1} Q ${fx} ${fy} ${x} ${y2}`;
+      }
+      return `M ${x} ${y1} L ${x} ${y2}`;
+    }
+
+    // --- Interactive Focal Point Picker on Poster ---
+    poster.addEventListener('click', (e) => {
+      const rect = poster.getBoundingClientRect();
+      focalPoint.x = ((e.clientX - rect.left) / rect.width) * 100;
+      focalPoint.y = ((e.clientY - rect.top) / rect.height) * 100;
+      rangeFocalY.value = focalPoint.y;
+
+      focalMarker.style.display = 'block';
+      setTimeout(() => { focalMarker.style.display = 'none'; }, 1600);
+
+      drawPoster();
+    });
+
+    rangeFocalY.addEventListener('input', () => {
+      focalPoint.y = parseFloat(rangeFocalY.value);
+      drawPoster();
+    });
+
+    // Reset Focal Point Handler
+    btnResetFocal.addEventListener('click', () => {
+      focalPoint = { x: 50, y: 50 };
+      rangeFocalY.value = 50;
+      focalMarker.style.display = 'none';
+      drawPoster();
+    });
+
+    // Invert Positions
+    btnInvert.addEventListener('click', () => {
+      const t = inputTop.value;
+      inputTop.value = inputBottom.value;
+      inputBottom.value = t;
+      drawPoster();
+    });
+
+    // --- Photo Crop & Upload Modal Handlers ---
+    function updateCropTransform() {
+      // If matching canvas to image dimensions, auto-zoom to perfectly fill and reset position
+      if (chkUsePhotoAspect.checked) {
+        cropState.zoom = 1;
+        cropState.posX = 0;
+        cropState.posY = 0;
+        rangeCropZoom.value = 1;
+        valCropZoom.textContent = '1.00x';
+      }
+
+      const baseScale = Math.max(cropViewport.clientWidth / cropState.naturalW, cropViewport.clientHeight / cropState.naturalH);
+
+      cropImage.style.width = (cropState.naturalW * baseScale) + 'px';
+      cropImage.style.height = (cropState.naturalH * baseScale) + 'px';
+      cropImage.style.transform = `translate(${cropState.posX}px, ${cropState.posY}px) scale(${cropState.zoom})`;
+    }
+
+    fileImage.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          cropImage.src = evt.target.result;
+          cropImage.onload = () => {
+            cropState.naturalW = cropImage.naturalWidth;
+            cropState.naturalH = cropImage.naturalHeight;
+            cropState.zoom = 1;
+            cropState.posX = 0;
+            cropState.posY = 0;
+            rangeCropZoom.value = 1;
+            valCropZoom.textContent = '1.00x';
+            
+            // Uncheck default
+            chkUsePhotoAspect.checked = false;
+            cropViewport.style.aspectRatio = poster.style.aspectRatio || '2 / 3';
+            
+            updateCropTransform();
+            cropModal.classList.add('active');
+          };
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    chkUsePhotoAspect.addEventListener('change', () => {
+      if (chkUsePhotoAspect.checked && cropState.naturalW && cropState.naturalH) {
+        cropViewport.style.aspectRatio = `${cropState.naturalW} / ${cropState.naturalH}`;
+      } else {
+        // Fallback to the current main canvas UI setting
+        let fallbackRatio = selectCanvasSize.value === 'custom' 
+          ? `${inputCustomW.value || 1} / ${inputCustomH.value || 1}` 
+          : selectCanvasSize.value;
+        cropViewport.style.aspectRatio = fallbackRatio;
+      }
+      updateCropTransform();
+    });
+
+    rangeCropZoom.addEventListener('input', () => {
+      cropState.zoom = parseFloat(rangeCropZoom.value);
+      valCropZoom.textContent = cropState.zoom.toFixed(2) + 'x';
+      updateCropTransform();
+    });
+
+    cropViewport.addEventListener('mousedown', (e) => {
+      cropState.isDragging = true;
+      cropState.startX = e.clientX - cropState.posX;
+      cropState.startY = e.clientY - cropState.posY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!cropState.isDragging) return;
+      cropState.posX = e.clientX - cropState.startX;
+      cropState.posY = e.clientY - cropState.startY;
+      updateCropTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      cropState.isDragging = false;
+    });
+
+    // Touch support for dragging on mobile devices
+    cropViewport.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        cropState.isDragging = true;
+        cropState.startX = e.touches[0].clientX - cropState.posX;
+        cropState.startY = e.touches[0].clientY - cropState.posY;
+      }
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!cropState.isDragging || e.touches.length !== 1) return;
+      cropState.posX = e.touches[0].clientX - cropState.startX;
+      cropState.posY = e.touches[0].clientY - cropState.startY;
+      updateCropTransform();
+    });
+
+    window.addEventListener('touchend', () => {
+      cropState.isDragging = false;
+    });
+
+    btnCancelCrop.addEventListener('click', () => {
+      cropModal.classList.remove('active');
+      fileImage.value = '';
+    });
+
+    btnApplyCrop.addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const aspect = chkUsePhotoAspect.checked ? (cropState.naturalW / cropState.naturalH) : 
+                     (selectCanvasSize.value === 'custom' ? (inputCustomW.value / inputCustomH.value) : eval(selectCanvasSize.value));
+                     
+      canvas.width = 1200;
+      canvas.height = 1200 / aspect;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.translate(
+        cropState.posX * (canvas.width / cropViewport.clientWidth),
+        cropState.posY * (canvas.height / cropViewport.clientHeight)
+      );
+      ctx.scale(cropState.zoom, cropState.zoom);
+
+      // Default (inset) uses cropViewport scale. Checked (match/fill) uses the full canvas scale.
+      const canvasBaseScale = chkUsePhotoAspect.checked 
+        ? Math.max(canvas.width / cropState.naturalW, canvas.height / cropState.naturalH)
+        : Math.max(cropViewport.clientWidth / cropState.naturalW, cropViewport.clientHeight / cropState.naturalH);
+
+      const drawW = cropState.naturalW * canvasBaseScale;
+      const drawH = cropState.naturalH * canvasBaseScale;
+
+      ctx.drawImage(cropImage, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+
+      bgImage.src = canvas.toDataURL('image/jpeg', 0.92);
+
+      // If user matched canvas to image size, update the main UI dropdown logic
+      if (chkUsePhotoAspect.checked) {
+        selectCanvasSize.value = 'custom';
+        inputCustomW.value = cropState.naturalW;
+        inputCustomH.value = cropState.naturalH;
+        updateCanvasAspect();
+      }
+
+      if (selectBgMode.value === 'solid') {
+        selectBgMode.value = 'full';
+      }
+      bgImage.style.display = 'block';
+      bgImage.className = 'poster-image ' + (selectBgMode.value === 'framed' ? 'mode-framed ' : '');
+      const filter = selectFilter.value;
+      if (filter !== 'none') bgImage.classList.add(`filter-${filter}`);
+
+      cropModal.classList.remove('active');
+      drawPoster();
+    });
+
+    // Background & Image handling
+    selectBgMode.addEventListener('change', () => {
+      const mode = selectBgMode.value;
+      bgImage.style.display = mode === 'solid' ? 'none' : 'block';
+      bgImage.classList.toggle('mode-framed', mode === 'framed');
+    });
+
+    selectFilter.addEventListener('change', () => {
+      bgImage.className = 'poster-image ' + (selectBgMode.value === 'framed' ? 'mode-framed ' : '');
+      const filter = selectFilter.value;
+      if (filter !== 'none') bgImage.classList.add(`filter-${filter}`);
+    });
+
+    // Structural Toggles
+    selectGridMode.addEventListener('change', renderGridSystem);
+    chkGrid.addEventListener('change', toggleGridVisibility);
+    chkGlaze.addEventListener('change', () => surfaceGlaze.style.display = chkGlaze.checked ? 'block' : 'none');
+    chkDifference.addEventListener('change', () => {
+      [blockPrimary, blockSecondary].forEach(w => w.classList.toggle('blend-difference', chkDifference.checked));
+    });
+
+    // Export Logic
+    function getExportScale() { return parseInt(selectExportRes.value) || 3; }
+
+    btnExportPNG.addEventListener('click', () => {
+      focalMarker.style.display = 'none';
+      html2canvas(poster, { scale: getExportScale(), useCORS: true, backgroundColor: null }).then(canvas => {
+        let link = document.createElement('a');
+        link.download = 'poster.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    });
+
+    btnCopyImage.addEventListener('click', () => {
+      focalMarker.style.display = 'none';
+      html2canvas(poster, { scale: getExportScale(), useCORS: true, backgroundColor: null }).then(canvas => {
+        canvas.toBlob(blob => {
+          navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
+            .then(() => alert('Poster copied to clipboard!'))
+            .catch(err => alert('Error copying image.'));
+        });
+      });
+    });
+
+    btnExportSVG.addEventListener('click', () => {
+      focalMarker.style.display = 'none';
+      const width = poster.offsetWidth;
+      const height = poster.offsetHeight;
+      
+      // Basic SVG wrapping of the live DOM state
+      const svgDoc = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%;">
+              ${poster.outerHTML.replace(/#/g, '%23')}
+            </div>
+          </foreignObject>
+        </svg>
+      `;
+      const blob = new Blob([svgDoc], {type: "image/svg+xml;charset=utf-8"});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "poster.svg";
+      link.click();
+    });
+
+    // Live Event Listeners
+    [inputTop, inputBottom, selectLayout, selectFont, selectWeight, rangeTracking, 
+     rangeDistance, selectConnector, selectFocalMode, pickerBg, pickerTextDark, pickerTextLight, pickerLine, rangeAngle, rangeGrain, rangeVignette, rangeHalftone, rangeScanlines, selectTexture, rangeTextureStr].forEach(el => {
+      el.addEventListener('input', drawPoster);
+    });
+    
+    window.addEventListener('resize', drawPoster);
+
+    // Initial Bootstrap
+    updateCanvasAspect();
+    renderGridSystem();
+  </script>
+</body>
+</html>
