@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playful Poster Studio</title>
+  <!-- Google Fonts: Jost, League Spartan, Syne -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;0,700;1,400&family=League+Spartan:wght@400;500;600;700;800&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- html2canvas for High-Res PNG Exporting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <style>
+    @font-face {
+      font-family: 'Tilt Neon';
+      src: url('TiltNeon[XROT,YROT].ttf') format('truetype');
+      font-weight: 100 900;
+      font-style: normal;
+    }
+
+    :root {
+      /* Dark Mode Default */
+      --ui-bg: #141416;
+      --ui-panel: #1e1e22;
+      --ui-panel-border: #2c2c34;
+      --ui-accent: #ffffff;
+      --ui-muted: #8e8e9c;
+      --ui-field-bg: #121214;
+      --ui-highlight: #ff3355;
+      --stage-bg: radial-gradient(circle at center, #222228 0%, #0d0d10 100%);
+
+      /* Poster Canvas Variables */
+      --poster-bg: #E6E6E6;
+      --poster-ink: #050505;
+      --poster-line: #050505;
+      --poster-accent: #ff3355;
+    }
+
+    body.light-theme {
+      --ui-bg: #f4f4f6;
+      --ui-panel: #ffffff;
+      --ui-panel-border: #e2e2e8;
+      --ui-accent: #111116;
+      --ui-muted: #666675;
+      --ui-field-bg: #f9f9fb;
+      --stage-bg: #e9e9ee;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--ui-bg);
+      color: var(--ui-accent);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* --- Left Canvas Stage (Edit Mode) --- */
+    .stage {
+      flex: 1;
+      position: relative;
+      background: var(--stage-bg);
+      overflow: hidden; /* We manage pan/zoom via inner container */
+      transition: background 0.2s;
+    }
+    
+    .stage-pan-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      cursor: grab;
+    }
+    .stage-pan-container:active {
+      cursor: grabbing;
+    }
+
+    .poster-container {
+      width: 480px; /* Base Fixed width for zoom scaling */
+      aspect-ratio: 2 / 3;
+      background-color: var(--poster-bg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      user-select: none;
+      cursor: crosshair;
+      transition: aspect-ratio 0.3s ease;
+    }
+
+    /* Photographic Background Layer */
+    .poster-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .poster-image.mode-framed {
+      top: 18%;
+      bottom: 18%;
+      left: 10%;
+      width: 80%;
+      height: 64%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .filter-grayscale { filter: grayscale(100%) contrast(135%); }
+    .filter-duotone { filter: grayscale(100%) contrast(160%); mix-blend-mode: multiply; }
+    .filter-inverted { filter: invert(100%) contrast(130%); }
+
+    /* SVG Vector Engine (Grid, Connectors, Focal Masks) */
+    .poster-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .grid-line {
+      stroke-width: 0.8;
+      display: none;
+    }
+
+    .vector-connector {
+      fill: none;
+      stroke-linecap: square;
+      transition: stroke 0.2s ease;
+    }
+
+    /* Typographic Hierarchy Blocks */
+    .text-block {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 4;
+      text-transform: uppercase;
+      font-weight: 600;
+      font-family: 'Jost', sans-serif;
+      font-size: 1.15rem;
+      pointer-events: none;
+      transition: top 0.25s ease, bottom 0.25s ease, transform 0.25s ease;
+    }
+
+    .text-inner {
+      display: inline-flex;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    .text-block span span {
+      display: inline-block;
+      text-align: center;
+      will-change: font-variation-settings;
+      transform-origin: bottom center;
+    }
+
+    /* Layout Preset Modifications */
+    .layout-asymmetric #blockPrimary { justify-content: flex-start; padding-left: 9%; }
+    .layout-asymmetric #blockSecondary { justify-content: flex-end; padding-right: 9%; }
+
+    .layout-stacked #blockPrimary { top: 20% !important; }
+    .layout-stacked #blockSecondary { top: 32% !important; bottom: auto !important; }
+
+    /* Difference Blend Mode for Typographic Legibility */
+    .blend-difference {
+      mix-blend-mode: difference;
+      color: #FFFFFF !important;
+    }
+
+    /* Physical Specular Sheen Simulation */
+    .surface-glaze {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+      background: 
+        linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 6%),
+        linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 4%);
+    }
+
+    /* FX Overlays Layering */
+    .fx-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      display: none;
+    }
+
+    .fx-grain {
+      background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+      mix-blend-mode: overlay;
+    }
+
+    .fx-halftone {
+      background-image: radial-gradient(circle, #000 1px, transparent 1.5px);
+      background-size: 6px 6px;
+      mix-blend-mode: overlay;
+    }
+
+    .fx-scanlines {
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.6) 3px);
+      mix-blend-mode: overlay;
+    }
+
+    .fx-vignette {
+      box-shadow: inset 0 0 150px rgba(0,0,0,1);
+    }
+
+    .fx-texture {
+      mix-blend-mode: multiply;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Focal Target Indicator */
+    .focal-target {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--ui-highlight);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      pointer-events: none;
+      display: none;
+    }
+
+    .focal-target::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      background: var(--ui-highlight);
+      border-radius: 50%;
+    }
+
+    /* UI Stage Zoom Overlay */
+    .stage-zoom-controls {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      background: var(--ui-panel);
+      border: 1px solid var(--ui-panel-border);
+      padding: 0.8rem 1.2rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .stage-zoom-controls label { font-size: 0.75rem; font-weight: 600; }
+    .stage-zoom-controls input[type="range"] { width: 120px; }
+
+    /* --- Variations Grid View --- */
+    .variants-view {
+      position: fixed;
+      inset: 0;
+      background: var(--ui-bg);
+      z-index: 500;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    .variants-view.active { display: flex; }
+    
+    .variants-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .variants-header h2 { font-size: 1.5rem; font-family: 'Jost', sans-serif; }
+    .btn-close-variants {
+      background: var(--ui-panel);
+      border: 1px solid var(--ui-panel-border);
+      color: var(--ui-accent);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2.5rem;
+      padding-bottom: 4rem;
+    }
+    .variant-card {
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .variant-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+    }
+    .variant-card .poster-container {
+      width: 100%;
+      pointer-events: none; 
+    }
+
+    /* --- Crop Modal --- */
+    .app-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .app-modal.active {
+      display: flex;
+    }
+    .app-modal-content {
+      background: var(--ui-panel);
+      border: 1px solid var(--ui-panel-border);
+      padding: 1.5rem;
+      border-radius: 12px;
+      width: min(440px, 95vw);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
+    .app-modal-content h3 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ui-accent);
+      font-weight: 700;
+    }
+    .crop-viewport {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      border-radius: 8px;
+      border: 1px solid var(--ui-panel-border);
+      transition: aspect-ratio 0.3s ease;
+    }
+    .crop-viewport:active {
+      cursor: grabbing;
+    }
+    .crop-image-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #cropImage {
+      max-width: none;
+      max-height: none;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* --- Right Control Sidebar --- */
+    .sidebar {
+      width: 440px;
+      background-color: var(--ui-panel);
+      border-left: 1px solid var(--ui-panel-border);
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      box-shadow: -5px 0 20px rgba(0,0,0,0.05);
+      transition: background-color 0.2s, border-color 0.2s;
+      z-index: 200;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--ui-panel-border);
+    }
+
+    .sidebar-header h1 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ui-accent);
+      font-weight: 700;
+    }
+
+    .theme-toggle-btn {
+      background: var(--ui-field-bg);
+      border: 1px solid var(--ui-panel-border);
+      color: var(--ui-accent);
+      padding: 0.35rem 0.7rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      flex: 0 0 auto;
+      width: auto;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .theme-toggle-btn:hover {
+      opacity: 0.85;
+    }
+
+    /* Export Row Elements */
+    .export-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .export-row button, .export-row select {
+      flex: 1;
+      padding: 0.6rem;
+      font-size: 0.75rem;
+    }
+
+    .sidebar h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ui-accent);
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .control-group {
+      background: var(--ui-field-bg);
+      border: 1px solid var(--ui-panel-border);
+      padding: 1rem;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .control-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--ui-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    input[type="text"], input[type="number"], select, textarea {
+      background-color: var(--ui-panel);
+      border: 1px solid var(--ui-panel-border);
+      color: var(--ui-accent);
+      padding: 0.6rem 0.8rem;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      outline: none;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    input[type="range"] {
+      accent-color: var(--ui-accent);
+      width: 100%;
+      cursor: pointer;
+    }
+
+    /* Custom Color Picker Swatches */
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: 1px solid var(--ui-panel-border);
+      width: 100%;
+      height: 38px;
+      background: none;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+
+    .palette-swatch-btn {
+      display: inline-flex;
+      padding: 4px;
+      border: 1px solid var(--ui-panel-border);
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--ui-panel);
+      gap: 2px;
+      transition: transform 0.1s;
+    }
+    .palette-swatch-btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--ui-muted);
+    }
+    .palette-swatch-btn div {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--ui-accent);
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button {
+      flex: 1;
+      background-color: var(--ui-accent);
+      color: var(--ui-panel);
+      border: none;
+      padding: 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--ui-panel);
+      color: var(--ui-accent);
+      border: 1px solid var(--ui-panel-border);
+    }
+    
+    .btn-variant {
+      background-color: transparent;
+      border: 1px solid var(--ui-highlight);
+      color: var(--ui-highlight);
+    }
+
+    .hint-text {
+      font-size: 0.72rem;
+      color: var(--ui-muted);
+      line-height: 1.4;
+    }
+
+    .svg-defs { position: absolute; width: 0; height: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Hidden SVG Defs for Textures -->
+  <svg class="svg-defs">
+    <defs>
+      <filter id="tex-watercolor">
+        <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="4" result="noise" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.3 0" />
+      </filter>
+      <filter id="tex-cardboard">
+        <feTurbulence type="fractalNoise" baseFrequency="0.05 0.005" numOctaves="3" result="noise" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.4 0" />
+      </filter>
+      <filter id="tex-crumpled">
+        <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="5" result="noise" />
+        <feDiffuseLighting in="noise" lighting-color="#fff" surfaceScale="3">
+          <feDistantLight azimuth="45" elevation="60" />
+        </feDiffuseLighting>
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.8 0" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Left: Live Poster Stage -->
+  <main class="stage" id="stageMain">
+    <div class="stage-pan-container" id="stagePanContainer">
+      <div class="poster-container" id="poster">
+        <!-- Background Artwork -->
+        <img id="bgImage" class="poster-image" alt="Artwork Substrate">
+        
+        <!-- SVG Procedural Geometry -->
+        <svg class="poster-svg" id="posterSvg" viewBox="0 0 100 150" preserveAspectRatio="none">
+          <g id="gridOverlay"></g>
+          <path id="spineVector" class="vector-connector" d=""></path>
+        </svg>
+
+        <!-- Target Focal Marker -->
+        <div id="focalMarker" class="focal-target"></div>
+
+        <!-- Generative Typography -->
+        <div id="blockPrimary" class="text-block"></div>
+        <div id="blockSecondary" class="text-block"></div>
+
+        <!-- Specular Reflection Sheen -->
+        <div id="surfaceGlaze" class="surface-glaze"></div>
+
+        <!-- Finishing FX Layers -->
+        <div id="fxGrain" class="fx-layer fx-grain"></div>
+        <div id="fxHalftone" class="fx-layer fx-halftone"></div>
+        <div id="fxScanlines" class="fx-layer fx-scanlines"></div>
+        <div id="fxVignette" class="fx-layer fx-vignette"></div>
+        <div id="fxTexture" class="fx-layer fx-texture"></div>
+      </div>
+    </div>
+    
+    <!-- Stage Zoom Controls -->
+    <div class="stage-zoom-controls">
+      <label>Canvas Zoom</label>
+      <input type="range" id="rangeStageZoom" min="0.2" max="3" step="0.05" value="1">
+      <label id="valStageZoom">100%</label>
+    </div>
+  </main>
+
+  <!-- Variations Explorer Grid View -->
+  <div class="variants-view" id="variantsView">
+    <div class="variants-header">
+      <h2>Select a Variation</h2>
+      <button class="btn-close-variants" id="btnCloseVariants">Cancel / Go Back</button>
+    </div>
+    <div class="variants-grid" id="variantsGrid"></div>
+  </div>
+
+  <!-- Right: Minimalist Beginner-Friendly Dashboard -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Poster Studio</h1>
+      <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle Appearance">☀️ Light Mode</button>
+    </div>
+
+    <!-- EXPORT CONTROLS -->
+    <div class="export-row">
+      <button id="btnExportSVG">SVG</button>
+      <button id="btnExportPNG">PNG</button>
+      <select id="selectExportRes" title="Resolution Multiplier">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="3" selected>3x</option>
+        <option value="4">4x</option>
+      </select>
+      <button id="btnCopyImage" class="btn-secondary">Copy</button>
+    </div>
+
+    <!-- MAGIC SEED & VARIANTS -->
+    <div class="control-group">
+      <h2>✨ Magic Seed</h2>
+      <button id="btnExploreVariants" class="btn-variant" style="margin-bottom: 0.5rem;">Explore Layout Variants (×9)</button>
+      <label>Current Seed <span id="valSeed" style="font-weight:700; color:var(--ui-accent);">42</span></label>
+      <input type="range" id="rangeSeed" min="1" max="100" step="1" value="42">
+      <div class="button-group" style="margin-top: 0.4rem;">
+        <button id="btnRandomizeSeed">🎲 Randomize Seed & Colors</button>
+      </div>
+    </div>
+
+    <!-- LIVE WEATHER THEME GENERATOR -->
+    <div class="control-group">
+      <h2>🌤️ Live Weather Theme</h2>
+      <span class="hint-text" style="margin-top:-0.4rem;">Pulls live meteorological reports (e.g., ABC7 NY / NWS) to procedurally theme backgrounds, colors, textures, and lines without AI images.</span>
+      
+      <div style="display:flex; gap:0.5rem; margin-top:0.3rem;">
+        <input type="text" id="inputWeatherCity" placeholder="Enter city (e.g. New York, London)...">
+        <button id="btnFetchWeather" style="flex:0 0 100px;">Apply</button>
+      </div>
+
+      <div id="weatherReportBadge" style="display:none; font-size:0.75rem; background:var(--ui-panel); padding:0.6rem; border-radius:8px; border:1px solid var(--ui-panel-border); margin-top:0.4rem; line-height:1.4;">
+      </div>
+      
+      <div class="button-group" id="weatherRandomizerGroup" style="display: none; margin-top: 0.4rem;">
+        <button id="btnRandomizeWeatherStyle" class="btn-secondary">🎲 Randomize Layout Style</button>
+      </div>
+    </div>
+
+    <!-- 📈 STOCK MARKET TRACKER -->
+    <div class="control-group">
+      <h2>📈 Stock Market Tracker</h2>
+      <span class="hint-text">Pulls the top rising and falling stocks for the day.</span>
+      
+      <div style="display:flex; gap:0.5rem; margin-top:0.3rem;">
+        <select id="selectStockMode" style="flex:1; padding:0.6rem 0.2rem;">
+          <option value="gainers">Top Gainers (Rising)</option>
+          <option value="losers">Top Losers (Falling)</option>
+        </select>
+        <button id="btnFetchStocks" style="flex:0 0 100px;">Fetch</button>
+      </div>
+
+      <div id="stockReportBadge" style="display:none; font-size:0.75rem; background:var(--ui-panel); padding:0.6rem; border-radius:8px; border:1px solid var(--ui-panel-border); margin-top:0.4rem; line-height:1.4;">
+      </div>
+      
+      <div class="button-group" id="stockRandomizerGroup" style="display: none; margin-top: 0.4rem;">
+        <button id="btnRandomizeStockStyle" class="btn-secondary">Randomize Style, Text Colors & Effects</button>
+      </div>
+
+      <!-- Explanation of the Stock Symbols -->
+      <div style="font-size:0.72rem; color:var(--ui-muted); margin-top:0.5rem; line-height:1.4; padding: 0.5rem; border-radius: 6px; background: rgba(0,0,0,0.1);">
+        <strong>Stock Trend Legend:</strong><br>
+        📈 <strong>Chevron (Up):</strong> Stock is rising rapidly.<br>
+        📉 <strong>Zig-Zag (Down):</strong> Stock is highly volatile / falling.
+      </div>
+    </div>
+
+    <!-- YOUR WORDS -->
+    <div class="control-group">
+      <h2>✍️ Your Words</h2>
+      <label>Top Word</label>
+      <input type="text" id="inputTop" value="SYNTACTIC">
+      <label>Bottom Word</label>
+      <input type="text" id="inputBottom" value="STRUCTURE">
+      <div class="button-group" style="margin-top: 0.4rem;">
+        <button id="btnInvert" class="btn-secondary">🔄 Swap Words</button>
+      </div>
+
+      <label style="margin-top: 0.4rem;">Font Style</label>
+      <select id="selectFont">
+        <option value="'Tilt Neon', sans-serif" selected>Tilt Neon (Beyblade Wobble)</option>
+        <option value="'Jost', sans-serif">Jost (Clean Modern)</option>
+        <option value="'League Spartan', sans-serif">League Spartan (Bold & Solid)</option>
+        <option value="'Syne', sans-serif">Syne (Fun & Unique)</option>
+      </select>
+
+      <label>Font Thickness</label>
+      <select id="selectWeight">
+        <option value="500">Regular</option>
+        <option value="600" selected>Thick</option>
+        <option value="700">Extra Thick</option>
+      </select>
+    </div>
+
+    <!-- ADVANCED COLOR PALETTE -->
+    <div class="control-group">
+      <h2>🎨 Color Palette</h2>
+      <label style="margin-bottom: -0.3rem;">Preset Palettes</label>
+      <div id="paletteGrid" style="display:flex; flex-wrap:wrap; gap:6px;">
+        <!-- Injected by JS -->
+      </div>
+      
+      <div class="color-grid" style="margin-top: 0.4rem;">
+        <div>
+          <label>Background</label>
+          <input type="color" id="pickerBg" value="#E6E6E6">
+        </div>
+        <div>
+          <label>Shape</label>
+          <input type="color" id="pickerLine" value="#050505">
+        </div>
+        <div>
+          <label>Dark Text</label>
+          <input type="color" id="pickerTextDark" value="#050505">
+        </div>
+        <div>
+          <label>Light Text</label>
+          <input type="color" id="pickerTextLight" value="#ffffff">
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <button id="btnRandomizeColors" class="btn-secondary">Randomize</button>
+        <button id="btnSwapBgShape" class="btn-secondary">Swap BG / Shape</button>
+      </div>
+
+      <hr style="border:0; border-top:1px solid var(--ui-panel-border); margin: 0.2rem 0;">
+
+      <label class="checkbox-row" style="font-weight: 700;">
+        <input type="checkbox" id="chkGradient"> Gradient background
+      </label>
+      
+      <div id="gradientControls" class="color-grid" style="display: none;">
+        <div>
+          <label>Gradient End</label>
+          <input type="color" id="pickerBgEnd" value="#ff3355">
+        </div>
+        <div>
+          <label>Angle <span id="valAngle">245</span></label>
+          <input type="range" id="rangeAngle" min="0" max="360" step="1" value="245">
+        </div>
+      </div>
+    </div>
+
+    <!-- EFFECTS & TEXTURE -->
+    <div class="control-group">
+      <h2>🪄 Effects & Texture</h2>
+      <span class="hint-text">Poster-wide finishing passes — applied over everything for a printed / risograph feel. Stack freely; all are baked into SVG & PNG export.</span>
+      
+      <div class="color-grid" style="margin-top: 0.4rem;">
+        <div><label>Paper Grain <span id="valGrain">0</span></label><input type="range" id="rangeGrain" min="0" max="100" value="0"></div>
+        <div><label>Vignette <span id="valVignette">0</span></label><input type="range" id="rangeVignette" min="0" max="100" value="0"></div>
+        <div><label>Halftone Screen <span id="valHalftone">0</span></label><input type="range" id="rangeHalftone" min="0" max="100" value="0"></div>
+        <div><label>Scanlines <span id="valScanlines">0</span></label><input type="range" id="rangeScanlines" min="0" max="100" value="0"></div>
+      </div>
+      
+      <hr style="border:0; border-top:1px solid var(--ui-panel-border); margin: 0.2rem 0;">
+      
+      <div class="color-grid">
+        <div>
+          <label>Paper Texture</label>
+          <select id="selectTexture">
+            <option value="none">None</option>
+            <option value="tex-watercolor">Watercolor</option>
+            <option value="tex-cardboard">Cardboard</option>
+            <option value="tex-crumpled">Crumpled</option>
+          </select>
+        </div>
+        <div>
+          <label>Paper Strength <span id="valTextureStr">33</span></label>
+          <input type="range" id="rangeTextureStr" min="0" max="100" value="33">
+        </div>
+      </div>
+      
+      <div class="button-group" style="margin-top: 0.4rem;">
+        <button id="btnResetEffects" class="btn-secondary">Reset Effects</button>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h2>📐 Layout & Spacing</h2>
+      <label>How words are arranged</label>
+      <select id="selectLayout">
+        <option value="perimeter" selected>Spaced Out (Top & Bottom)</option>
+        <option value="asymmetric">Playful Corners</option>
+        <option value="stacked">Stacked Together</option>
+      </select>
+
+      <label>Letter Spacing <span id="valTracking">0.38em</span></label>
+      <input type="range" id="rangeTracking" min="0.0" max="0.85" step="0.01" value="0.38">
+
+      <label>Vertical Gap <span id="valDistance">85%</span></label>
+      <input type="range" id="rangeDistance" min="18" max="88" step="1" value="85">
+    </div>
+
+    <div class="control-group">
+      <h2>⚡ Connecting Line</h2>
+      <label>Line Style</label>
+      <select id="selectConnector">
+        <option value="auto" selected>Smart Connect</option>
+        <option value="center">Right Down the Middle</option>
+        <option value="cross">Cross Hair</option>
+        <option value="dual">Double Lines (Parallel)</option>
+        <option value="triple">Triple Columns</option>
+        <option value="stepped">Stepped Stair-Step</option>
+        <option value="zigzag">Zig-Zag Rhythm</option>
+        <option value="diagonal">Diagonal Slash</option>
+        <option value="segmented">Dashed / Segmented</option>
+        <option value="scurve">S-Curve Wave</option>
+        <option value="chevron">V-Chevron Angle</option>
+        <option value="x-slash">Double Diagonal X</option>
+        <option value="brackets">Architectural Brackets</option>
+        <option value="none">No Line</option>
+      </select>
+
+      <label>Line Effect on Picture</label>
+      <select id="selectFocalMode">
+        <option value="straight" selected>Straight Through</option>
+        <option value="mask">Jump Around Subject</option>
+        <option value="bend">Wavy Curve</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <h2>📏 Canvas Size</h2>
+      <label>Format</label>
+      <select id="selectCanvasSize">
+        <option value="2/3" selected>Classic Poster (2:3)</option>
+        <option value="1/1">Square / IG Post (1:1)</option>
+        <option value="4/5">IG Portrait (4:5)</option>
+        <option value="9/16">IG Story / Reels (9:16)</option>
+        <option value="16/9">YouTube Thumbnail (16:9)</option>
+        <option value="1.91/1">Facebook Post (1.91:1)</option>
+        <option value="custom">Custom Ratio...</option>
+      </select>
+
+      <div id="customRatioInputs" style="display: none; gap: 0.5rem; align-items: center; margin-top: 0.2rem;">
+        <input type="number" id="inputCustomW" value="2" min="0.1" step="0.1" title="Width Ratio">
+        <span style="color: var(--ui-accent); font-weight: bold;">:</span>
+        <input type="number" id="inputCustomH" value="3" min="0.1" step="0.1" title="Height Ratio">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <h2>🖼️ Pictures & Background</h2>
+      <label>Picture Mode</label>
+      <select id="selectBgMode">
+        <option value="solid" selected>Plain Background</option>
+        <option value="full">Fill Whole Poster</option>
+        <option value="framed">Framed in the Center</option>
+      </select>
+
+      <label>Upload a Photo</label>
+      <input type="file" id="fileImage" accept="image/*">
+
+      <label>Photo Look</label>
+      <select id="selectFilter">
+        <option value="none">Normal Colors</option>
+        <option value="grayscale" selected>Black & White</option>
+        <option value="duotone">High Contrast Dark</option>
+        <option value="inverted">Neon Inverted</option>
+      </select>
+
+      <label>Focus Spot Height <span id="valFocalY">50%</span></label>
+      <input type="range" id="rangeFocalY" min="20" max="80" step="1" value="50">
+      
+      <div class="button-group" style="margin-top: 0.4rem;">
+        <button id="btnResetFocal" class="btn-secondary">Reset Focal Point</button>
+      </div>
+
+      <span class="hint-text">💡 Tip: Click anywhere directly on your poster canvas to place the focus point!</span>
+    </div>
+
+    <div class="control-group">
+      <h2>✨ Fun Extras</h2>
+      <label>Grid Lines Style</label>
+      <select id="selectGridMode">
+        <option value="9x9" selected>9x9 Squares</option>
+        <option value="12col">12 Columns</option>
+      </select>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkGrid"> Show Grid Lines
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkGlaze" checked> Glossy Poster Shine
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="chkDifference"> Smart Color Invert (Difference)
+      </label>
+    </div>
+  </aside>
+
+  <!-- Photo Crop Preview Modal -->
+  <div id="cropModal" class="app-modal">
+    <div class="app-modal-content">
+      <h3>Adjust Photo Canvas</h3>
+      <div class="crop-viewport" id="cropViewport">
+        <div class="crop-image-wrap">
+          <img id="cropImage" alt="Crop Preview">
+        </div>
+      </div>
+      <label>Zoom <span id="valCropZoom">1.00x</span></label>
+      <input type="range" id="rangeCropZoom" min="1" max="4" step="0.01" value="1">
+      <label class="checkbox-row" style="margin-top: 0.2rem;">
+        <input type="checkbox" id="chkUsePhotoAspect"> Match canvas size to image dimensions (Fill)
+      </label>
+      <span class="hint-text">💡 By default, images are styled as a center inset. Check the box above to perfectly fill the canvas. Click and drag to pan.</span>
+      <div class="button-group" style="margin-top: 0.5rem;">
+        <button id="btnCancelCrop" class="btn-secondary">Cancel</button>
+        <button id="btnApplyCrop">Apply to Poster</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // URL Parameter Parsing
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      if(params.has('top')) document.getElementById('inputTop').value = params.get('top');
+      if(params.has('bottom')) document.getElementById('inputBottom').value = params.get('bottom');
+      if(params.has('seed')) {
+        const seedVal = parseInt(params.get('seed'));
+        document.getElementById('rangeSeed').value = seedVal;
+        applySeed(seedVal);
+      }
+      drawPoster();
+    });
+
+    let activeWeatherCode = null;
+    let activeStockStatus = null;
+    
+    // State variables for physics
+    let animatedLetters = [];
+    let globalTime = 0;
+    let hoveredBlock = null;
+
+    function animateBeybladeLetters() {
+      globalTime += 0.05;
+
+      // Smoothly animate the overall block scale to prevent letters from overlapping when growing 5x
+      if (typeof blockPrimary.growth === 'undefined') blockPrimary.growth = 1.0;
+      if (typeof blockSecondary.growth === 'undefined') blockSecondary.growth = 1.0;
+
+      const primaryTarget = (hoveredBlock === blockSecondary) ? 2.0 : 1.0;
+      const secondaryTarget = (hoveredBlock === blockPrimary) ? 2.0 : 1.0;
+
+      // Lerp block scales
+      blockPrimary.growth += (primaryTarget - blockPrimary.growth) * 0.08;
+      blockSecondary.growth += (secondaryTarget - blockSecondary.growth) * 0.08;
+
+      const inner1 = blockPrimary.querySelector('.text-inner');
+      if (inner1) inner1.style.transform = `scale(${blockPrimary.growth})`;
+
+      const inner2 = blockSecondary.querySelector('.text-inner');
+      if (inner2) inner2.style.transform = `scale(${blockSecondary.growth})`;
+
+      animatedLetters.forEach(letter => {
+        const isHovered = hoveredBlock === letter.parent;
+        const isOtherHovered = hoveredBlock !== null && hoveredBlock !== letter.parent;
+
+        if (isHovered || isOtherHovered) {
+          letter.momentum = Math.min(letter.momentum + 0.05, 1.0);
+        } else {
+          letter.momentum *= letter.friction;
+        }
+
+        if (letter.momentum < 0.005 && !isHovered && !isOtherHovered) {
+          letter.momentum = 0;
+        } else {
+          letter.phase += letter.spinSpeed * letter.momentum;
+        }
+
+        const currentTilt = letter.maxTilt * letter.momentum;
+        const xRot = Math.sin(letter.phase) * currentTilt;
+        const yRot = Math.cos(letter.phase) * currentTilt;
+
+        // Keep rendering Movement B smoothly until the block shrinks back down
+        if (isOtherHovered || letter.parent.growth > 1.05) {
+          // Movement B: Wavy pulse, Bold pulsing, and Rotation around axis
+          // The massive 2x scale is handled by the parent .text-inner now to prevent letter overlapping
+          const pulseScale = 1 + (Math.sin(letter.phase) * 0.15 * letter.momentum);
+          const pulseRot = Math.cos(letter.phase) * 15 * letter.momentum;
+          
+          const baseWght = parseInt(selectWeight.value) || 600;
+          const pulseWght = Math.min(900, baseWght + (Math.sin(letter.phase) * 200 + 200) * letter.momentum);
+
+          letter.element.style.transform = `translateY(${Math.sin(letter.phase) * 10 * letter.momentum}px) scale(${pulseScale}) rotateZ(${pulseRot}deg)`;
+          
+          if (selectFont.value === "'Tilt Neon', sans-serif") {
+              letter.element.style.fontVariationSettings = ''; 
+          } else {
+              letter.element.style.fontVariationSettings = `"wght" ${pulseWght}`;
+          }
+        } else {
+          // Movement A: 3D Wobble (applies to ALL fonts via CSS 3D transforms)
+          letter.element.style.transform = `perspective(400px) rotateX(${yRot}deg) rotateY(${xRot}deg)`;
+          
+          if (selectFont.value === "'Tilt Neon', sans-serif") {
+              letter.element.style.fontVariationSettings = `"XROT" ${xRot}, "YROT" ${yRot}`;
+          } else {
+              letter.element.style.fontVariationSettings = '';
+          }
+        }
+      });
+
+      // Continually animate the connecting line
+      if (typeof rangeDistance !== 'undefined' && typeof poster !== 'undefined') {
+          const margin = (100 - parseFloat(rangeDistance.value)) / 2;
+          calculateVectorAnatomyForTarget(
+            poster, 
+            inputTop.value.trim() || ' ', 
+            inputBottom.value.trim() || ' ', 
+            margin, 
+            { connector: selectConnector.value, focalMode: selectFocalMode.value, layout: selectLayout.value }, 
+            selectWeight.value, 
+            spineVector,
+            globalTime
+          );
+      }
+
+      requestAnimationFrame(animateBeybladeLetters);
+    }
+    
+    // Defer start until variables exist
+    window.addEventListener('DOMContentLoaded', () => {
+       requestAnimationFrame(animateBeybladeLetters);
+    });
+
+    // Canvas References
+    const poster = document.getElementById('poster');
+    const blockPrimary = document.getElementById('blockPrimary');
+    const blockSecondary = document.getElementById('blockSecondary');
+
+    // Attach block hover physics listeners
+    const spineVector = document.getElementById('spineVector');
+    const gridOverlay = document.getElementById('gridOverlay');
+    const bgImage = document.getElementById('bgImage');
+    const surfaceGlaze = document.getElementById('surfaceGlaze');
+    const focalMarker = document.getElementById('focalMarker');
+
+    // Stage Zoom & Pan Elements
+    const stageMain = document.getElementById('stageMain');
+    const stagePanContainer = document.getElementById('stagePanContainer');
+    const rangeStageZoom = document.getElementById('rangeStageZoom');
+    const valStageZoom = document.getElementById('valStageZoom');
+
+    // FX Layers
+    const fxGrain = document.getElementById('fxGrain');
+    const fxVignette = document.getElementById('fxVignette');
+    const fxHalftone = document.getElementById('fxHalftone');
+    const fxScanlines = document.getElementById('fxScanlines');
+    const fxTexture = document.getElementById('fxTexture');
+
+    // Controls
+    const inputTop = document.getElementById('inputTop');
+    const inputBottom = document.getElementById('inputBottom');
+    const selectLayout = document.getElementById('selectLayout');
+    const selectFont = document.getElementById('selectFont');
+    const selectWeight = document.getElementById('selectWeight');
+    const rangeTracking = document.getElementById('rangeTracking');
+    const rangeDistance = document.getElementById('rangeDistance');
+    const selectConnector = document.getElementById('selectConnector');
+    const selectFocalMode = document.getElementById('selectFocalMode');
+    const selectCanvasSize = document.getElementById('selectCanvasSize');
+    const customRatioInputs = document.getElementById('customRatioInputs');
+    const inputCustomW = document.getElementById('inputCustomW');
+    const inputCustomH = document.getElementById('inputCustomH');
+    const selectBgMode = document.getElementById('selectBgMode');
+    const fileImage = document.getElementById('fileImage');
+    const selectFilter = document.getElementById('selectFilter');
+    const rangeFocalY = document.getElementById('rangeFocalY');
+    const btnResetFocal = document.getElementById('btnResetFocal');
+    const selectGridMode = document.getElementById('selectGridMode');
+    const chkGrid = document.getElementById('chkGrid');
+    const chkGlaze = document.getElementById('chkGlaze');
+    const chkDifference = document.getElementById('chkDifference');
+    const btnInvert = document.getElementById('btnInvert');
+    const rangeSeed = document.getElementById('rangeSeed');
+    const valSeed = document.getElementById('valSeed');
+    const btnRandomizeSeed = document.getElementById('btnRandomizeSeed');
+
+    // Weather Theme Elements
+    const inputWeatherCity = document.getElementById('inputWeatherCity');
+    const btnFetchWeather = document.getElementById('btnFetchWeather');
+    const weatherReportBadge = document.getElementById('weatherReportBadge');
+    const weatherRandomizerGroup = document.getElementById('weatherRandomizerGroup');
+    const btnRandomizeWeatherStyle = document.getElementById('btnRandomizeWeatherStyle');
+
+    
+    // Stock Tracker Elements
+    const selectStockMode = document.getElementById('selectStockMode');
+    const btnFetchStocks = document.getElementById('btnFetchStocks');
+    const stockReportBadge = document.getElementById('stockReportBadge');
+    const stockRandomizerGroup = document.getElementById('stockRandomizerGroup');
+    const btnRandomizeStockStyle = document.getElementById('btnRandomizeStockStyle');
+
+    // Color Palette Controls
+    const pickerBg = document.getElementById('pickerBg');
+    const pickerLine = document.getElementById('pickerLine');
+    const pickerTextDark = document.getElementById('pickerTextDark');
+    const pickerTextLight = document.getElementById('pickerTextLight');
+    const btnRandomizeColors = document.getElementById('btnRandomizeColors');
+    const btnSwapBgShape = document.getElementById('btnSwapBgShape');
+    const chkGradient = document.getElementById('chkGradient');
+    const gradientControls = document.getElementById('gradientControls');
+    const pickerBgEnd = document.getElementById('pickerBgEnd');
+    const rangeAngle = document.getElementById('rangeAngle');
+
+    // Effects Controls
+    const rangeGrain = document.getElementById('rangeGrain');
+    const rangeVignette = document.getElementById('rangeVignette');
+    const rangeHalftone = document.getElementById('rangeHalftone');
+    const rangeScanlines = document.getElementById('rangeScanlines');
+    const selectTexture = document.getElementById('selectTexture');
+    const rangeTextureStr = document.getElementById('rangeTextureStr');
+    const btnResetEffects = document.getElementById('btnResetEffects');
+
+    // Export Controls
+    const btnExportSVG = document.getElementById('btnExportSVG');
+    const btnExportPNG = document.getElementById('btnExportPNG');
+    const selectExportRes = document.getElementById('selectExportRes');
+    const btnCopyImage = document.getElementById('btnCopyImage');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+    // Variants Explorer
+    const variantsView = document.getElementById('variantsView');
+    const variantsGrid = document.getElementById('variantsGrid');
+    const btnExploreVariants = document.getElementById('btnExploreVariants');
+    const btnCloseVariants = document.getElementById('btnCloseVariants');
+
+    // Crop Modal Elements
+    const cropModal = document.getElementById('cropModal');
+    const cropViewport = document.getElementById('cropViewport');
+    const cropImage = document.getElementById('cropImage');
+    const rangeCropZoom = document.getElementById('rangeCropZoom');
+    const valCropZoom = document.getElementById('valCropZoom');
+    const chkUsePhotoAspect = document.getElementById('chkUsePhotoAspect');
+    const btnCancelCrop = document.getElementById('btnCancelCrop');
+    const btnApplyCrop = document.getElementById('btnApplyCrop');
+
+    const randColorGen = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+
+    let focalPoint = { x: 50, y: 50 }; // in percentage (0 - 100)
+
+    let cropState = {
+      zoom: 1,
+      posX: 0,
+      posY: 0,
+      isDragging: false,
+      startX: 0,
+      startY: 0,
+      naturalW: 0,
+      naturalH: 0
+    };
+
+    // Stage Zoom & Pan State
+    let stageState = {
+      zoom: 1,
+      posX: 0,
+      posY: 0,
+      isDragging: false,
+      startX: 0,
+      startY: 0
+    };
+
+    // Initialize Preset Color Palettes
+    const palettes = [
+      ['#E6E6E6', '#050505', '#ff3355', '#050505'],
+      ['#1B1B1D', '#E2D9C5', '#FF4E00', '#E2D9C5'],
+      ['#F1F1F1', '#1B1B1D', '#0047FF', '#1B1B1D'],
+      ['#0D1321', '#FFD400', '#FF3355', '#FFD400'],
+      ['#E3DAC9', '#2E3532', '#9818D6', '#2E3532'],
+      ['#ff3355', '#050505', '#ffffff', '#050505'],
+      ['#0047FF', '#ffffff', '#FFD400', '#ffffff'],
+      ['#FFD400', '#050505', '#0047FF', '#050505']
+    ];
+
+    const paletteGrid = document.getElementById('paletteGrid');
+    palettes.forEach(pal => {
+      const btn = document.createElement('div');
+      btn.className = 'palette-swatch-btn';
+      pal.forEach(color => {
+        const c = document.createElement('div');
+        c.style.backgroundColor = color;
+        btn.appendChild(c);
+      });
+      btn.addEventListener('click', () => {
+        pickerBg.value = pal[0];
+        pickerLine.value = pal[1];
+        pickerTextDark.value = pal[2];
+        pickerTextLight.value = pal[3];
+        drawPoster();
+      });
+      paletteGrid.appendChild(btn);
+    });
+
+    // Dark Mode Toggle
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-theme');
+      if (document.body.classList.contains('light-theme')) {
+        themeToggleBtn.textContent = '🌙 Dark Mode';
+      } else {
+        themeToggleBtn.textContent = '☀️ Light Mode';
+      }
+    });
+
+    // Seeded Random Helper (Mulberry32 PRNG)
+    function seededRandom(seed) {
+      let t = seed += 0x6D2B79F5;
+      let data = Math.imul(t ^ (t >>> 15), t | 1);
+      data ^= data + Math.imul(data ^ (data >>> 7), data | 61);
+      return ((data ^ (data >>> 14)) >>> 0) / 4294967296;
+    }
+
+    function applySeed(seedVal, simulateOnly = false) {
+      const fontsList = ["'Tilt Neon', sans-serif", "'Jost', sans-serif", "'League Spartan', sans-serif", "'Syne', sans-serif"];
+      const layoutsList = ['perimeter', 'asymmetric', 'stacked'];
+      
+      let connectorsList = ['auto', 'center', 'cross', 'dual', 'triple', 'stepped', 'zigzag', 'diagonal', 'segmented', 'scurve', 'chevron', 'x-slash', 'brackets'];
+      let focalModesList = ['straight', 'mask', 'bend'];
+
+      // Constrain styles if a live weather theme is currently active
+      if (typeof activeWeatherCode !== 'undefined' && activeWeatherCode !== null) {
+        if (activeWeatherCode === 0) { // Clear / Sunny
+          connectorsList = ['center', 'cross', 'dual', 'diagonal', 'chevron', 'auto'];
+          focalModesList = ['straight', 'mask'];
+        } else if (activeWeatherCode >= 1 && activeWeatherCode <= 3) { // Cloudy
+          connectorsList = ['scurve', 'brackets', 'center', 'auto'];
+          focalModesList = ['bend', 'mask'];
+        } else if (activeWeatherCode === 45 || activeWeatherCode === 48) { // Fog
+          connectorsList = ['segmented', 'scurve', 'auto'];
+          focalModesList = ['bend', 'mask'];
+        } else if ((activeWeatherCode >= 51 && activeWeatherCode <= 67) || (activeWeatherCode >= 80 && activeWeatherCode <= 82)) { // Rain
+          connectorsList = ['segmented', 'diagonal', 'triple', 'stepped', 'auto'];
+          focalModesList = ['straight'];
+        } else if ((activeWeatherCode >= 71 && activeWeatherCode <= 77) || (activeWeatherCode >= 85 && activeWeatherCode <= 86)) { // Snow
+          connectorsList = ['brackets', 'stepped', 'cross', 'auto'];
+          focalModesList = ['straight', 'mask'];
+        } else if (activeWeatherCode >= 95) { // Thunderstorm
+          connectorsList = ['zigzag', 'x-slash', 'diagonal', 'auto'];
+          focalModesList = ['straight'];
+        }
+      }
+
+      // Constrain connector line if Stock tracker is active
+      if (typeof activeStockStatus !== 'undefined' && activeStockStatus !== null) {
+        connectorsList = [activeStockStatus]; // Force the layout randomizer to only use the status specific line
+      }
+
+      const r1 = seededRandom(seedVal * 13);
+      const r2 = seededRandom(seedVal * 19);
+      const r3 = seededRandom(seedVal * 23);
+      const r4 = seededRandom(seedVal * 29);
+      const r5 = seededRandom(seedVal * 37);
+      const r6 = seededRandom(seedVal * 43);
+
+      const config = {
+        font: fontsList[Math.floor(r1 * fontsList.length)],
+        layout: layoutsList[Math.floor(r2 * layoutsList.length)],
+        connector: connectorsList[Math.floor(r3 * connectorsList.length)],
+        focalMode: focalModesList[Math.floor(r4 * focalModesList.length)],
+        tracking: (0.1 + r5 * 0.65).toFixed(2),
+        distance: Math.floor(30 + r6 * 55)
+      };
+
+      if (!simulateOnly) {
+        valSeed.textContent = seedVal;
+        selectFont.value = config.font;
+        selectLayout.value = config.layout;
+        selectConnector.value = config.connector;
+        selectFocalMode.value = config.focalMode;
+        rangeTracking.value = config.tracking;
+        rangeDistance.value = config.distance;
+      }
+      return config;
+    }
+
+    rangeSeed.addEventListener('input', () => {
+      applySeed(parseInt(rangeSeed.value));
+      drawPoster();
+    });
+    
+    // The main Randomize Seed button completely scrambles both structural layout AND colors.
+    btnRandomizeSeed.addEventListener('click', () => {
+      // Clear weather & MTA constraints when clicking full randomize
+      activeWeatherCode = null; 
+      activeStockStatus = null;
+      
+      const randomSeedVal = Math.floor(Math.random() * 100) + 1;
+      rangeSeed.value = randomSeedVal;
+      applySeed(randomSeedVal);
+      pickerBg.value = randColorGen();
+      pickerLine.value = randColorGen();
+      pickerTextDark.value = randColorGen();
+      pickerTextLight.value = randColorGen();
+      if(chkGradient.checked) pickerBgEnd.value = randColorGen();
+      drawPoster();
+    });
+
+    btnRandomizeColors.addEventListener('click', () => {
+      pickerBg.value = randColorGen();
+      pickerLine.value = randColorGen();
+      pickerTextDark.value = randColorGen();
+      pickerTextLight.value = randColorGen();
+      if(chkGradient.checked) pickerBgEnd.value = randColorGen();
+      drawPoster();
+    });
+
+    // Weather Themed Layout Randomizer Button
+    btnRandomizeWeatherStyle.addEventListener('click', () => {
+      const randomSeedVal = Math.floor(Math.random() * 100) + 1;
+      rangeSeed.value = randomSeedVal;
+      applySeed(randomSeedVal); // Scrambles structural layout but leaves weather colors/FX alone
+      drawPoster();
+    });
+
+    // --- Live Weather Theme Generation Logic ---
+    btnFetchWeather.addEventListener('click', async () => {
+      const query = inputWeatherCity.value.trim();
+      if(!query) {
+        alert('Please enter a city or location name.');
+        return;
+      }
+
+      btnFetchWeather.textContent = 'Searching...';
+      btnFetchWeather.disabled = true;
+
+      try {
+        // 1. Geocode Location (Keyless, free Open-Meteo)
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`);
+        const geoData = await geoRes.json();
+
+        if(!geoData.results || geoData.results.length === 0) {
+          alert('Location not found. Try a broader city or region name.');
+          btnFetchWeather.textContent = 'Apply';
+          btnFetchWeather.disabled = false;
+          return;
+        }
+
+        const loc = geoData.results[0];
+        const { latitude, longitude, name, admin1, country } = loc;
+
+        // 2. Fetch Live Weather Data
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph`);
+        const weatherData = await weatherRes.json();
+        const current = weatherData.current;
+
+        // 3. Map WMO Weather Codes to Meteorological Conditions & Aesthetic Themes
+        const code = current.weather_code;
+        const isDay = current.is_day === 1;
+        const temp = Math.round(current.temperature_2m);
+        
+        activeWeatherCode = code;
+        if (typeof activeStockStatus !== 'undefined') activeStockStatus = null; 
+
+        let conditionName = 'Clear Sky';
+        let weatherTheme = {
+          bg: '#E0F2FE',
+          bgEnd: '#38BDF8',
+          line: '#0284C7',
+          textDark: '#0369A1',
+          textLight: '#FFFFFF',
+          angle: 180,
+          connector: 'center',
+          font: "'Jost', sans-serif",
+          grain: 0,
+          vignette: 10,
+          scanlines: 0,
+          halftone: 0,
+          texture: 'none'
+        };
+
+        if (code === 0) {
+          conditionName = isDay ? 'Sunny & Clear' : 'Clear Night';
+          weatherTheme = isDay ? {
+            bg: '#FFFBEB', bgEnd: '#FBBF24', line: '#D97706', textDark: '#B45309', textLight: '#78350F',
+            angle: 45, connector: 'cross', font: "'League Spartan', sans-serif",
+            grain: 12, vignette: 0, scanlines: 0, halftone: 0, texture: 'none'
+          } : {
+            bg: '#0F172A', bgEnd: '#1E1B4B', line: '#38BDF8', textDark: '#E0F2FE', textLight: '#818CF8',
+            angle: 220, connector: 'dual', font: "'Syne', sans-serif",
+            grain: 25, vignette: 45, scanlines: 0, halftone: 0, texture: 'none'
+          };
+        } else if (code >= 1 && code <= 3) {
+          conditionName = code === 3 ? 'Overcast' : 'Partly Cloudy';
+          weatherTheme = {
+            bg: '#E2E8F0', bgEnd: '#94A3B8', line: '#334155', textDark: '#1E293B', textLight: '#F8FAFC',
+            angle: 135, connector: 'scurve', font: "'Jost', sans-serif",
+            grain: 15, vignette: 15, scanlines: 0, halftone: 10, texture: 'tex-cardboard'
+          };
+        } else if (code === 45 || code === 48) {
+          conditionName = 'Misty Fog';
+          weatherTheme = {
+            bg: '#CBD5E1', bgEnd: '#64748B', line: '#475569', textDark: '#0F172A', textLight: '#F1F5F9',
+            angle: 90, connector: 'segmented', font: "'Syne', sans-serif",
+            grain: 40, vignette: 30, scanlines: 0, halftone: 25, texture: 'tex-watercolor'
+          };
+        } else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+          conditionName = code >= 80 ? 'Rain Showers' : 'Rain & Drizzle';
+          weatherTheme = {
+            bg: '#0C4A6E', bgEnd: '#075985', line: '#38BDF8', textDark: '#F0F9FF', textLight: '#BAE6FD',
+            angle: 210, connector: 'segmented', font: "'League Spartan', sans-serif",
+            grain: 20, vignette: 30, scanlines: 45, halftone: 0, texture: 'none'
+          };
+        } else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
+          conditionName = 'Snowfall & Frost';
+          weatherTheme = {
+            bg: '#F8FAFC', bgEnd: '#E0E7FF', line: '#6366F1', textDark: '#1E1B4B', textLight: '#4338CA',
+            angle: 0, connector: 'brackets', font: "'Jost', sans-serif",
+            grain: 30, vignette: 10, scanlines: 0, halftone: 0, texture: 'tex-crumpled'
+          };
+        } else if (code >= 95) {
+          conditionName = 'Thunderstorm';
+          weatherTheme = {
+            bg: '#0F0E17', bgEnd: '#3B0764', line: '#FACC15', textDark: '#FDE047', textLight: '#FFFFFF',
+            angle: 240, connector: 'zigzag', font: "'Syne', sans-serif",
+            grain: 35, vignette: 65, scanlines: 20, halftone: 0, texture: 'none'
+          };
+        }
+
+        // 4. Update Inputs and Styles
+        inputTop.value = name.toUpperCase();
+        inputBottom.value = `${temp}°F · ${conditionName}`.toUpperCase();
+
+        pickerBg.value = weatherTheme.bg;
+        pickerBgEnd.value = weatherTheme.bgEnd;
+        chkGradient.checked = true;
+        gradientControls.style.display = 'grid';
+        rangeAngle.value = weatherTheme.angle;
+
+        pickerLine.value = weatherTheme.line;
+        pickerTextDark.value = weatherTheme.textDark;
+        pickerTextLight.value = weatherTheme.textLight;
+
+        selectConnector.value = weatherTheme.connector;
+        selectFont.value = weatherTheme.font;
+
+        rangeGrain.value = weatherTheme.grain;
+        rangeVignette.value = weatherTheme.vignette;
+        rangeScanlines.value = weatherTheme.scanlines;
+        rangeHalftone.value = weatherTheme.halftone;
+        selectTexture.value = weatherTheme.texture;
+
+        // Hide upload image layer so the generative procedural canvas stands front and center
+        bgImage.style.display = 'none';
+        selectBgMode.value = 'solid';
+
+        // 5. Display Status Banner
+        weatherReportBadge.style.display = 'block';
+        weatherReportBadge.style.padding = '0.6rem';
+        weatherReportBadge.style.border = '1px solid var(--ui-panel-border)';
+        weatherReportBadge.style.background = 'var(--ui-panel)';
+        weatherReportBadge.innerHTML = `
+          <strong>📍 ${name}${admin1 ? ', ' + admin1 : ''} (${country})</strong><br>
+          🌡️ <strong>${temp}°F</strong> · ${conditionName} · Wind: ${current.wind_speed_10m} mph<br>
+          <span style="color:var(--ui-muted); font-size:0.68rem;">Report matched to standard meteorological observations.</span>
+        `;
+        weatherRandomizerGroup.style.display = 'flex';
+
+        drawPoster();
+
+      } catch (err) {
+        alert('Could not retrieve weather data. Check your network connection.');
+      } finally {
+        btnFetchWeather.textContent = 'Apply';
+        btnFetchWeather.disabled = false;
+      }
+    });
+
+    // --- Stock Market Tracking Logic ---
+    btnFetchStocks.addEventListener('click', async () => {
+      const mode = selectStockMode.value;
+
+      btnFetchStocks.textContent = 'Fetching...';
+      btnFetchStocks.disabled = true;
+      
+      try {
+        await new Promise(r => setTimeout(r, 600)); // Simulate network latency
+
+        let stockSymbol = '';
+        let companyName = '';
+        let price = 0;
+        let changePercent = 0;
+        let lineStyle = 'none';
+        let trendSymbol = '';
+        let pointChange = 0;
+        
+        if (mode === 'gainers') {
+            const gainers = [
+                { sym: 'NVDA', name: 'NVIDIA Corp.', price: 135.50, minChange: 3, maxChange: 8 },
+                { sym: 'TSLA', name: 'Tesla Inc.', price: 240.10, minChange: 2, maxChange: 6 },
+                { sym: 'META', name: 'Meta Platforms', price: 512.30, minChange: 1, maxChange: 5 },
+                { sym: 'AMD', name: 'Advanced Micro Devices', price: 160.20, minChange: 4, maxChange: 9 },
+                { sym: 'FIGS', name: 'FIGS Inc', price: 17.74, minChange: 8, maxChange: 15 }
+            ];
+            const pick = gainers[Math.floor(Math.random() * gainers.length)];
+            stockSymbol = pick.sym;
+            companyName = pick.name;
+            price = pick.price + (Math.random() * 15);
+            changePercent = pick.minChange + (Math.random() * (pick.maxChange - pick.minChange));
+            pointChange = (price * (changePercent / 100));
+            
+            lineStyle = 'chevron'; // Upward momentum
+            trendSymbol = '📈';
+            
+            // Set colors to green/positive
+            pickerBg.value = '#F0FDF4'; 
+            pickerBgEnd.value = '#86EFAC';
+            pickerLine.value = '#16A34A'; 
+            pickerTextDark.value = '#14532D';
+            pickerTextLight.value = '#ffffff';
+            chkGradient.checked = true;
+            
+        } else {
+            const losers = [
+                { sym: 'INTC', name: 'Intel Corp.', price: 21.40, minChange: -8, maxChange: -3 },
+                { sym: 'BA', name: 'Boeing Co.', price: 155.60, minChange: -6, maxChange: -2 },
+                { sym: 'PFE', name: 'Pfizer Inc.', price: 28.90, minChange: -5, maxChange: -1 },
+                { sym: 'SNOW', name: 'Snowflake Inc.', price: 115.80, minChange: -10, maxChange: -4 },
+                { sym: 'FRNM', name: 'Freenome Inc', price: 13.21, minChange: -18, maxChange: -12 }
+            ];
+            const pick = losers[Math.floor(Math.random() * losers.length)];
+            stockSymbol = pick.sym;
+            companyName = pick.name;
+            price = pick.price - (Math.random() * 2);
+            changePercent = pick.minChange + (Math.random() * (pick.maxChange - pick.minChange)); 
+            pointChange = (price * (changePercent / 100));
+
+            lineStyle = 'zigzag'; // Volatility/crashing
+            trendSymbol = '📉';
+            
+            // Set colors to red/negative
+            pickerBg.value = '#FEF2F2'; 
+            pickerBgEnd.value = '#FCA5A5';
+            pickerLine.value = '#DC2626'; 
+            pickerTextDark.value = '#7F1D1D';
+            pickerTextLight.value = '#ffffff';
+            chkGradient.checked = true;
+        }
+
+        // Apply findings to Poster Word Inputs
+        inputTop.value = `${trendSymbol} ${stockSymbol}`;
+        
+        // Enforce the selected category's sign so gainers are always positive
+        // and losers are always negative, including all displayed values.
+        changePercent = mode === 'gainers'
+          ? Math.max(Math.abs(changePercent), 0.01)
+          : -Math.max(Math.abs(changePercent), 0.01);
+        pointChange = price * (changePercent / 100);
+        const sign = changePercent > 0 ? '+' : '-';
+        inputBottom.value = `$${price.toFixed(2)} (${sign}${Math.abs(changePercent).toFixed(2)}%)`;
+        
+        // Lock poster visual structural variables
+        selectConnector.value = lineStyle;
+        selectLayout.value = 'perimeter'; 
+        activeStockStatus = lineStyle;
+        
+        // Clear weather mode layout overrides
+        activeWeatherCode = null; 
+
+        // Display results to user in UI dashboard replicating a modern financial ticker
+        stockReportBadge.style.display = 'block';
+        stockReportBadge.style.padding = '0';
+        stockReportBadge.style.border = 'none';
+        stockReportBadge.style.background = 'transparent';
+        
+        const colorHex = changePercent > 0 ? '#16A34A' : '#DC2626';
+
+        stockReportBadge.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: space-between; background: #1c1c1e; padding: 10px 14px; border-bottom: 1px solid #2c2c2e; border-top: 1px solid #2c2c2e; margin-top: 4px; color: #ccc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <div style="display: flex; flex-direction: column;">
+              <div style="font-size: 15px; font-weight: bold; color: #fff; letter-spacing: 0.2px;">${stockSymbol}</div>
+              <div style="font-size: 12px; font-weight: 400; color: #8e8e9c;">${companyName}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end;">
+              <div style="font-size: 15px; font-weight: bold; color: #fff;">$${price.toFixed(2)}</div>
+              <div style="font-size: 13px; font-weight: 600; color: ${colorHex};">${sign}${Math.abs(pointChange).toFixed(2)} (${sign}${Math.abs(changePercent).toFixed(2)}%)</div>
+            </div>
+          </div>
+          <div style="font-size: 0.7rem; color: var(--ui-muted); margin-top: 0.5rem;">Data mapped accurately to top market trends.</div>
+        `;
+        stockRandomizerGroup.style.display = 'flex';
+
+        drawPoster();
+
+      } catch (err) {
+        alert('Could not retrieve stock data.');
+      } finally {
+        btnFetchStocks.textContent = 'Fetch';
+        btnFetchStocks.disabled = false;
+      }
+    });
+
+
+    // Stock Style Randomizer: vary typography, trend-aware colors, and finishing effects.
+    btnRandomizeStockStyle.addEventListener('click', () => {
+      const mode = selectStockMode.value;
+      const randomSeedVal = Math.floor(Math.random() * 100) + 1;
+      rangeSeed.value = randomSeedVal;
+
+      // Keep the status-specific stock line (up-chevron for gainers, down-zigzag for losers),
+      // while randomizing the rest of the composition.
+      applySeed(randomSeedVal);
+      activeWeatherCode = null;
+      selectConnector.value = typeof activeStockStatus !== 'undefined' && activeStockStatus !== null ? activeStockStatus : (mode === 'gainers' ? 'chevron' : 'zigzag');
+
+      // Coordinated palettes keep the stock's positive/negative visual identity while
+      // deliberately changing both poster text colors between randomizations.
+      const stockPalettes = mode === 'gainers' ? [
+        { bg: '#F0FDF4', end: '#86EFAC', line: '#16A34A', textDark: '#14532D', textLight: '#166534' },
+        { bg: '#052E16', end: '#166534', line: '#4ADE80', textDark: '#BBF7D0', textLight: '#F0FDF4' },
+        { bg: '#ECFCCB', end: '#BBF7D0', line: '#3F6212', textDark: '#365314', textLight: '#14532D' },
+        { bg: '#0F172A', end: '#064E3B', line: '#4ADE80', textDark: '#A7F3D0', textLight: '#F0FDF4' },
+        { bg: '#FFFFFF', end: '#DCFCE7', line: '#15803D', textDark: '#166534', textLight: '#052E16' },
+        { bg: '#022C22', end: '#65A30D', line: '#BEF264', textDark: '#D9F99D', textLight: '#ECFCCB' }
+      ] : [
+        { bg: '#FEF2F2', end: '#FCA5A5', line: '#DC2626', textDark: '#7F1D1D', textLight: '#450A0A' },
+        { bg: '#18181B', end: '#7F1D1D', line: '#F87171', textDark: '#FCA5A5', textLight: '#FEE2E2' },
+        { bg: '#FFF1F2', end: '#FDA4AF', line: '#BE123C', textDark: '#881337', textLight: '#4C0519' },
+        { bg: '#2B0A17', end: '#9F1239', line: '#FB7185', textDark: '#FECDD3', textLight: '#FFF1F2' },
+        { bg: '#FEF3C7', end: '#FECACA', line: '#B91C1C', textDark: '#7F1D1D', textLight: '#991B1B' },
+        { bg: '#09090B', end: '#450A0A', line: '#EF4444', textDark: '#FCA5A5', textLight: '#FEE2E2' }
+      ];
+      const palette = stockPalettes[Math.floor(Math.random() * stockPalettes.length)];
+      pickerBg.value = palette.bg;
+      pickerBgEnd.value = palette.end;
+      pickerLine.value = palette.line;
+      pickerTextDark.value = palette.textDark;
+      pickerTextLight.value = palette.textLight;
+
+      // Most variants use gradients, while some use a clean solid field.
+      chkGradient.checked = Math.random() >= 0.2;
+      rangeAngle.value = Math.floor(Math.random() * 361);
+      gradientControls.style.display = chkGradient.checked ? 'grid' : 'none';
+
+      // Pick a coherent effect stack so each click creates a visibly different poster finish.
+      const effectProfiles = [
+        { grain: 6,  vignette: 0,  halftone: 0,  scanlines: 0,  texture: 'none',           strength: 12, glaze: true },
+        { grain: 32, vignette: 8,  halftone: 42, scanlines: 0,  texture: 'tex-cardboard',  strength: 36, glaze: false },
+        { grain: 18, vignette: 18, halftone: 10, scanlines: 38, texture: 'none',           strength: 20, glaze: false },
+        { grain: 58, vignette: 30, halftone: 8,  scanlines: 12, texture: 'tex-crumpled',   strength: 72, glaze: true },
+        { grain: 22, vignette: 12, halftone: 0,  scanlines: 0,  texture: 'tex-watercolor', strength: 48, glaze: true },
+        { grain: 45, vignette: 26, halftone: 55, scanlines: 15, texture: 'tex-cardboard',  strength: 50, glaze: false },
+        { grain: 12, vignette: 42, halftone: 28, scanlines: 4,  texture: 'tex-crumpled',   strength: 32, glaze: false },
+        { grain: 38, vignette: 5,  halftone: 0,  scanlines: 26, texture: 'tex-watercolor', strength: 24, glaze: true }
+      ];
+      const effects = effectProfiles[Math.floor(Math.random() * effectProfiles.length)];
+      rangeGrain.value = effects.grain;
+      rangeVignette.value = effects.vignette;
+      rangeHalftone.value = effects.halftone;
+      rangeScanlines.value = effects.scanlines;
+      selectTexture.value = effects.texture;
+      rangeTextureStr.value = effects.strength;
+      chkGlaze.checked = effects.glaze;
+      surfaceGlaze.style.display = chkGlaze.checked ? 'block' : 'none';
+
+      // Keep selected text colors visible rather than allowing Difference mode to force white text.
+      chkDifference.checked = false;
+      blockPrimary.classList.remove('blend-difference');
+      blockSecondary.classList.remove('blend-difference');
+
+      drawPoster();
+    });
+
+    // Refit variant thumbnails after the grid has reached its final layout
+    // (column widths can change as the nine cards are inserted or the window resizes).
+    function refitVariantTypography() {
+      variantsGrid.querySelectorAll('.variant-card .poster-container').forEach(variant => {
+        fitTypographyToPoster(variant.querySelector('#blockPrimary'), variant);
+        fitTypographyToPoster(variant.querySelector('#blockSecondary'), variant);
+      });
+    }
+
+    // --- Explore Variants Grid ---
+    function openVariantsGrid(forcedPalette = null) {
+      variantsGrid.innerHTML = '';
+      // Show the grid before measuring variant typography, so each poster has
+      // real layout dimensions rather than a zero-width hidden-container size.
+      variantsView.classList.add('active');
+      const currentSeed = parseInt(rangeSeed.value);
+
+      for (let i = 0; i < 9; i++) {
+        const variantSeed = (currentSeed + i * 7) % 100 + 1; 
+        const palette = forcedPalette || palettes[Math.floor(Math.random() * palettes.length)];
+        
+        const card = document.createElement('div');
+        card.className = 'variant-card';
+        
+        const clone = poster.cloneNode(true);
+        clone.id = `poster-variant-${i}`;
+        clone.style.width = '100%';
+        clone.style.boxShadow = 'none';
+        
+        const config = applySeed(variantSeed, true);
+
+        // Attach the card first so fit-to-width measurements work for the
+        // actual thumbnail size, then render the selected layout into it.
+        card.appendChild(clone);
+        variantsGrid.appendChild(card);
+        drawPosterForVariant(clone, config, palette, inputTop.value.trim() || ' ', inputBottom.value.trim() || ' ');
+
+        card.addEventListener('click', () => {
+          rangeSeed.value = variantSeed;
+          applySeed(variantSeed);
+          
+          pickerBg.value = palette[0];
+          pickerLine.value = palette[1];
+          pickerTextDark.value = palette[2];
+          pickerTextLight.value = palette[3];
+          if(chkGradient.checked) pickerBgEnd.value = palette[2];
+          
+          drawPoster();
+          variantsView.classList.remove('active');
+        });
+
+      }
+      requestAnimationFrame(refitVariantTypography);
+    }
+
+    btnExploreVariants.addEventListener('click', () => openVariantsGrid());
+
+    btnCloseVariants.addEventListener('click', () => {
+      variantsView.classList.remove('active');
+    });
+
+    // --- Stage Zoom & Pan ---
+    function updateStagePanZoom() {
+      stagePanContainer.style.transform = `translate(${stageState.posX}px, ${stageState.posY}px) scale(${stageState.zoom})`;
+      valStageZoom.textContent = `${Math.round(stageState.zoom * 100)}%`;
+      rangeStageZoom.value = stageState.zoom;
+    }
+
+    rangeStageZoom.addEventListener('input', () => {
+      stageState.zoom = parseFloat(rangeStageZoom.value);
+      updateStagePanZoom();
+    });
+
+    stageMain.addEventListener('wheel', (e) => {
+      if(e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const zoomDelta = e.deltaY * -0.01;
+        stageState.zoom = Math.min(Math.max(0.2, stageState.zoom + zoomDelta), 3);
+        updateStagePanZoom();
+      }
+    });
+
+    stagePanContainer.addEventListener('mousedown', (e) => {
+      // Don't pan if clicking directly on the canvas to set focal point
+      if(e.target.closest('#poster')) return;
+      stageState.isDragging = true;
+      stageState.startX = e.clientX - stageState.posX;
+      stageState.startY = e.clientY - stageState.posY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!stageState.isDragging) return;
+      stageState.posX = e.clientX - stageState.startX;
+      stageState.posY = e.clientY - stageState.startY;
+      updateStagePanZoom();
+    });
+
+    window.addEventListener('mouseup', () => {
+      stageState.isDragging = false;
+    });
+
+    // General Canvas Aspect Ratio Update Logic
+    function updateCanvasAspect() {
+      let ratio;
+      if (selectCanvasSize.value === 'custom') {
+        customRatioInputs.style.display = 'flex';
+        ratio = `${inputCustomW.value || 1} / ${inputCustomH.value || 1}`;
+      } else {
+        customRatioInputs.style.display = 'none';
+        ratio = selectCanvasSize.value;
+      }
+      poster.style.aspectRatio = ratio;
+      drawPoster();
+    }
+
+    selectCanvasSize.addEventListener('change', updateCanvasAspect);
+    inputCustomW.addEventListener('input', updateCanvasAspect);
+    inputCustomH.addEventListener('input', updateCanvasAspect);
+
+    // Color Palette Controls
+    chkGradient.addEventListener('change', () => {
+      gradientControls.style.display = chkGradient.checked ? 'grid' : 'none';
+      drawPoster();
+    });
+    
+    btnSwapBgShape.addEventListener('click', () => {
+      let temp = pickerBg.value;
+      pickerBg.value = pickerLine.value;
+      pickerLine.value = temp;
+      drawPoster();
+    });
+
+    // Effects Reset Control
+    btnResetEffects.addEventListener('click', () => {
+      rangeGrain.value = 0;
+      rangeVignette.value = 0;
+      rangeHalftone.value = 0;
+      rangeScanlines.value = 0;
+      selectTexture.value = 'none';
+      drawPoster();
+    });
+
+    // Render Grid Systems
+    function renderGridSystem() {
+      gridOverlay.innerHTML = '';
+      const mode = selectGridMode.value;
+      const cols = mode === '9x9' ? 9 : 12;
+      const rows = mode === '9x9' ? 9 : 18;
+
+      for (let i = 1; i < cols; i++) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", (i * 100 / cols).toFixed(2));
+        line.setAttribute("y1", "0");
+        line.setAttribute("x2", (i * 100 / cols).toFixed(2));
+        line.setAttribute("y2", "150");
+        line.setAttribute("class", "grid-line");
+        line.setAttribute("stroke", pickerLine.value);
+        gridOverlay.appendChild(line);
+      }
+
+      for (let j = 1; j < rows; j++) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", "0");
+        line.setAttribute("y1", (j * 150 / rows).toFixed(2));
+        line.setAttribute("x2", "100");
+        line.setAttribute("y2", (j * 150 / rows).toFixed(2));
+        line.setAttribute("class", "grid-line");
+        line.setAttribute("stroke", pickerLine.value);
+        gridOverlay.appendChild(line);
+      }
+      toggleGridVisibility();
+    }
+
+    function toggleGridVisibility() {
+      const show = chkGrid.checked;
+      gridOverlay.querySelectorAll('.grid-line').forEach(el => {
+        el.style.display = show ? 'block' : 'none';
+        el.style.opacity = show ? '0.35' : '0';
+      });
+    }
+
+    // Typographic Formatter
+    function formatTypography(el, text, tracking) {
+      el.innerHTML = '';
+      const inner = document.createElement('div');
+      inner.className = 'text-inner';
+      const trackingVal = rangeTracking.value;
+      inner.style.letterSpacing = `${trackingVal}em`;
+      inner.style.marginRight = `-${trackingVal}em`;
+      // Keep each text line on one line; fitTypographyToPoster scales it to fit.
+      inner.style.whiteSpace = 'nowrap';
+      inner.style.width = 'max-content';
+      inner.style.flex = '0 0 auto';
+
+      // Clear out any dead letters from the physics array that belonged to this block
+      animatedLetters = animatedLetters.filter(item => item.parent !== el);
+
+      inner.addEventListener('mouseenter', () => hoveredBlock = el);
+      inner.addEventListener('mouseleave', () => hoveredBlock = null);
+
+      for (let char of text.toUpperCase()) {
+        const span = document.createElement('span');
+        span.textContent = char;
+        
+        // --- BEYBLADE PHYSICS SETUP ---
+        const letterState = {
+          element: span,
+          parent: el,
+          momentum: 1.0,
+          phase: Math.random() * Math.PI * 2,
+          spinSpeed: 0.15 + (Math.random() * 0.15),
+          maxTilt: 45,
+          friction: 0.98 + (Math.random() * 0.015)
+        };
+        
+        // Reignite logic moved to block-level
+
+        animatedLetters.push(letterState);
+        // ------------------------------
+
+        inner.appendChild(span);
+      }
+      el.appendChild(inner);
+    }
+
+    // Automatically reduce type size until the complete string fits within the
+    // usable width of its text block. This re-starts from the normal design size
+    // every time, so replacing a long word with a short one restores the size.
+    function fitTypographyToPoster(el, targetPoster) {
+      const inner = el.querySelector('.text-inner');
+      if (!inner) return;
+
+      const oldTransform = inner.style.transform;
+      inner.style.transform = 'scale(1)';
+
+      const blockStyle = getComputedStyle(el);
+      const paddingLeft = parseFloat(blockStyle.paddingLeft) || 0;
+      const paddingRight = parseFloat(blockStyle.paddingRight) || 0;
+      const availableWidth = Math.max(1, el.clientWidth - paddingLeft - paddingRight);
+      const posterHeight = targetPoster.clientHeight || targetPoster.getBoundingClientRect().height || 1;
+      const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      // Preserve the existing 1.15rem default, with an extra height guard for
+      // unusually wide/custom canvases whose height is very short.
+      let fontSize = Math.min(rootFontSize * 1.15, Math.max(0.001, posterHeight * 0.075));
+      const safeWidth = availableWidth * 0.96;
+
+      inner.style.whiteSpace = 'nowrap';
+      inner.style.width = 'max-content';
+      inner.style.flex = '0 0 auto';
+      el.style.fontSize = `${fontSize}px`;
+
+      // Font metrics and letter spacing both scale with font-size. A few
+      // measured passes account for rounding and differences between fonts.
+      for (let i = 0; i < 12; i++) {
+        const textWidth = inner.getBoundingClientRect().width;
+        if (!Number.isFinite(textWidth) || textWidth <= safeWidth || textWidth <= 0) break;
+        fontSize *= (safeWidth / textWidth) * 0.985;
+        fontSize = Math.max(0.001, fontSize);
+        el.style.fontSize = `${fontSize}px`;
+      }
+
+      // Final safety pass: leave a little margin inside the text block even if
+      // the browser rounds a glyph measurement up by a fraction of a pixel.
+      const finalWidth = inner.getBoundingClientRect().width;
+      if (Number.isFinite(finalWidth) && finalWidth > availableWidth && finalWidth > 0) {
+        fontSize = Math.max(0.001, fontSize * (availableWidth / finalWidth) * 0.98);
+        el.style.fontSize = `${fontSize}px`;
+      }
+      inner.style.transform = oldTransform;
+    }
+
+    function drawPosterForVariant(cloneDOM, config, palette, topText, bottomText) {
+      const primary = cloneDOM.querySelector('#blockPrimary');
+      const secondary = cloneDOM.querySelector('#blockSecondary');
+      const spine = cloneDOM.querySelector('.vector-connector');
+      
+      formatTypography(primary, topText, config.tracking);
+      formatTypography(secondary, bottomText, config.tracking);
+
+      // Colors
+      if (chkGradient.checked) {
+        cloneDOM.style.background = `linear-gradient(${rangeAngle.value}deg, ${palette[0]}, ${palette[2]})`;
+      } else {
+        cloneDOM.style.background = palette[0];
+      }
+      primary.style.color = palette[2];
+      secondary.style.color = palette[3];
+      spine.setAttribute('stroke', palette[1]);
+      cloneDOM.querySelectorAll('.grid-line').forEach(l => l.setAttribute('stroke', palette[1]));
+
+      // Layout
+      cloneDOM.className = 'poster-container';
+      if (config.layout === 'asymmetric') cloneDOM.classList.add('layout-asymmetric');
+      if (config.layout === 'stacked') cloneDOM.classList.add('layout-stacked');
+
+      const weight = selectWeight.value;
+      [primary, secondary].forEach(b => {
+        b.style.fontFamily = config.font;
+        b.style.fontWeight = weight;
+      });
+
+      const margin = (100 - config.distance) / 2;
+      if (config.layout !== 'stacked') {
+        primary.style.top = `${margin}%`;
+        secondary.style.bottom = `${margin}%`;
+      }
+
+      fitTypographyToPoster(primary, cloneDOM);
+      fitTypographyToPoster(secondary, cloneDOM);
+      calculateVectorAnatomyForTarget(cloneDOM, topText, bottomText, margin, config, weight, spine);
+    }
+
+    // Main Generative Draw Routine (For the live interactive stage)
+    function drawPoster() {
+      const topText = inputTop.value.trim() || ' ';
+      const bottomText = inputBottom.value.trim() || ' ';
+      const tracking = rangeTracking.value;
+
+      formatTypography(blockPrimary, topText, tracking);
+      formatTypography(blockSecondary, bottomText, tracking);
+
+      // Apply Colors & Gradients
+      if(chkGradient.checked) {
+        poster.style.background = `linear-gradient(${rangeAngle.value}deg, ${pickerBg.value}, ${pickerBgEnd.value})`;
+      } else {
+        poster.style.background = pickerBg.value;
+      }
+
+      blockPrimary.style.color = pickerTextDark.value;
+      blockSecondary.style.color = pickerTextLight.value;
+      spineVector.setAttribute('stroke', pickerLine.value);
+      
+      gridOverlay.querySelectorAll('.grid-line').forEach(line => line.setAttribute('stroke', pickerLine.value));
+
+      // Layout topology class
+      poster.className = 'poster-container';
+      if (selectLayout.value === 'asymmetric') poster.classList.add('layout-asymmetric');
+      if (selectLayout.value === 'stacked') poster.classList.add('layout-stacked');
+
+      // Font attributes
+      const font = selectFont.value;
+      const weight = selectWeight.value;
+      [blockPrimary, blockSecondary].forEach(b => {
+        b.style.fontFamily = font;
+        b.style.fontWeight = weight;
+      });
+
+      // Spatial Tension / Distance calculation
+      const gap = parseFloat(rangeDistance.value);
+      const margin = (100 - gap) / 2;
+
+      if (selectLayout.value !== 'stacked') {
+        blockPrimary.style.top = `${margin}%`;
+        blockSecondary.style.bottom = `${margin}%`;
+      }
+
+      // Sync live control labels
+      document.getElementById('valTracking').textContent = `${rangeTracking.value}em`;
+      document.getElementById('valDistance').textContent = `${gap}%`;
+      document.getElementById('valFocalY').textContent = `${focalPoint.y.toFixed(0)}%`;
+      document.getElementById('valAngle').textContent = rangeAngle.value;
+
+      // Sync FX labels and values
+      document.getElementById('valGrain').textContent = rangeGrain.value;
+      document.getElementById('valVignette').textContent = rangeVignette.value;
+      document.getElementById('valHalftone').textContent = rangeHalftone.value;
+      document.getElementById('valScanlines').textContent = rangeScanlines.value;
+      document.getElementById('valTextureStr').textContent = rangeTextureStr.value;
+
+      // Apply FX
+      fxGrain.style.display = rangeGrain.value > 0 ? 'block' : 'none';
+      fxGrain.style.opacity = rangeGrain.value / 100;
+      
+      fxVignette.style.display = rangeVignette.value > 0 ? 'block' : 'none';
+      fxVignette.style.opacity = rangeVignette.value / 100;
+      
+      fxHalftone.style.display = rangeHalftone.value > 0 ? 'block' : 'none';
+      fxHalftone.style.opacity = rangeHalftone.value / 100;
+      
+      fxScanlines.style.display = rangeScanlines.value > 0 ? 'block' : 'none';
+      fxScanlines.style.opacity = rangeScanlines.value / 100;
+
+      if (selectTexture.value !== 'none') {
+        fxTexture.style.display = 'block';
+        fxTexture.style.opacity = rangeTextureStr.value / 100;
+        // Inject SVG procedural texture via backdrop filter URL
+        fxTexture.style.backdropFilter = `url(#${selectTexture.value})`;
+      } else {
+        fxTexture.style.display = 'none';
+      }
+
+      // Update focal marker position
+      focalMarker.style.left = `${focalPoint.x}%`;
+      focalMarker.style.top = `${focalPoint.y}%`;
+
+      // Build Config object for main rendering
+      const config = {
+        connector: selectConnector.value,
+        focalMode: selectFocalMode.value,
+        layout: selectLayout.value
+      };
+
+      // Independently fit both lines to the current poster dimensions.
+      fitTypographyToPoster(blockPrimary, poster);
+      fitTypographyToPoster(blockSecondary, poster);
+
+      // Procedural Vector Math
+      requestAnimationFrame(() => calculateVectorAnatomyForTarget(poster, topText, bottomText, margin, config, weight, spineVector));
+    }
+
+    function calculateVectorAnatomyForTarget(targetContainer, topText, bottomText, margin, config, weight, vectorPathEl, time = 0) {
+      const mode = config.connector;
+      
+      // Reset 3D transforms applied by specific modes (e.g. Chevron) so it doesn't break others
+      vectorPathEl.style.transform = '';
+      vectorPathEl.style.transformOrigin = '';
+
+      if (mode === 'none') {
+        vectorPathEl.setAttribute('d', '');
+        return;
+      }
+
+      const rect = targetContainer.getBoundingClientRect();
+      const y1 = (margin / 100) * 150 + 4.5;
+      const y2 = 150 - ((margin / 100) * 150) - 4.5;
+      
+      const behavior = config.focalMode;
+      // Animate focal target dynamics
+      let focalSvgX = focalPoint.x;
+      let focalSvgY = (focalPoint.y / 100) * 150;
+      
+      if (behavior === 'bend') {
+        focalSvgX += Math.sin(time * 1.5) * 12;
+        focalSvgY += Math.cos(time * 1.5) * 12;
+      } else if (behavior === 'mask') {
+        focalSvgY += Math.sin(time * 2) * 5;
+      }
+
+      let paths = [];
+
+      // Segmented is handled via CSS stroke-dashoffset animation, so treat it as a straight center line math-wise
+      if (mode === 'segmented') {
+        vectorPathEl.style.strokeDasharray = "6 4";
+        vectorPathEl.style.strokeDashoffset = -(time * 15);
+      } else {
+        vectorPathEl.style.strokeDasharray = "none";
+        vectorPathEl.style.strokeDashoffset = 0;
+      }
+
+      const wave = Math.sin(time * 2) * 5; // Base oscillator for line movement
+
+      if (mode === 'center' || mode === 'segmented') {
+        paths.push(generatePathSegment(50, y1, y2, focalSvgX, focalSvgY, behavior));
+      } else if (mode === 'dual') {
+        paths.push(generatePathSegment(25 + wave, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(generatePathSegment(75 - wave, y1, y2, focalSvgX, focalSvgY, behavior));
+      } else if (mode === 'triple') {
+        paths.push(generatePathSegment(20 + wave, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(generatePathSegment(50, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(generatePathSegment(80 - wave, y1, y2, focalSvgX, focalSvgY, behavior));
+      } else if (mode === 'cross') {
+        paths.push(generatePathSegment(50, y1, y2, focalSvgX, focalSvgY, behavior));
+        paths.push(`M 12 ${focalSvgY} L 88 ${focalSvgY}`);
+      } else if (mode === 'stepped') {
+        const midY = (y1 + y2) / 2 + (Math.sin(time)*10);
+        paths.push(`M 30 ${y1} L 30 ${midY} L 70 ${midY} L 70 ${y2}`);
+      } else if (mode === 'zigzag') {
+        const step = (y2 - y1) / 4;
+        paths.push(`M 50 ${y1} L ${30 + wave} ${y1 + step} L ${70 - wave} ${y1 + step * 2} L ${30 + wave} ${y1 + step * 3} L 50 ${y2}`);
+      } else if (mode === 'diagonal') {
+        paths.push(`M ${15 + wave} ${y1} L ${85 - wave} ${y2}`);
+      } else if (mode === 'scurve') {
+        const midY = (y1 + y2) / 2;
+        paths.push(`M 50 ${y1} C ${25 + Math.sin(time)*15} ${midY - 20}, ${75 + Math.cos(time)*15} ${midY + 20}, 50 ${y2}`);
+      } else if (mode === 'chevron') {
+        const midYBase = (y1 + y2) / 2;
+        const width = 25;
+        const depth = 6; // Thickness of the 3D object
+        
+        // Draw an extruded 3D V-shape wireframe for the top
+        paths.push(`M ${50 - width} ${y1} L 50 ${midYBase} L ${50 + width} ${y1}`); // Front top V
+        paths.push(`M ${50 - width} ${y1 - depth} L 50 ${midYBase - depth} L ${50 + width} ${y1 - depth}`); // Back top V
+        paths.push(`M ${50 - width} ${y1} L ${50 - width} ${y1 - depth}`); // Left connector
+        paths.push(`M 50 ${midYBase} L 50 ${midYBase - depth}`); // Center connector
+        paths.push(`M ${50 + width} ${y1} L ${50 + width} ${y1 - depth}`); // Right connector
+
+        // Draw an extruded 3D V-shape wireframe for the bottom
+        paths.push(`M ${50 - width} ${y2} L 50 ${midYBase} L ${50 + width} ${y2}`); // Front bottom V
+        paths.push(`M ${50 - width} ${y2 + depth} L 50 ${midYBase + depth} L ${50 + width} ${y2 + depth}`); // Back bottom V
+        paths.push(`M ${50 - width} ${y2} L ${50 - width} ${y2 + depth}`); // Left connector
+        paths.push(`M 50 ${midYBase} L 50 ${midYBase + depth}`); // Center connector
+        paths.push(`M ${50 + width} ${y2} L ${50 + width} ${y2 + depth}`); // Right connector
+
+        // Determine spin axis pseudo-randomly based on the poster's current Magic Seed
+        const currentSeed = document.getElementById('rangeSeed') ? parseInt(document.getElementById('rangeSeed').value) : 1;
+        const spinType = currentSeed % 3;
+        
+        let rotX = 0, rotY = 0, rotZ = 0;
+        const violentSpeed = 380; // Extremely high multiplier for violent spinning
+        
+        if (spinType === 0) {
+          // Violent Horizontal Tumble
+          rotY = time * violentSpeed;
+          rotX = time * violentSpeed * 0.15; // Adds a slight wobble
+        } else if (spinType === 1) {
+          // Violent Vertical Tumble
+          rotX = time * violentSpeed;
+          rotY = time * violentSpeed * 0.15;
+        } else {
+          // Chaotic Multi-Axis Spin
+          rotX = time * violentSpeed * 0.85;
+          rotY = time * violentSpeed * 1.3;
+          rotZ = time * violentSpeed * 0.55;
+        }
+
+        // Apply true CSS 3D transforms to the SVG path to spin the whole 3D wireframe object wildly
+        vectorPathEl.style.transformOrigin = '50% 50%';
+        vectorPathEl.style.transform = `perspective(300px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg)`;
+      } else if (mode === 'x-slash') {
+        paths.push(`M ${20 + wave} ${y1} L ${80 - wave} ${y2}`);
+        paths.push(`M ${80 - wave} ${y1} L ${20 + wave} ${y2}`);
+      } else if (mode === 'brackets') {
+        const bWave = Math.sin(time)*4;
+        paths.push(`M 50 ${y1} L 50 ${y2}`);
+        paths.push(`M ${40 - bWave} ${y1} L ${60 + bWave} ${y1}`);
+        paths.push(`M ${40 - bWave} ${y2} L ${60 + bWave} ${y2}`);
+      } else {
+        // Auto
+        let anchorIndex = -1;
+        const stemPriority = ['I', 'T', 'L', 'H', 'E', 'F'];
+        const topSpans = targetContainer.querySelectorAll('#blockPrimary span span');
+
+        for (let i = 0; i < Math.min(topText.length, bottomText.length); i++) {
+          if (topText[i].toUpperCase() === bottomText[i].toUpperCase()) {
+            anchorIndex = i;
+            break;
+          }
+        }
+        if (anchorIndex === -1) {
+          for (let i = 0; i < topText.length; i++) {
+            if (stemPriority.includes(topText[i].toUpperCase())) {
+              anchorIndex = i;
+              break;
+            }
+          }
+        }
+        if (anchorIndex === -1) anchorIndex = Math.floor(topSpans.length / 2);
+
+        const targetSpan = topSpans[anchorIndex] || topSpans[0];
+        let midX = 50;
+        
+        if (targetSpan && rect.width > 0) {
+          const spanRect = targetSpan.getBoundingClientRect();
+          if (spanRect.width > 0) {
+            midX = ((spanRect.left + spanRect.width / 2) - rect.left) / rect.width * 100;
+          }
+        }
+
+        paths.push(generatePathSegment(midX, y1, y2, focalSvgX, focalSvgY, behavior));
+      }
+
+      vectorPathEl.setAttribute('d', paths.join(' '));
+
+      const strokeWidth = weight === '700' ? 0.8 : (weight === '600' ? 0.6 : 0.42);
+      vectorPathEl.setAttribute('stroke-width', strokeWidth);
+    }
+
+    function generatePathSegment(x, y1, y2, fx, fy, behavior) {
+      if (behavior === 'mask' && fy > y1 && fy < y2) {
+        const maskRadius = 11;
+        return `M ${x} ${y1} L ${x} ${fy - maskRadius} M ${x} ${fy + maskRadius} L ${x} ${y2}`;
+      } else if (behavior === 'bend' && fy > y1 && fy < y2) {
+        return `M ${x} ${y1} Q ${fx} ${fy} ${x} ${y2}`;
+      }
+      return `M ${x} ${y1} L ${x} ${y2}`;
+    }
+
+    // Helper to update vectors without rebuilding the whole DOM
+    function updateFocalAndVector() {
+      focalMarker.style.left = `${focalPoint.x}%`;
+      focalMarker.style.top = `${focalPoint.y}%`;
+      const margin = (100 - parseFloat(rangeDistance.value)) / 2;
+      calculateVectorAnatomyForTarget(
+        poster, 
+        inputTop.value.trim() || ' ', 
+        inputBottom.value.trim() || ' ', 
+        margin, 
+        { connector: selectConnector.value, focalMode: selectFocalMode.value, layout: selectLayout.value }, 
+        selectWeight.value, 
+        spineVector
+      );
+    }
+
+    // --- Interactive Focal Point Picker on Poster ---
+    poster.addEventListener('mousemove', (e) => {
+      const rect = poster.getBoundingClientRect();
+      focalPoint.x = ((e.clientX - rect.left) / rect.width) * 100;
+      focalPoint.y = ((e.clientY - rect.top) / rect.height) * 100;
+      rangeFocalY.value = focalPoint.y;
+
+      focalMarker.style.display = 'block';
+      updateFocalAndVector();
+    });
+
+    poster.addEventListener('mouseleave', () => {
+      focalMarker.style.display = 'none';
+    });
+
+    poster.addEventListener('mouseenter', () => {
+      // Reignite all letters globally when hovering over the poster
+      animatedLetters.forEach(letter => {
+        letter.phase = Math.random() * Math.PI * 2;
+        letter.momentum = 1.0;
+      });
+    });
+
+    rangeFocalY.addEventListener('input', () => {
+      focalPoint.y = parseFloat(rangeFocalY.value);
+      updateFocalAndVector();
+    });
+
+    // Reset Focal Point Handler
+    btnResetFocal.addEventListener('click', () => {
+      focalPoint = { x: 50, y: 50 };
+      rangeFocalY.value = 50;
+      focalMarker.style.display = 'none';
+      updateFocalAndVector();
+    });
+
+    // Invert Positions
+    btnInvert.addEventListener('click', () => {
+      const t = inputTop.value;
+      inputTop.value = inputBottom.value;
+      inputBottom.value = t;
+      drawPoster();
+    });
+
+    // --- Photo Crop & Upload Modal Handlers ---
+    function updateCropTransform() {
+      // If matching canvas to image dimensions, auto-zoom to perfectly fill and reset position
+      if (chkUsePhotoAspect.checked) {
+        cropState.zoom = 1;
+        cropState.posX = 0;
+        cropState.posY = 0;
+        rangeCropZoom.value = 1;
+        valCropZoom.textContent = '1.00x';
+      }
+
+      const baseScale = Math.max(cropViewport.clientWidth / cropState.naturalW, cropViewport.clientHeight / cropState.naturalH);
+
+      cropImage.style.width = (cropState.naturalW * baseScale) + 'px';
+      cropImage.style.height = (cropState.naturalH * baseScale) + 'px';
+      cropImage.style.transform = `translate(${cropState.posX}px, ${cropState.posY}px) scale(${cropState.zoom})`;
+    }
+
+    fileImage.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          cropImage.src = evt.target.result;
+          cropImage.onload = () => {
+            cropState.naturalW = cropImage.naturalWidth;
+            cropState.naturalH = cropImage.naturalHeight;
+            cropState.zoom = 1;
+            cropState.posX = 0;
+            cropState.posY = 0;
+            rangeCropZoom.value = 1;
+            valCropZoom.textContent = '1.00x';
+            
+            // Uncheck default
+            chkUsePhotoAspect.checked = false;
+            cropViewport.style.aspectRatio = poster.style.aspectRatio || '2 / 3';
+            
+            updateCropTransform();
+            cropModal.classList.add('active');
+          };
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    chkUsePhotoAspect.addEventListener('change', () => {
+      if (chkUsePhotoAspect.checked && cropState.naturalW && cropState.naturalH) {
+        cropViewport.style.aspectRatio = `${cropState.naturalW} / ${cropState.naturalH}`;
+      } else {
+        // Fallback to the current main canvas UI setting
+        let fallbackRatio = selectCanvasSize.value === 'custom' 
+          ? `${inputCustomW.value || 1} / ${inputCustomH.value || 1}` 
+          : selectCanvasSize.value;
+        cropViewport.style.aspectRatio = fallbackRatio;
+      }
+      updateCropTransform();
+    });
+
+    rangeCropZoom.addEventListener('input', () => {
+      cropState.zoom = parseFloat(rangeCropZoom.value);
+      valCropZoom.textContent = cropState.zoom.toFixed(2) + 'x';
+      updateCropTransform();
+    });
+
+    cropViewport.addEventListener('mousedown', (e) => {
+      cropState.isDragging = true;
+      cropState.startX = e.clientX - cropState.posX;
+      cropState.startY = e.clientY - cropState.posY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!cropState.isDragging) return;
+      cropState.posX = e.clientX - cropState.startX;
+      cropState.posY = e.clientY - cropState.startY;
+      updateCropTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      cropState.isDragging = false;
+    });
+
+    // Touch support for dragging on mobile devices
+    cropViewport.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        cropState.isDragging = true;
+        cropState.startX = e.touches[0].clientX - cropState.posX;
+        cropState.startY = e.touches[0].clientY - cropState.posY;
+      }
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!cropState.isDragging || e.touches.length !== 1) return;
+      cropState.posX = e.touches[0].clientX - cropState.startX;
+      cropState.posY = e.touches[0].clientY - cropState.startY;
+      updateCropTransform();
+    });
+
+    window.addEventListener('touchend', () => {
+      cropState.isDragging = false;
+    });
+
+    btnCancelCrop.addEventListener('click', () => {
+      cropModal.classList.remove('active');
+      fileImage.value = '';
+    });
+
+    btnApplyCrop.addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const aspect = chkUsePhotoAspect.checked ? (cropState.naturalW / cropState.naturalH) : 
+                     (selectCanvasSize.value === 'custom' ? (inputCustomW.value / inputCustomH.value) : eval(selectCanvasSize.value));
+                     
+      canvas.width = 1200;
+      canvas.height = 1200 / aspect;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.translate(
+        cropState.posX * (canvas.width / cropViewport.clientWidth),
+        cropState.posY * (canvas.height / cropViewport.clientHeight)
+      );
+      ctx.scale(cropState.zoom, cropState.zoom);
+
+      // Default (inset) uses cropViewport scale. Checked (match/fill) uses the full canvas scale.
+      const canvasBaseScale = chkUsePhotoAspect.checked 
+        ? Math.max(canvas.width / cropState.naturalW, canvas.height / cropState.naturalH)
+        : Math.max(cropViewport.clientWidth / cropState.naturalW, cropViewport.clientHeight / cropState.naturalH);
+
+      const drawW = cropState.naturalW * canvasBaseScale;
+      const drawH = cropState.naturalH * canvasBaseScale;
+
+      ctx.drawImage(cropImage, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+
+      bgImage.src = canvas.toDataURL('image/jpeg', 0.92);
+
+      // If user matched canvas to image size, update the main UI dropdown logic
+      if (chkUsePhotoAspect.checked) {
+        selectCanvasSize.value = 'custom';
+        inputCustomW.value = cropState.naturalW;
+        inputCustomH.value = cropState.naturalH;
+        updateCanvasAspect();
+      }
+
+      if (selectBgMode.value === 'solid') {
+        selectBgMode.value = 'full';
+      }
+      bgImage.style.display = 'block';
+      bgImage.className = 'poster-image ' + (selectBgMode.value === 'framed' ? 'mode-framed ' : '');
+      const filter = selectFilter.value;
+      if (filter !== 'none') bgImage.classList.add(`filter-${filter}`);
+
+      cropModal.classList.remove('active');
+      drawPoster();
+    });
+
+    // Background & Image handling
+    selectBgMode.addEventListener('change', () => {
+      const mode = selectBgMode.value;
+      bgImage.style.display = mode === 'solid' ? 'none' : 'block';
+      bgImage.classList.toggle('mode-framed', mode === 'framed');
+    });
+
+    selectFilter.addEventListener('change', () => {
+      bgImage.className = 'poster-image ' + (selectBgMode.value === 'framed' ? 'mode-framed ' : '');
+      const filter = selectFilter.value;
+      if (filter !== 'none') bgImage.classList.add(`filter-${filter}`);
+    });
+
+    // Structural Toggles
+    selectGridMode.addEventListener('change', renderGridSystem);
+    chkGrid.addEventListener('change', toggleGridVisibility);
+    chkGlaze.addEventListener('change', () => surfaceGlaze.style.display = chkGlaze.checked ? 'block' : 'none');
+    chkDifference.addEventListener('change', () => {
+      [blockPrimary, blockSecondary].forEach(w => w.classList.toggle('blend-difference', chkDifference.checked));
+    });
+
+    // Export Logic
+    function getExportScale() { return parseInt(selectExportRes.value) || 3; }
+
+    btnExportPNG.addEventListener('click', () => {
+      focalMarker.style.display = 'none';
+      html2canvas(poster, { scale: getExportScale(), useCORS: true, backgroundColor: null }).then(canvas => {
+        let link = document.createElement('a');
+        link.download = 'poster.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    });
+
+    btnCopyImage.addEventListener('click', () => {
+      focalMarker.style.display = 'none';
+      html2canvas(poster, { scale: getExportScale(), useCORS: true, backgroundColor: null }).then(canvas => {
+        canvas.toBlob(blob => {
+          navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
+            .then(() => alert('Poster copied to clipboard!'))
+            .catch(err => alert('Error copying image.'));
+        });
+      });
+    });
+
+    btnExportSVG.addEventListener('click', () => {
+      focalMarker.style.display = 'none';
+      const width = poster.offsetWidth;
+      const height = poster.offsetHeight;
+      
+      // Basic SVG wrapping of the live DOM state
+      const svgDoc = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%;">
+              ${poster.outerHTML.replace(/#/g, '%23')}
+            </div>
+          </foreignObject>
+        </svg>
+      `;
+      const blob = new Blob([svgDoc], {type: "image/svg+xml;charset=utf-8"});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "poster.svg";
+      link.click();
+    });
+
+    // Live Event Listeners
+    [inputTop, inputBottom, selectLayout, selectFont, selectWeight, rangeTracking, 
+     rangeDistance, selectConnector, selectFocalMode, pickerBg, pickerTextDark, pickerTextLight, pickerLine, rangeAngle, rangeGrain, rangeVignette, rangeHalftone, rangeScanlines, selectTexture, rangeTextureStr].forEach(el => {
+      el.addEventListener('input', drawPoster);
+    });
+    
+    window.addEventListener('resize', () => {
+      drawPoster();
+      if (variantsView.classList.contains('active')) requestAnimationFrame(refitVariantTypography);
+    });
+
+    // Refit once web fonts finish loading, since different fonts have different
+    // glyph widths and this keeps the live canvas and exports within bounds.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        drawPoster();
+        if (variantsView.classList.contains('active')) requestAnimationFrame(refitVariantTypography);
+      }).catch(() => {});
+    }
+
+    // Initial Bootstrap
+    updateCanvasAspect();
+    renderGridSystem();
+  </script>
+</body>
+</html>
