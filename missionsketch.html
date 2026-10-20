@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark">
+<title>Concept Sketches | Brian Lau</title>
+<style>
+:root{--black:#000;--white:#fff;--gold:#D4AF37;--brown:#A52A2A;--panel:rgba(0,0,0,.82);--head:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;--body:"Ink Free","Segoe Print","Bradley Hand",cursive;--ease:cubic-bezier(.22,1,.36,1)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;background:#000}body{margin:0;min-width:320px;overflow-x:hidden;color:#fff;background:#000;font:1rem/1.6 var(--body)}
+.moving-bg{position:fixed;inset:-25vmax;z-index:0;pointer-events:none;background:radial-gradient(circle at 16% 22%,rgba(165,42,42,.88) 0 13%,transparent 38%),radial-gradient(circle at 84% 28%,rgba(165,42,42,.62) 0 12%,transparent 37%),radial-gradient(circle at 52% 82%,rgba(165,42,42,.72) 0 14%,transparent 39%),linear-gradient(125deg,#000 15%,#A52A2A 50%,#000 85%);background-size:135% 135%,145% 145%,155% 155%,220% 220%;animation:bgShift 22s ease-in-out infinite alternate;will-change:transform,background-position,opacity}.moving-bg:after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.12)}
+@keyframes bgShift{0%{opacity:.62;transform:translate3d(-4%,-3%,0) scale(1.03);background-position:0 20%,100% 10%,35% 100%,0 50%}50%{opacity:1;transform:translate3d(4%,2%,0) scale(1.09);background-position:48% 35%,55% 60%,75% 30%,100% 50%}100%{opacity:.76;transform:translate3d(-1%,4%,0) scale(1.05);background-position:95% 75%,10% 90%,15% 10%,20% 50%}}
+.entry{position:fixed;inset:0;z-index:100;display:grid;place-items:center;pointer-events:none;background:#000;animation:entryOut 1.25s var(--ease) forwards}.entry span{color:var(--gold);font:700 .875rem/1 var(--head);letter-spacing:.34em;text-transform:uppercase;animation:entryText 1.05s var(--ease) both}@keyframes entryText{0%{opacity:0;transform:translateY(12px);letter-spacing:.55em}38%,68%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-8px)}}@keyframes entryOut{0%,72%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+.hero,main,footer{position:relative;z-index:1}.hero{isolation:isolate;display:grid;width:100%;height:60vh;min-height:360px;place-items:center;overflow:hidden;background-image:url("hero.png");background-size:cover;background-position:center;background-repeat:no-repeat}.hero:before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.34)}.hero h1{margin:0;padding:20px;font:650 clamp(4rem,9vw,6rem)/.95 var(--head);letter-spacing:-.055em;text-align:center;text-shadow:0 3px 28px rgba(0,0,0,.72)}
+main{width:min(100%,1200px);margin:auto;padding:80px 32px 0}.panel{position:relative;overflow:hidden;margin:0 0 80px;padding:clamp(26px,4vw,44px);border:1px solid rgba(212,175,55,.76);border-radius:24px;background:var(--panel);box-shadow:0 20px 55px rgba(0,0,0,.54),0 0 28px rgba(212,175,55,.05);backdrop-filter:blur(12px)}.panel:before{content:"";position:absolute;inset:0 auto auto 0;width:90px;height:1px;background:var(--gold);box-shadow:0 0 14px rgba(212,175,55,.7)}.eyebrow{margin:0 0 10px;color:var(--gold);font:700 .75rem/1.2 var(--head);letter-spacing:.2em;text-transform:uppercase}h2{margin:0 0 18px;font:650 1.4rem/1.25 var(--head)}.intro{max-width:67ch;margin:0}
+.gallery{display:flex;flex-direction:column;gap:32px;margin-top:24px;}
+.gallery img{width:100%;height:auto;border:1px solid var(--gold);border-radius:18px;display:block;box-shadow:0 7px 18px rgba(0,0,0,.34)}
+.js .reveal{opacity:0;filter:blur(7px);transform:translateY(28px) scale(.975);transition:opacity 760ms var(--ease),filter 760ms var(--ease),transform 760ms var(--ease)}.js .reveal.visible{opacity:1;filter:none;transform:none}
+footer{width:min(100%,1200px);margin:auto;padding:0 32px 48px;text-align:center}.rule{height:1px;margin-bottom:30px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}.email{color:var(--gold);font-size:.875rem;text-decoration:none;text-underline-offset:4px}.email:hover{text-decoration:underline}
+.back-link{display:inline-block;margin-top:20px;color:var(--gold);font-family:var(--head);font-weight:600;text-decoration:none;border:1px solid var(--gold);padding:12px 24px;border-radius:18px;transition:all 240ms var(--ease)}.back-link:hover{background:rgba(212,175,55,.1);transform:translateY(-2px)}
+@media(min-width:768px) and (max-width:1199px){.hero{height:55vh}}@media(max-width:767px){.hero{height:45vh}.hero h1{font-size:clamp(3.35rem,16vw,4.6rem)}main{padding:48px 20px 0}.panel{margin-bottom:48px;padding:26px 20px}footer{padding:0 20px 34px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.moving-bg{animation:none!important;transform:none}.entry{display:none}.js .reveal{opacity:1;filter:none;transform:none}}
+</style><script>document.documentElement.classList.add("js")</script>
+</head>
+<body><div class="moving-bg" aria-hidden="true"></div><div class="entry" aria-hidden="true"><span>Concept Sketches</span></div>
+<header class="hero" aria-labelledby="title"><h1 id="title">Concept Sketches</h1></header>
+<main>
+<section class="panel reveal" aria-labelledby="intro-title"><p class="eyebrow">Project Work</p><h2 id="intro-title">Introduction</h2><p class="intro">A collection of exploratory concept sketches covering various ideas, layouts, and visual explorations for the course.</p>
+<a href="index.html" class="back-link">&larr; Back to Course Index</a>
+</section>
+<section class="panel reveal" aria-labelledby="gallery-title"><p class="eyebrow">Visual Concepts</p><h2 id="gallery-title">Sketches</h2>
+<div class="gallery">
+<img src="sketch1.jpg" alt="Sketch 1: Curiosity, Discovery, and Weightlessness" loading="lazy">
+<img src="sketch2.png" alt="Sketch 2: Space research, floating, known vs unknown" loading="lazy">
+<img src="sketch3.png" alt="Sketch 3: Baruch community and students mind map" loading="lazy">
+<img src="sketch4.png" alt="Sketch 4: Geometric, Narrative, Abstract, Symbolic" loading="lazy">
+<img src="sketch5.jpg" alt="Sketch 5: Symbolic final concept" loading="lazy">
+</div>
+</section>
+</main>
+<footer><div class="rule" aria-hidden="true"></div><a class="email" href="mailto:brian.lau79@stu-mail.baruch.cuny.edu">brian.lau79@stu-mail.baruch.cuny.edu</a></footer>
+<script>const items=document.querySelectorAll(".reveal");if("IntersectionObserver" in window){const observer=new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.classList.toggle("visible",entry.isIntersecting)),{threshold:.18});items.forEach(item=>observer.observe(item))}else{items.forEach(item=>item.classList.add("visible"))}</script>
+</body></html>
