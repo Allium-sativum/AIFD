@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSEP Mission Patch Generator - Size Check Edition</title>
+
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --bg-panel: #1e1e1e;
+      --border-color: #333333;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- Stage --- */
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2rem;
+      background: #e5e7eb;
+      background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+      background-size: 20px 20px;
+      overflow: auto;
+    }
+
+    .canvas-container {
+      width: 100%;
+      max-width: 600px;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: max-width 0.3s ease;
+    }
+
+    .canvas-container svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+      filter: drop-shadow(0 25px 35px rgba(0,0,0,0.4));
+    }
+    
+    /* Small Size Check Canvas */
+    .canvas-small {
+      display: none;
+      width: 150px;
+      height: 150px;
+      aspect-ratio: 1 / 1;
+      position: relative;
+    }
+    .canvas-small svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+    }
+    
+    .size-check-active .canvas-container {
+      max-width: 450px;
+    }
+    .size-check-active .canvas-small {
+      display: block;
+    }
+
+    /* --- Sidebar UI --- */
+    .sidebar {
+      width: 440px; 
+      background-color: var(--bg-panel);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background-color: #171717;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .sidebar-header h1 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+    .sidebar-header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4; }
+
+    .panel-section {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .panel-section h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+
+    .control-row { display: flex; flex-direction: column; gap: 0.4rem; }
+    .control-row label { font-size: 0.75rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); text-transform: uppercase;}
+    
+    .val-badge { background: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: var(--text-main); }
+
+    input[type="text"], select {
+      width: 100%; padding: 0.6rem; background-color: #000; border: 1px solid var(--border-color);
+      color: var(--text-main); border-radius: 6px; outline: none; transition: border-color 0.2s; font-family: inherit; font-size: 0.85rem;
+    }
+    input[type="text"]:focus, select:focus { border-color: var(--accent); }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+    
+    .color-picker { display: flex; align-items: center; gap: 0.5rem; background: #000; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color);}
+    input[type="color"] { -webkit-appearance: none; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; background: none; padding: 0; flex-shrink: 0;}
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+    .color-picker span { font-size: 0.7rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+    .btn-group { display: flex; gap: 0.5rem; }
+    button {
+      flex: 1; padding: 0.8rem; background-color: var(--accent); color: #fff; border: none; border-radius: 6px;
+      font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s;
+    }
+    button:hover { background-color: var(--accent-hover); }
+    button:active { transform: scale(0.98); }
+    .btn-secondary { background-color: var(--border-color); color: var(--text-main); }
+    .btn-secondary:hover { background-color: #444; }
+    .btn-primary-large { padding: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    @media (max-width: 800px) {
+      body { flex-direction: column; }
+      .sidebar { width: 100%; height: 50vh; border-left: none; border-top: 1px solid var(--border-color); }
+      .stage { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT: Stage & SVG Generator -->
+  <main class="stage" id="stageMain">
+    <!-- Big Canvas -->
+    <div class="canvas-container" id="poster">
+      <svg id="patchSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+        <defs>
+          <filter id="satinV" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.6 0.015" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+            <feSpecularLighting in="blur" surfaceScale="3" specularConstant="1.2" specularExponent="25" lighting-color="#ffffff" result="spec">
+              <feDistantLight azimuth="135" elevation="45" />
+            </feSpecularLighting>
+            <feComposite in="spec" in2="SourceAlpha" operator="in" result="specMasked" />
+            <feComposite in="displaced" in2="specMasked" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="lit" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.45 0" in="noise" result="coloredNoise" />
+            <feBlend mode="multiply" in="lit" in2="coloredNoise" result="final" />
+          </filter>
+
+          <filter id="satinH" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.015 0.6" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+            <feSpecularLighting in="blur" surfaceScale="3" specularConstant="1.2" specularExponent="25" lighting-color="#ffffff" result="spec">
+              <feDistantLight azimuth="45" elevation="45" />
+            </feSpecularLighting>
+            <feComposite in="spec" in2="SourceAlpha" operator="in" result="specMasked" />
+            <feComposite in="displaced" in2="specMasked" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="lit" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.45 0" in="noise" result="coloredNoise" />
+            <feBlend mode="multiply" in="lit" in2="coloredNoise" result="final" />
+          </filter>
+
+          <filter id="stitchLines" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.1 0.1" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+
+          <clipPath id="patchBorderClip">
+            <rect width="500" height="500" rx="16" ry="16"/>
+          </clipPath>
+          
+          <pattern id="bgTwillPattern" width="4" height="4" patternUnits="userSpaceOnUse">
+             <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#222" stroke-width="1.5"/>
+          </pattern>
+          
+          <pattern id="borderThreadPattern" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(10)">
+             <line x1="0" y1="0" x2="0" y2="6" stroke="#000" stroke-width="2" opacity="0.6"/>
+             <line x1="3" y1="0" x2="3" y2="6" stroke="#fff" stroke-width="2" opacity="0.2"/>
+          </pattern>
+        </defs>
+
+        <rect width="500" height="500" rx="16" ry="16" fill="#050505" id="bgBase" />
+        <rect width="500" height="500" rx="16" ry="16" fill="url(#bgTwillPattern)" />
+        
+        <g clip-path="url(#patchBorderClip)">
+          <g id="layer-swirls" fill="none" stroke-linecap="round" filter="url(#stitchLines)" opacity="1">
+            <path d="M -50 150 C 150 400, 400 450, 550 250" stroke="#333333" stroke-width="6" opacity="0.6"/>
+            <path d="M -50 150 C 150 400, 400 450, 550 250" stroke="#ffffff" stroke-width="2" opacity="0.3" stroke-dasharray="10 6"/>
+            <path d="M 50 350 C 200 550, 450 400, 550 100" stroke="#333333" stroke-width="8" opacity="0.6"/>
+            <path d="M 50 350 C 200 550, 450 400, 550 100" stroke="#ffffff" stroke-width="2" opacity="0.4" stroke-dasharray="4 8"/>
+            <path d="M -20 250 C 100 50, 400 0, 520 150" stroke="#333333" stroke-width="5" opacity="0.6"/>
+            <path d="M -20 250 C 100 50, 400 0, 520 150" stroke="#ffffff" stroke-width="1.5" opacity="0.5" stroke-dasharray="15 5"/>
+            <ellipse cx="250" cy="250" rx="200" ry="120" stroke="#ffffff" stroke-width="1.5" opacity="0.15" transform="rotate(-15 250 250)" />
+            <ellipse cx="250" cy="250" rx="240" ry="160" stroke="#ffffff" stroke-width="2" opacity="0.1" stroke-dasharray="12 12" transform="rotate(-10 250 250)" />
+          </g>
+          
+          <g id="layer-stars" fill="#ffffff" filter="url(#satinH)"></g>
+
+          <g id="earthGroup" transform="translate(90, 405)" filter="url(#satinH)">
+            <circle id="earth-ocean" cx="0" cy="0" r="30" fill="#0ea5e9" />
+            <g id="earth-land" fill="#84cc16">
+              <path d="M -15 -10 Q -5 -20 8 -15 Q 15 -5 5 10 Q -10 15 -15 -10 Z"/>
+              <path d="M 5 15 Q 15 25 15 5 Q 0 -5 5 15 Z"/>
+              <path d="M -20 0 Q -25 10 -15 15 Q -10 5 -20 0 Z"/>
+            </g>
+          </g>
+
+          <g id="layer-letter-b" filter="url(#satinV)">
+            <path fill-rule="evenodd" d="
+                M 175 110 L 330 110 C 380 110, 395 160, 360 210 C 420 240, 400 370, 330 370 L 175 370 L 135 320 L 175 270 L 135 230 L 170 180 L 135 140 Z 
+                M 230 150 L 290 150 C 320 150, 320 180, 290 180 L 230 180 Z" 
+                fill="#2563eb" stroke="#1e40af" stroke-width="4" stroke-linejoin="round" id="b-shape" />
+          </g>
+
+          <g id="starGroup" transform="translate(390, 245)" filter="url(#satinH)">
+            <path d="M 0 -65 Q 5 -5 65 0 Q 5 5 0 65 Q -5 5 -65 0 Q -5 -5 0 -65 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="2" id="shape-star"/>
+          </g>
+
+          <g id="layer-paw" transform="translate(245, 295)" filter="url(#satinH)">
+            <path d="M -15,-20 C -30,-40 30,-45 40,-25 C 50,0 20,20 -5,5 Z" fill="#8b5cf6" stroke="#5b21b6" stroke-width="3" id="paw-heel"/>
+            <g transform="translate(-30, 20) rotate(-45)">
+                <ellipse cx="0" cy="0" rx="14" ry="10" fill="#8b5cf6" stroke="#5b21b6" stroke-width="2.5" class="paw-toe"/>
+                <path d="M -10 8 Q -20 25 -30 35 Q -15 25 -3 13 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5" class="paw-claw"/>
+            </g>
+            <g transform="translate(-5, 38) rotate(-30)">
+                <ellipse cx="0" cy="0" rx="14" ry="10" fill="#8b5cf6" stroke="#5b21b6" stroke-width="2.5" class="paw-toe"/>
+                <path d="M -10 8 Q -15 30 -25 45 Q -8 30 2 15 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5" class="paw-claw"/>
+            </g>
+            <g transform="translate(25, 42) rotate(-10)">
+                <ellipse cx="0" cy="0" rx="14" ry="10" fill="#8b5cf6" stroke="#5b21b6" stroke-width="2.5" class="paw-toe"/>
+                <path d="M -10 10 Q -5 32 -5 50 Q 8 32 8 15 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5" class="paw-claw"/>
+            </g>
+            <g transform="translate(55, 30) rotate(15)">
+                <ellipse cx="0" cy="0" rx="14" ry="10" fill="#8b5cf6" stroke="#5b21b6" stroke-width="2.5" class="paw-toe"/>
+                <path d="M -8 10 Q 5 30 15 45 Q 15 30 12 15 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5" class="paw-claw"/>
+            </g>
+          </g>
+        </g>
+        
+        <g id="layer-typography" filter="url(#satinV)">
+            <text id="txt-top" x="250" y="70" text-anchor="middle" font-family="'Helvetica', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" letter-spacing="1.5">BARUCH COLLEGE</text>
+            <text id="txt-bottom" x="270" y="445" text-anchor="middle" font-family="'Helvetica', Arial, sans-serif" font-weight="900" font-size="44" fill="#ffffff" letter-spacing="4">ISS</text>
+            <g id="text-decorations">
+              <path d="M 195 428 Q 198 428 198 425 Q 198 428 201 428 Q 198 428 198 431 Q 198 428 195 428 Z" fill="#ffffff"/>
+              <circle cx="175" cy="432" r="2.5" fill="#ffffff"/>
+              <circle cx="185" cy="425" r="2" fill="#ffffff"/>
+              <circle cx="340" cy="425" r="2.5" fill="#ffffff"/>
+            </g>
+        </g>
+
+        <g id="outerBorder">
+            <rect width="500" height="500" rx="16" ry="16" fill="none" stroke="#475569" stroke-width="16" id="border-base" />
+            <rect width="500" height="500" rx="16" ry="16" fill="none" stroke="url(#borderThreadPattern)" stroke-width="16" id="border-threads" />
+            <rect width="478" height="478" x="11" y="11" rx="8" ry="8" fill="none" stroke="#1e293b" stroke-width="3" id="border-inner" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- Small Canvas for Side-by-Side Size Check -->
+    <div class="canvas-small" id="posterSmall">
+      <!-- Will be injected via JS -->
+    </div>
+  </main>
+
+  <!-- RIGHT: Controls -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Patch Studio</h1>
+      <p>Satisfies requirement: "Show each patch big and small, side by side."</p>
+    </div>
+
+    <!-- VIEW & EXPORT -->
+    <div class="panel-section">
+      <div class="control-row" style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <label style="margin:0; font-size: 0.85rem; color: var(--accent);">🔍 Enable Size Check</label>
+        <input type="checkbox" id="chkSizeCheck" style="width:auto; height: 18px; width: 18px; accent-color: var(--accent);">
+      </div>
+      <span style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.5rem;">Displays a 3.5" thumbnail next to the large editor to check legibility.</span>
+      
+      <div class="btn-group">
+        <button id="btnExportPNG">Export PNG (2000px)</button>
+        <button id="btnExportSVG" class="btn-secondary">Export SVG</button>
+      </div>
+    </div>
+
+    <!-- TYPOGRAPHY -->
+    <div class="panel-section">
+      <h2>1. Typography</h2>
+      <div class="control-row">
+        <label>Top Text</label>
+        <input type="text" id="inTextTop" value="BARUCH COLLEGE">
+      </div>
+      <div class="grid-2">
+        <div class="control-row">
+          <label>Size <span class="val-badge" id="lblTopSize">34</span></label>
+          <input type="range" id="inTopSize" min="20" max="60" step="1" value="34">
+        </div>
+        <div class="control-row">
+          <label>Spacing <span class="val-badge" id="lblTopSpace">1.5</span></label>
+          <input type="range" id="inTopSpace" min="0" max="10" step="0.5" value="1.5">
+        </div>
+      </div>
+      
+      <div class="control-row" style="margin-top: 0.5rem;">
+        <label>Bottom Text</label>
+        <input type="text" id="inTextBottom" value="ISS">
+      </div>
+      <div class="grid-2">
+        <div class="control-row">
+          <label>Size <span class="val-badge" id="lblBotSize">44</span></label>
+          <input type="range" id="inBotSize" min="20" max="80" step="1" value="44">
+        </div>
+        <div class="control-row">
+          <label>Spacing <span class="val-badge" id="lblBotSpace">4</span></label>
+          <input type="range" id="inBotSpace" min="0" max="15" step="0.5" value="4">
+        </div>
+      </div>
+      
+      <div class="control-row" style="margin-top: 0.5rem; flex-direction: row; align-items: center; justify-content: space-between;">
+        <label style="margin:0;">Show "ISS" Star Decorations</label>
+        <input type="checkbox" id="chkTextDecor" checked style="width:auto; height: 16px; width: 16px; accent-color: var(--accent);">
+      </div>
+    </div>
+
+    <!-- TRANSFORMATIONS -->
+    <div class="panel-section">
+      <h2>2. Positions & Layout</h2>
+
+      <label style="font-size: 0.75rem; color: var(--text-main); font-weight: bold; margin-bottom: -0.3rem;">Letter 'B'</label>
+      <div class="grid-3">
+        <div class="control-row">
+          <label>X-Pos</label>
+          <input type="range" id="inBX" min="-100" max="100" step="1" value="0">
+        </div>
+        <div class="control-row">
+          <label>Y-Pos</label>
+          <input type="range" id="inBY" min="-100" max="100" step="1" value="0">
+        </div>
+        <div class="control-row">
+          <label>Scale</label>
+          <input type="range" id="inBS" min="0.5" max="1.5" step="0.05" value="1">
+        </div>
+      </div>
+      
+      <label style="font-size: 0.75rem; color: var(--text-main); font-weight: bold; margin-top: 0.5rem; margin-bottom: -0.3rem;">Paw Print</label>
+      <div class="grid-2">
+        <div class="control-row">
+          <label>X-Pos</label>
+          <input type="range" id="inPawX" min="150" max="350" step="1" value="245">
+        </div>
+        <div class="control-row">
+          <label>Y-Pos</label>
+          <input type="range" id="inPawY" min="200" max="400" step="1" value="295">
+        </div>
+        <div class="control-row">
+          <label>Angle</label>
+          <input type="range" id="inPawR" min="-45" max="45" step="1" value="0">
+        </div>
+        <div class="control-row">
+          <label>Scale</label>
+          <input type="range" id="inPawS" min="0.5" max="1.5" step="0.05" value="1">
+        </div>
+      </div>
+
+      <label style="font-size: 0.75rem; color: var(--text-main); font-weight: bold; margin-top: 0.5rem; margin-bottom: -0.3rem;">Star</label>
+      <div class="grid-3">
+        <div class="control-row">
+          <label>X-Pos</label>
+          <input type="range" id="inStarX" min="250" max="450" step="1" value="390">
+        </div>
+        <div class="control-row">
+          <label>Y-Pos</label>
+          <input type="range" id="inStarY" min="150" max="350" step="1" value="245">
+        </div>
+        <div class="control-row">
+          <label>Scale</label>
+          <input type="range" id="inStarS" min="0.5" max="1.5" step="0.05" value="1">
+        </div>
+      </div>
+      
+      <label style="font-size: 0.75rem; color: var(--text-main); font-weight: bold; margin-top: 0.5rem; margin-bottom: -0.3rem;">Earth Planet</label>
+      <div class="grid-3">
+        <div class="control-row">
+          <label>X-Pos</label>
+          <input type="range" id="inEarthX" min="30" max="250" step="1" value="90">
+        </div>
+        <div class="control-row">
+          <label>Y-Pos</label>
+          <input type="range" id="inEarthY" min="250" max="450" step="1" value="405">
+        </div>
+        <div class="control-row">
+          <label>Scale</label>
+          <input type="range" id="inEarthS" min="0.5" max="2" step="0.05" value="1">
+        </div>
+      </div>
+    </div>
+
+    <!-- COLORS & STYLE -->
+    <div class="panel-section">
+      <h2>3. Colors & Theme</h2>
+      <div class="grid-2">
+        <div class="color-picker"><input type="color" id="colB" value="#2563eb"><span>Letter 'B'</span></div>
+        <div class="color-picker"><input type="color" id="colStar" value="#fef08a"><span>Star</span></div>
+        <div class="color-picker"><input type="color" id="colPaw" value="#8b5cf6"><span>Paw Pads</span></div>
+        <div class="color-picker"><input type="color" id="colClaw" value="#ef4444"><span>Claw Swipes</span></div>
+        <div class="color-picker"><input type="color" id="colEarthOcean" value="#0ea5e9"><span>Earth Ocean</span></div>
+        <div class="color-picker"><input type="color" id="colEarthLand" value="#84cc16"><span>Earth Land</span></div>
+        <div class="color-picker"><input type="color" id="colBg" value="#050505"><span>Fabric Base</span></div>
+        <div class="color-picker"><input type="color" id="colBorder" value="#475569"><span>Outer Border</span></div>
+      </div>
+
+      <div class="control-row" style="margin-top: 1rem;">
+        <label>Cosmic Swirl Opacity <span class="val-badge" id="lblSwirl">100%</span></label>
+        <input type="range" id="inSwirl" min="0" max="100" step="5" value="100">
+      </div>
+      
+      <div class="control-row">
+        <label>Star Cluster Density <span class="val-badge" id="lblStars">35</span></label>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="range" id="inStars" min="0" max="100" step="5" value="35">
+            <button id="btnGenStars" style="padding: 0.4rem; font-size: 0.7rem; flex-shrink: 0;">🎲 Seed</button>
+        </div>
+      </div>
+      
+      <div class="control-row" style="margin-top: 0.5rem; flex-direction: row; align-items: center; justify-content: space-between;">
+        <label style="margin:0;">Enable 3D Embroidery FX</label>
+        <input type="checkbox" id="chkTexture" checked style="width:auto; height: 16px; width: 16px; accent-color: var(--accent);">
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const stageMain = document.getElementById('stageMain');
+    const chkSizeCheck = document.getElementById('chkSizeCheck');
+    const posterSmall = document.getElementById('posterSmall');
+    const patchSvg = document.getElementById('patchSvg');
+
+    // UI Toggle for Size Check
+    chkSizeCheck.addEventListener('change', () => {
+      if(chkSizeCheck.checked) {
+        stageMain.classList.add('size-check-active');
+        posterSmall.innerHTML = patchSvg.outerHTML; // Clone it over initially
+      } else {
+        stageMain.classList.remove('size-check-active');
+        posterSmall.innerHTML = '';
+      }
+    });
+
+    function syncSmallCanvas() {
+        if(chkSizeCheck.checked) {
+            posterSmall.innerHTML = patchSvg.outerHTML;
+            posterSmall.querySelector('svg').removeAttribute('id');
+        }
+    }
+
+    // --- Elements ---
+    const layerStars = document.getElementById('layer-stars');
+    const layerSwirls = document.getElementById('layer-swirls');
+    const layerPawGrp = document.getElementById('layer-paw');
+    const layerStarGrp = document.getElementById('starGroup');
+    const layerEarth = document.getElementById('earthGroup');
+    const layerTypo = document.getElementById('layer-typography');
+    const layerB = document.getElementById('layer-letter-b');
+    
+    const shapeB = document.getElementById('b-shape');
+    const shapeStar = document.getElementById('shape-star');
+    const pawHeel = document.getElementById('paw-heel');
+    const borderBase = document.getElementById('border-base');
+    const borderInner = document.getElementById('border-inner');
+    const borderThreads = document.getElementById('border-threads');
+    const bgBase = document.getElementById('bgBase');
+    const earthOcean = document.getElementById('earth-ocean');
+    const earthLand = document.getElementById('earth-land');
+    
+    const txtTop = document.getElementById('txt-top');
+    const txtBottom = document.getElementById('txt-bottom');
+    const textDecorations = document.getElementById('text-decorations');
+    
+    // Inputs
+    const inTextTop = document.getElementById('inTextTop');
+    const inTopSize = document.getElementById('inTopSize');
+    const inTopSpace = document.getElementById('inTopSpace');
+    const inTextBottom = document.getElementById('inTextBottom');
+    const inBotSize = document.getElementById('inBotSize');
+    const inBotSpace = document.getElementById('inBotSpace');
+    const chkTextDecor = document.getElementById('chkTextDecor');
+    
+    const inBX = document.getElementById('inBX');
+    const inBY = document.getElementById('inBY');
+    const inBS = document.getElementById('inBS');
+    
+    const inPawX = document.getElementById('inPawX');
+    const inPawY = document.getElementById('inPawY');
+    const inPawR = document.getElementById('inPawR');
+    const inPawS = document.getElementById('inPawS');
+    const inStarX = document.getElementById('inStarX');
+    const inStarY = document.getElementById('inStarY');
+    const inStarS = document.getElementById('inStarS');
+    const inEarthX = document.getElementById('inEarthX');
+    const inEarthY = document.getElementById('inEarthY');
+    const inEarthS = document.getElementById('inEarthS');
+    
+    const inSwirl = document.getElementById('inSwirl');
+    const inStars = document.getElementById('inStars');
+    const btnGenStars = document.getElementById('btnGenStars');
+    const chkTexture = document.getElementById('chkTexture');
+    
+    const colB = document.getElementById('colB');
+    const colStar = document.getElementById('colStar');
+    const colPaw = document.getElementById('colPaw');
+    const colClaw = document.getElementById('colClaw');
+    const colBorder = document.getElementById('colBorder');
+    const colEarthOcean = document.getElementById('colEarthOcean');
+    const colEarthLand = document.getElementById('colEarthLand');
+    const colBg = document.getElementById('colBg');
+
+    function adjustColor(color, amount) {
+      return '#' + color.replace(/^#/, '').replace(/../g, color => 
+        ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2)
+      );
+    }
+    
+    function generateStars() {
+      const sparkle = layerStars.querySelector('path');
+      layerStars.innerHTML = '';
+      if(sparkle) layerStars.appendChild(sparkle);
+
+      const starCount = parseInt(inStars.value);
+      document.getElementById('lblStars').textContent = starCount;
+      
+      for(let i = 0; i < starCount; i++) {
+        const cx = Math.random() * 500;
+        const cy = Math.random() * 500;
+        if (cx > 100 && cx < 420 && cy > 80 && cy < 400 && Math.random() > 0.1) continue;
+        
+        const r = Math.random() * 1.5 + 1;
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", cx);
+        circle.setAttribute("cy", cy);
+        circle.setAttribute("r", r);
+        
+        if (Math.random() > 0.9) {
+          const sp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          sp.setAttribute("d", `M ${cx} ${cy-r*3} Q ${cx+r} ${cy-r} ${cx+r*3} ${cy} Q ${cx+r} ${cy+r} ${cx} ${cy+r*3} Q ${cx-r} ${cy+r} ${cx-r*3} ${cy} Q ${cx-r} ${cy-r} ${cx} ${cy-r*3} Z`);
+          sp.setAttribute("fill", "#ffffff");
+          layerStars.appendChild(sp);
+        } else {
+          layerStars.appendChild(circle);
+        }
+      }
+      syncSmallCanvas();
+    }
+
+    function updatePatch(e) {
+      txtTop.textContent = inTextTop.value.toUpperCase();
+      txtBottom.textContent = inTextBottom.value.toUpperCase();
+      
+      txtTop.setAttribute('font-size', inTopSize.value);
+      document.getElementById('lblTopSize').textContent = inTopSize.value;
+      txtTop.setAttribute('letter-spacing', inTopSpace.value);
+      document.getElementById('lblTopSpace').textContent = inTopSpace.value;
+      
+      txtBottom.setAttribute('font-size', inBotSize.value);
+      document.getElementById('lblBotSize').textContent = inBotSize.value;
+      txtBottom.setAttribute('letter-spacing', inBotSpace.value);
+      document.getElementById('lblBotSpace').textContent = inBotSpace.value;
+      
+      textDecorations.style.display = chkTextDecor.checked ? 'block' : 'none';
+
+      // 'B' Layout Transformation (Scaling smoothly around center ~270,240)
+      const bx = parseFloat(inBX.value);
+      const by = parseFloat(inBY.value);
+      const bs = parseFloat(inBS.value);
+      const tx = bx + 270 * (1 - bs);
+      const ty = by + 240 * (1 - bs);
+      layerB.setAttribute('transform', `translate(${tx}, ${ty}) scale(${bs})`);
+
+      layerPawGrp.setAttribute('transform', `translate(${inPawX.value}, ${inPawY.value}) rotate(${inPawR.value}) scale(${inPawS.value})`);
+      layerStarGrp.setAttribute('transform', `translate(${inStarX.value}, ${inStarY.value}) scale(${inStarS.value})`);
+      layerEarth.setAttribute('transform', `translate(${inEarthX.value}, ${inEarthY.value}) scale(${inEarthS.value})`);
+
+      shapeB.setAttribute('fill', colB.value);
+      shapeB.setAttribute('stroke', adjustColor(colB.value, -50));
+      
+      shapeStar.setAttribute('fill', colStar.value);
+      shapeStar.setAttribute('stroke', adjustColor(colStar.value, -50));
+      
+      pawHeel.setAttribute('fill', colPaw.value);
+      pawHeel.setAttribute('stroke', adjustColor(colPaw.value, -50));
+      document.querySelectorAll('.paw-toe').forEach(el => {
+        el.setAttribute('fill', colPaw.value);
+        el.setAttribute('stroke', adjustColor(colPaw.value, -50));
+      });
+      document.querySelectorAll('.paw-claw').forEach(el => {
+        el.setAttribute('fill', colClaw.value);
+        el.setAttribute('stroke', adjustColor(colClaw.value, -50));
+      });
+      
+      earthOcean.setAttribute('fill', colEarthOcean.value);
+      earthLand.setAttribute('fill', colEarthLand.value);
+      
+      bgBase.setAttribute('fill', colBg.value);
+      borderBase.setAttribute('stroke', colBorder.value);
+      borderInner.setAttribute('stroke', adjustColor(colBg.value, 30));
+
+      layerSwirls.setAttribute('opacity', inSwirl.value / 100);
+      document.getElementById('lblSwirl').textContent = inSwirl.value + '%';
+
+      if (chkTexture.checked) {
+        layerB.setAttribute('filter', 'url(#satinV)');
+        layerTypo.setAttribute('filter', 'url(#satinV)');
+        layerStarGrp.setAttribute('filter', 'url(#satinH)');
+        layerPawGrp.setAttribute('filter', 'url(#satinH)');
+        layerEarth.setAttribute('filter', 'url(#satinH)');
+        borderThreads.style.display = 'block';
+      } else {
+        layerB.removeAttribute('filter');
+        layerTypo.removeAttribute('filter');
+        layerStarGrp.removeAttribute('filter');
+        layerPawGrp.removeAttribute('filter');
+        layerEarth.removeAttribute('filter');
+        borderThreads.style.display = 'none';
+      }
+      
+      if(e && e.target === inStars) generateStars();
+      
+      syncSmallCanvas();
+    }
+
+    const inputs = [
+        inTextTop, inTopSize, inTopSpace, 
+        inTextBottom, inBotSize, inBotSpace, chkTextDecor,
+        inBX, inBY, inBS,
+        inPawX, inPawY, inPawR, inPawS,
+        inStarX, inStarY, inStarS,
+        inEarthX, inEarthY, inEarthS,
+        inSwirl, inStars, chkTexture,
+        colB, colStar, colPaw, colClaw, colEarthOcean, colEarthLand, colBg, colBorder
+    ];
+    
+    inputs.forEach(input => input.addEventListener('input', updatePatch));
+    btnGenStars.addEventListener('click', generateStars);
+
+    document.getElementById('btnExportSVG').addEventListener('click', () => {
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(patchSvg);
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'SSEP-Exact-Match-Custom.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btnExportPNG').addEventListener('click', () => {
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(patchSvg);
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      
+      const img = new Image();
+      const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2000;
+        canvas.height = 2000;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = "#ffffff"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, 2000, 2000);
+        
+        const a = document.createElement('a');
+        a.download = 'SSEP-Exact-Match-Custom.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+
+    // Init
+    generateStars();
+    updatePatch();
+  </script>
+</body>
+</html>
