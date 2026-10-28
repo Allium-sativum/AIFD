@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSEP Mission Patch Generator</title>
+  
+  <!-- Added gif.js for GIF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap');
+
+    :root {
+      --bg-dark: #121212;
+      --bg-panel: #1e1e1e;
+      --border-color: #333333;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- Stage --- */
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2rem;
+      background: #e5e7eb;
+      background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+      background-size: 20px 20px;
+      overflow: auto;
+    }
+
+    .canvas-container {
+      width: 3.5in;  
+      height: 3.5in; 
+      flex-shrink: 0;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .canvas-container svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+      filter: drop-shadow(0 25px 35px rgba(0,0,0,0.4));
+    }
+    
+    .canvas-small {
+      display: none;
+      width: 150px;
+      height: 150px;
+      aspect-ratio: 1 / 1;
+      position: relative;
+    }
+    .canvas-small svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+    }
+    
+    .size-check-active .canvas-container {
+      max-width: 450px;
+    }
+    .size-check-active .canvas-small {
+      display: block;
+    }
+
+    /* --- Variations Grid View --- */
+    .variants-view {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      z-index: 500;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    .variants-view.active { display: flex; }
+    
+    .variants-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .variants-header h2 { font-size: 1.5rem; color: var(--text-main); }
+    .btn-close-variants {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-close-variants:hover { background: #333; }
+    
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2.5rem;
+      padding-bottom: 4rem;
+    }
+    .variant-card {
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: #000;
+      border-radius: 16px;
+      aspect-ratio: 1/1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .variant-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    }
+    .variant-card svg {
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* --- Sidebar UI --- */
+    .sidebar {
+      width: 380px; 
+      background-color: var(--bg-panel);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background-color: #171717;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .sidebar-header h1 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+    .sidebar-header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4; }
+
+    .panel-section {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .panel-section h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+
+    .control-row { display: flex; flex-direction: column; gap: 0.4rem; }
+    .control-row label { font-size: 0.75rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); text-transform: uppercase;}
+    
+    .val-badge { background: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: var(--text-main); }
+
+    input[type="text"], select {
+      width: 100%; padding: 0.6rem; background-color: #000; border: 1px solid var(--border-color);
+      color: var(--text-main); border-radius: 6px; outline: none; transition: border-color 0.2s; font-family: inherit; font-size: 0.85rem;
+    }
+    input[type="text"]:focus, select:focus { border-color: var(--accent); }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    
+    .color-picker { display: flex; align-items: center; gap: 0.5rem; background: #000; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color);}
+    input[type="color"] { -webkit-appearance: none; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; background: none; padding: 0; flex-shrink: 0;}
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+    .color-picker span { font-size: 0.7rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+    .btn-group { display: flex; gap: 0.5rem; }
+    button {
+      flex: 1; padding: 0.8rem; background-color: var(--accent); color: #fff; border: none; border-radius: 6px;
+      font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s;
+    }
+    button:hover { background-color: var(--accent-hover); }
+    button:active { transform: scale(0.98); }
+    .btn-secondary { background-color: var(--border-color); color: var(--text-main); }
+    .btn-secondary:hover { background-color: #444; }
+    .btn-primary-large { padding: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    .accordion {
+      background-color: #000;
+      color: var(--text-main);
+      cursor: pointer;
+      padding: 0.8rem;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      outline: none;
+      transition: 0.2s;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .accordion:hover { background-color: #111; }
+    .accordion:after { content: '\002B'; font-size: 1.2rem; color: var(--accent); }
+    .active-accordion:after { content: "\2212"; }
+    .panel-accordion {
+      padding: 0 1rem; background-color: var(--bg-panel); max-height: 0;
+      overflow: hidden; transition: max-height 0.2s ease-out, padding 0.2s ease;
+      display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .panel-accordion.show { padding: 1rem; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; }
+    .accordion-container { margin-bottom: 0.5rem; }
+
+    @media (max-width: 800px) {
+      body { flex-direction: column; }
+      .sidebar { width: 100%; height: 50vh; border-left: none; border-top: 1px solid var(--border-color); }
+      .stage { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT: Stage & SVG Generator -->
+  <main class="stage" id="stageMain">
+    <div class="canvas-container" id="poster">
+      <svg id="patchSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="3.5in" height="3.5in">
+        <defs>
+          <filter id="globalSatin" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.4 0.02" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+            <feSpecularLighting in="blur" surfaceScale="2.5" specularConstant="1.2" specularExponent="20" lighting-color="#ffffff" result="spec">
+              <feDistantLight azimuth="135" elevation="45" />
+            </feSpecularLighting>
+            <feComposite in="spec" in2="SourceAlpha" operator="in" result="specMasked" />
+            <feComposite in="displaced" in2="specMasked" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="lit" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.35 0" in="noise" result="coloredNoise" />
+            <feBlend mode="multiply" in="lit" in2="coloredNoise" result="final" />
+          </filter>
+
+          <clipPath id="patchBorderClip">
+            <rect width="490" height="490" x="5" y="5" rx="16" ry="16"/>
+          </clipPath>
+
+          <pattern id="hatchBase" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+             <line x1="0" y1="0" x2="0" y2="8" stroke="#000000" stroke-width="3" opacity="0.5"/>
+          </pattern>
+        
+          <!-- Paths for Typography Layouts -->
+          <path id="path_circular_top" d="M 60 250 A 190 190 0 0 1 440 250" />
+          <path id="path_circular_bot" d="M 60 250 A 190 190 0 0 0 440 250" />
+          <path id="path_horizontal_top" d="M 20 65 L 480 65" />
+          <path id="path_horizontal_bot" d="M 20 445 L 480 445" />
+          <path id="path_sides_top" d="M 250 440 A 190 190 0 0 1 250 60" /> 
+          <path id="path_sides_bot" d="M 250 60 A 190 190 0 0 1 250 440" /> 
+        </defs>
+
+        <g clip-path="url(#patchBorderClip)">
+          <rect width="500" height="500" fill="#050505" id="bgBase" />
+          
+          <g id="layer-swirls" fill="none" stroke-linecap="round" opacity="1">
+            <ellipse id="swirl1" cx="250" cy="250" rx="200" ry="120" stroke="#ffffff" stroke-width="4" opacity="0.3" transform="rotate(-30 250 250)" />
+            <ellipse id="swirl2" cx="250" cy="250" rx="260" ry="160" stroke="#ffffff" stroke-width="2" opacity="0.2" stroke-dasharray="8 8" transform="rotate(-30 250 250)" />
+          </g>
+          
+          <g id="layer-stars" fill="#ffffff"></g>
+          
+          <g id="masterEmbroideryGroup">
+              <g id="earthGroup" transform="translate(75, 425)">
+                <circle id="earth-ocean" cx="0" cy="0" r="35" fill="#0ea5e9" stroke="#0284c7" stroke-width="4"/>
+                <g id="earth-land" fill="#84cc16">
+                  <circle cx="-12" cy="-12" r="10" />
+                  <circle cx="5" cy="-18" r="8" />
+                  <rect x="-15" y="-18" width="20" height="15" rx="4" />
+                  <circle cx="12" cy="10" r="12" />
+                  <circle cx="5" cy="20" r="8" />
+                  <rect x="5" y="10" width="10" height="15" rx="4" />
+                  <circle cx="-18" cy="8" r="6" />
+                </g>
+              </g>
+
+              <g id="layer-letter-b">
+                <path fill-rule="evenodd" d="M 150 80 L 300 80 A 80 80 0 0 1 380 160 C 380 200, 360 230, 330 240 C 380 250, 410 280, 410 330 A 90 90 0 0 1 320 420 L 150 420 Z M 215 120 L 275 120 A 20 20 0 0 1 295 140 A 20 20 0 0 1 275 160 L 215 160 A 20 20 0 0 1 195 140 A 20 20 0 0 1 215 120 Z" fill="none" stroke="#2563eb" stroke-width="8" stroke-linejoin="miter" id="b-shape" />
+                <path fill-rule="evenodd" d="M 150 80 L 300 80 A 80 80 0 0 1 380 160 C 380 200, 360 230, 330 240 C 380 250, 410 280, 410 330 A 90 90 0 0 1 320 420 L 150 420 Z M 215 120 L 275 120 A 20 20 0 0 1 295 140 A 20 20 0 0 1 275 160 L 215 160 A 20 20 0 0 1 195 140 A 20 20 0 0 1 215 120 Z" fill="url(#hatchBase)" id="b-hatch" />
+              </g>
+
+              <g id="layer-swirls-front" fill="none" stroke-linecap="round" opacity="1">
+                <ellipse id="swirl3" cx="250" cy="250" rx="300" ry="100" stroke="#ffffff" stroke-width="3" opacity="0.4" transform="rotate(25 250 250)" />
+              </g>
+              <g id="layer-stars-front" fill="#ffffff"></g>
+
+              <g id="starGroup" transform="translate(390, 240)">
+                <path d="M 0 -45 C 0 -15, 10 0, 75 0 C 10 0, 0 15, 0 45 C 0 15, -10 0, -170 0 C -10 0, 0 -15, 0 -45 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="4" stroke-linejoin="round" id="shape-star"/>
+              </g>
+
+              <g transform="rotate(-15) translate(0, -70)">
+                  <rect x="-12" y="-20" width="24" height="40" rx="12" fill="#8b5cf6" stroke="#5b21b6" stroke-width="4" class="paw-toe"/>
+                  <circle cx="0" cy="-6" r="5" fill="#ffffff" class="paw-win" />
+                  <polygon points="-8,20 0,48 8,20" fill="#ef4444" stroke="#b91c1c" stroke-width="3" stroke-linejoin="round" class="paw-claw"/>
+              </g>
+              <g transform="rotate(15) translate(0, -70)">
+                  <rect x="-12" y="-20" width="24" height="40" rx="12" fill="#8b5cf6" stroke="#5b21b6" stroke-width="4" class="paw-toe"/>
+                  <circle cx="0" cy="-6" r="5" fill="#ffffff" class="paw-win" />
+                  <polygon points="-8,20 0,48 8,20" fill="#ef4444" stroke="#b91c1c" stroke-width="3" stroke-linejoin="round" class="paw-claw"/>
+              </g>
+              <g transform="rotate(45) translate(0, -70)">
+                  <rect x="-12" y="-20" width="24" height="40" rx="12" fill="#8b5cf6" stroke="#5b21b6" stroke-width="4" class="paw-toe"/>
+                  <circle cx="0" cy="-6" r="5" fill="#ffffff" class="paw-win" />
+                  <polygon points="-8,20 0,48 8,20" fill="#ef4444" stroke="#b91c1c" stroke-width="3" stroke-linejoin="round" class="paw-claw"/>
+              </g>
+          </g>
+              
+          <g id="layer-typography">
+              <text font-family="'Montserrat', sans-serif" font-weight="900" font-size="34" fill="#ffffff" letter-spacing="4">
+                <textPath id="txt-top-path" href="#path_circular_top" startOffset="50%" text-anchor="middle" dominant-baseline="central">BARUCH COLLEGE</textPath>
+              </text>
+              <text font-family="'Montserrat', sans-serif" font-weight="900" font-size="44" fill="#ffffff" letter-spacing="8">
+                <textPath id="txt-bottom-path" href="#path_circular_bot" startOffset="50%" text-anchor="middle" dominant-baseline="central">ISS</textPath>
+              </text>
+              
+              <g id="decor-circular">
+                  <polygon points="50,240 60,250 50,260 40,250" fill="#fef08a" stroke="#ca8a04" stroke-width="2" />
+                  <polygon points="450,240 460,250 450,260 440,250" fill="#fef08a" stroke="#ca8a04" stroke-width="2" />
+                  <circle cx="250" cy="250" r="225" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.15" />
+                  <circle cx="250" cy="250" r="155" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.15" />
+              </g>
+              <g id="decor-horizontal" display="none">
+                  <line x1="30" y1="90" x2="470" y2="90" stroke="#ffffff" stroke-width="2" opacity="0.4" stroke-dasharray="8 8"/>
+                  <line x1="30" y1="420" x2="470" y2="420" stroke="#ffffff" stroke-width="2" opacity="0.4" stroke-dasharray="8 8"/>
+              </g>
+              <g id="decor-sides" display="none">
+                  <circle cx="250" cy="250" r="215" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.2" stroke-dasharray="4 12" />
+              </g>
+          </g>
+          <rect width="500" height="500" fill="transparent" id="textureOverlay" filter="url(#globalSatin)" pointer-events="none" style="mix-blend-mode: hard-light; opacity: 0.8;" />
+        </g>
+        <g id="outerBorder">
+            <rect width="484" height="484" x="8" y="8" rx="12" ry="12" fill="none" stroke="#ffffff" stroke-width="6" stroke-dasharray="24 16" opacity="0.9" id="border-base" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- Small Canvas for Side-by-Side Size Check -->
+    <div class="canvas-small" id="posterSmall"></div>
+  </main>
+
+  <!-- Variations Explorer Grid View -->
+  <div class="variants-view" id="variantsView">
+    <div class="variants-header">
+      <h2>Select a Variation</h2>
+      <button class="btn-close-variants" id="btnCloseVariants">Cancel / Go Back</button>
+    </div>
+    <div class="variants-grid" id="variantsGrid"></div>
+  </div>
+
+  <!-- RIGHT: Controls -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Patch Studio</h1>
+      <p>Simplified customization dashboard.</p>
+    </div>
+
+    <div class="panel-section">
+      <button class="btn-primary-large" id="btnExploreVariants" style="margin-bottom: 0.5rem;">✨ Explore Variations (x9)</button>
+      <button class="btn-secondary" id="btnRandomize" style="padding: 0.8rem; font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color); color: var(--text-main);">🎲 Randomize Current</button>
+    </div>
+
+    <!-- TYPOGRAPHY -->
+    <div class="panel-section">
+      <h2>1. Typography</h2>
+      <div class="control-row">
+        <label>Top Text</label>
+        <input type="text" id="inTextTop" value="BARUCH COLLEGE">
+      </div>
+      <div class="control-row" style="margin-top: 0.5rem;">
+        <label>Bottom Text</label>
+        <input type="text" id="inTextBottom" value="ISS">
+      </div>
+      <div class="control-row" style="margin-top: 0.75rem;">
+        <label>Text Layout</label>
+        <select id="inTextLayout">
+            <option value="circular">Circular (Arch)</option>
+            <option value="horizontal">Horizontal (Straight)</option>
+            <option value="sides">Vertical (Sides)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TRANSFORMATIONS ACCORDION -->
+    <div class="panel-section">
+      <h2>2. Object Layout</h2>
+      <!-- B Accordion -->
+      <div class="accordion-container">
+        <button class="accordion">Letter 'B'</button>
+        <div class="panel-accordion">
+          <div class="control-row">
+            <label>Scale <span class="val-badge" id="lblBS">1x</span></label>
+            <input type="range" id="inBS" min="0.1" max="2.5" step="0.05" value="1">
+          </div>
+          <div class="control-row">
+            <label>X Offset <span class="val-badge" id="lblBX">0</span></label>
+            <input type="range" id="inBX" min="-250" max="250" step="1" value="0">
+          </div>
+          <div class="control-row">
+            <label>Y Offset <span class="val-badge" id="lblBY">0</span></label>
+            <input type="range" id="inBY" min="-250" max="250" step="1" value="0">
+          </div>
+          <div class="control-row">
+            <label>Rotation <span class="val-badge" id="lblBR">0°</span></label>
+            <input type="range" id="inBR" min="-180" max="180" step="1" value="0">
+          </div>
+        </div>
+      </div>
+      <!-- Star Accordion -->
+      <div class="accordion-container">
+        <button class="accordion">Interlocking Star</button>
+        <div class="panel-accordion">
+          <div class="control-row">
+            <label>Scale <span class="val-badge" id="lblStarS">1x</span></label>
+            <input type="range" id="inStarS" min="0.1" max="3.0" step="0.05" value="1">
+          </div>
+          <div class="control-row">
+            <label>X Position <span class="val-badge" id="lblStarX">390</span></label>
+            <input type="range" id="inStarX" min="-50" max="550" step="1" value="390">
+          </div>
+          <div class="control-row">
+            <label>Y Position <span class="val-badge" id="lblStarY">240</span></label>
+            <input type="range" id="inStarY" min="-50" max="550" step="1" value="240">
+          </div>
+          <div class="control-row">
+            <label>Rotation <span class="val-badge" id="lblStarR">0°</span></label>
+            <input type="range" id="inStarR" min="-180" max="180" step="1" value="0">
+          </div>
+        </div>
+      </div>
+      <!-- Earth Accordion -->
+      <div class="accordion-container">
+        <button class="accordion">Planet Earth</button>
+        <div class="panel-accordion">
+          <div class="control-row">
+            <label>Scale <span class="val-badge" id="lblEarthS">1x</span></label>
+            <input type="range" id="inEarthS" min="0.1" max="3.0" step="0.05" value="1">
+          </div>
+          <div class="control-row">
+            <label>X Position <span class="val-badge" id="lblEarthX">80</span></label>
+            <input type="range" id="inEarthX" min="-50" max="550" step="1" value="80">
+          </div>
+          <div class="control-row">
+            <label>Y Position <span class="val-badge" id="lblEarthY">420</span></label>
+            <input type="range" id="inEarthY" min="-50" max="550" step="1" value="420">
+          </div>
+          <div class="control-row">
+            <label>Rotation <span class="val-badge" id="lblEarthR">0°</span></label>
+            <input type="range" id="inEarthR" min="-180" max="180" step="1" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLORS & THEME -->
+    <div class="panel-section">
+      <h2>3. Colors & Theme</h2>
+      <div class="grid-2">
+        <div class="color-picker"><input type="color" id="colB" value="#2563eb"><span>Letter 'B'</span></div>
+        <div class="color-picker"><input type="color" id="colStar" value="#fef08a"><span>Star</span></div>
+        <div class="color-picker"><input type="color" id="colBg" value="#050505"><span>Fabric Base</span></div>
+        <div class="color-picker"><input type="color" id="colBorder" value="#ffffff"><span>Border</span></div>
+      </div>
+      
+      <div class="control-row" style="margin-top: 1rem; flex-direction: row; align-items: center; justify-content: space-between;">
+        <label style="margin:0;">Enable 3D Embroidery FX</label>
+        <input type="checkbox" id="chkTexture" checked style="width:auto; height: 16px; width: 16px; accent-color: var(--accent);">
+      </div>
+    </div>
+
+    <!-- VIEW & EXPORT -->
+    <div class="panel-section" style="border-bottom: none;">
+      <h2>4. View & Export</h2>
+      <div class="control-row" style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <label style="margin:0; font-size: 0.85rem; color: var(--accent);">🔍 Enable Size Check</label>
+        <input type="checkbox" id="chkSizeCheck" style="width:auto; height: 18px; width: 18px; accent-color: var(--accent);">
+      </div>
+
+      <!-- Play/Pause Animation -->
+      <div class="control-row" style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <label style="margin:0;">Animation Status</label>
+        <button id="btnPlayPause" style="padding: 0.4rem; font-size: 0.8rem; width: auto; flex: 0 1 auto; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color);">Pause Animation</button>
+      </div>
+
+      <div class="btn-group" style="margin-bottom: 0.5rem;">
+        <button id="btnExportPNG">Export PNG</button>
+        <button id="btnExportSVG" class="btn-secondary">Export SVG</button>
+      </div>
+
+      <!-- Video & GIF Export -->
+      <div class="btn-group">
+        <button id="btnExportWebM" style="background-color: #10b981;">Export WebM</button>
+        <button id="btnExportGIF" style="background-color: #8b5cf6;">Export GIF</button>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    // Accordion Logic
+    const accordions = document.getElementsByClassName("accordion");
+    for (let i = 0; i < accordions.length; i++) {
+      accordions[i].addEventListener("click", function() {
+        this.classList.toggle("active-accordion");
+        let panel = this.nextElementSibling;
+        if (panel.style.maxHeight) {
+          panel.style.maxHeight = null;
+          panel.classList.remove("show");
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + 30 + "px";
+          panel.classList.add("show");
+        }
+      });
+    }
+
+    const stageMain = document.getElementById('stageMain');
+    const chkSizeCheck = document.getElementById('chkSizeCheck');
+    const posterSmall = document.getElementById('posterSmall');
+    const patchSvg = document.getElementById('patchSvg');
+
+    chkSizeCheck.addEventListener('change', () => {
+      if(chkSizeCheck.checked) {
+        stageMain.classList.add('size-check-active');
+        posterSmall.innerHTML = patchSvg.outerHTML; 
+      } else {
+        stageMain.classList.remove('size-check-active');
+        posterSmall.innerHTML = '';
+      }
+    });
+
+    function syncSmallCanvas() {
+        if(chkSizeCheck.checked) {
+            posterSmall.innerHTML = patchSvg.outerHTML;
+            posterSmall.querySelector('svg').removeAttribute('id');
+        }
+    }
+
+    // DOM Elements
+    const layerStars = document.getElementById('layer-stars');
+    const layerStarsFront = document.getElementById('layer-stars-front');
+    const layerSwirls = document.getElementById('layer-swirls');
+    const layerStarGrp = document.getElementById('starGroup');
+    const layerEarth = document.getElementById('earthGroup');
+    const layerB = document.getElementById('layer-letter-b');
+    
+    const textureOverlay = document.getElementById('textureOverlay');
+    const borderBase = document.getElementById('border-base');
+    const bgBase = document.getElementById('bgBase');
+    
+    const txtTop = document.getElementById('txt-top-path');
+    const txtBottom = document.getElementById('txt-bottom-path');
+    const decorCircular = document.getElementById('decor-circular');
+    const decorHorizontal = document.getElementById('decor-horizontal');
+    const decorSides = document.getElementById('decor-sides');
+    const inTextLayout = document.getElementById('inTextLayout');
+    const shapeB = document.getElementById('b-shape');
+    const bHatch = document.getElementById('b-hatch');
+    const shapeStar = document.getElementById('shape-star');
+    
+    // UI Inputs
+    const inTextTop = document.getElementById('inTextTop');
+    const inTextBottom = document.getElementById('inTextBottom');
+    
+    const inBS = document.getElementById('inBS');
+    const inBX = document.getElementById('inBX');
+    const inBY = document.getElementById('inBY');
+    const inBR = document.getElementById('inBR');
+
+    const inStarS = document.getElementById('inStarS');
+    const inStarX = document.getElementById('inStarX');
+    const inStarY = document.getElementById('inStarY');
+    const inStarR = document.getElementById('inStarR');
+
+    const inEarthS = document.getElementById('inEarthS');
+    const inEarthX = document.getElementById('inEarthX');
+    const inEarthY = document.getElementById('inEarthY');
+    const inEarthR = document.getElementById('inEarthR');
+    
+    const chkTexture = document.getElementById('chkTexture');
+    const colB = document.getElementById('colB');
+    const colStar = document.getElementById('colStar');
+    const colBg = document.getElementById('colBg');
+    const colBorder = document.getElementById('colBorder');
+    
+    // Master State
+    let layout = {
+      textLayout: 'circular',
+      bX: 0, bY: 0, bs: 1, bR: 0,
+      starX: 390, starY: 240, starS: 1, starR: 0,
+      earthX: 80, earthY: 420, earthS: 1, earthR: 0,
+      starCount: 35,
+      starT: -45, starB: 45, starL: -170, starR: 75,
+      swirls: [
+        {rx: 200, ry: 120, rot: -30},
+        {rx: 260, ry: 160, rot: -30},
+        {rx: 300, ry: 100, rot: 25}
+      ]
+    };
+
+    // --- ANIMATION SYSTEM ---
+    let isAnimating = true;
+    let animationTime = 0;
+    let lastTimestamp = performance.now();
+
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    btnPlayPause.addEventListener('click', () => {
+        isAnimating = !isAnimating;
+        btnPlayPause.textContent = isAnimating ? 'Pause Animation' : 'Play Animation';
+    });
+
+    function animationLoop(timestamp) {
+        const delta = timestamp - lastTimestamp;
+        lastTimestamp = timestamp;
+
+        if (isAnimating) {
+            animationTime += delta;
+            
+            // 1. Twinkle Stars
+            const allStars = document.querySelectorAll('#layer-stars circle, #layer-stars path, #layer-stars-front circle, #layer-stars-front path');
+            allStars.forEach(el => {
+                const speed = parseFloat(el.getAttribute('data-twinkle-speed') || 0.002);
+                const offset = parseFloat(el.getAttribute('data-twinkle-offset') || 0);
+                const opacity = 0.2 + (Math.sin(animationTime * speed + offset) + 1) / 2 * 0.8;
+                el.setAttribute('opacity', opacity.toFixed(2));
+            });
+
+            // 2. Revolve Rings
+            const swirl1 = document.getElementById('swirl1');
+            const swirl2 = document.getElementById('swirl2');
+            const swirl3 = document.getElementById('swirl3');
+            
+            if (swirl1 && layout.swirls && layout.swirls[0]) {
+                const r = layout.swirls[0].rot + (animationTime * 0.02);
+                swirl1.setAttribute('transform', `rotate(${r} 250 250)`);
+            }
+            if (swirl2 && layout.swirls && layout.swirls[1]) {
+                const r = layout.swirls[1].rot - (animationTime * 0.015);
+                swirl2.setAttribute('transform', `rotate(${r} 250 250)`);
+            }
+            if (swirl3 && layout.swirls && layout.swirls[2]) {
+                const r = layout.swirls[2].rot + (animationTime * 0.01);
+                swirl3.setAttribute('transform', `rotate(${r} 250 250)`);
+            }
+
+            // Keep mini canvas in sync if size check is enabled
+            if (chkSizeCheck.checked) syncSmallCanvas();
+        }
+        requestAnimationFrame(animationLoop);
+    }
+    requestAnimationFrame(animationLoop);
+
+    function getStarPath(t, b, l, r) {
+        return `M 0 ${t} C 0 -15, 10 0, ${r} 0 C 10 0, 0 15, 0 ${b} C 0 15, -10 0, ${l} 0 C -10 0, 0 -15, 0 ${t} Z`;
+    }
+    
+    function applyShapesToSvg(state, svgNode) {
+        const star = svgNode.querySelector('#shape-star');
+        if(star) star.setAttribute('d', getStarPath(state.starT, state.starB, state.starL, state.starR));
+        
+        const swirl1 = svgNode.querySelector('#swirl1');
+        const swirl2 = svgNode.querySelector('#swirl2');
+        const swirl3 = svgNode.querySelector('#swirl3');
+        if(swirl1 && state.swirls && state.swirls[0]) {
+            swirl1.setAttribute('rx', state.swirls[0].rx);
+            swirl1.setAttribute('ry', state.swirls[0].ry);
+            swirl1.setAttribute('transform', `rotate(${state.swirls[0].rot} 250 250)`);
+        }
+        if(swirl2 && state.swirls && state.swirls[1]) {
+            swirl2.setAttribute('rx', state.swirls[1].rx);
+            swirl2.setAttribute('ry', state.swirls[1].ry);
+            swirl2.setAttribute('transform', `rotate(${state.swirls[1].rot} 250 250)`);
+        }
+        if(swirl3 && state.swirls && state.swirls[2]) {
+            swirl3.setAttribute('rx', state.swirls[2].rx);
+            swirl3.setAttribute('ry', state.swirls[2].ry);
+            swirl3.setAttribute('transform', `rotate(${state.swirls[2].rot} 250 250)`);
+        }
+    }
+
+    const compositions = [
+        { name: "Centered Placement & Symmetry", textLayout: "circular",
+          b: {x: 0, y: 0, s: 0.85, r: 0}, star: {x: 250, y: 250, s: 1.4, r: 0}, earth: {x: 250, y: 400, s: 0.9, r: 0} },
+        { name: "Circular Eye Movement", textLayout: "sides",
+          b: {x: 0, y: -20, s: 0.75, r: 15}, star: {x: 380, y: 150, s: 0.8, r: 45}, earth: {x: 120, y: 380, s: 0.9, r: -20} },
+        { name: "Rule of Thirds & Soft Asymmetry", textLayout: "horizontal",
+          b: {x: -60, y: 0, s: 0.85, r: -5}, star: {x: 350, y: 160, s: 1.0, r: 15}, earth: {x: 350, y: 380, s: 0.8, r: 0} },
+        { name: "Negative-Space Dominance", textLayout: "horizontal",
+          b: {x: -100, y: 100, s: 0.35, r: 0}, star: {x: 400, y: 100, s: 0.45, r: 45}, earth: {x: 100, y: 400, s: 0.35, r: 0} },
+        { name: "Strong Geometries & Shapes", textLayout: "circular",
+          b: {x: 0, y: 0, s: 1.2, r: 0}, star: {x: 250, y: 250, s: 2.2, r: 90}, earth: {x: 250, y: 250, s: 1.3, r: 0} }
+    ];
+
+    function getComposition() {
+        const comp = compositions[Math.floor(Math.random() * compositions.length)];
+        const j = (range) => (Math.random() - 0.5) * range;
+        
+        return {
+            textLayout: comp.textLayout,
+            bX: Math.round(comp.b.x + j(10)), bY: Math.round(comp.b.y + j(10)), bR: Math.round(comp.b.r + j(5)),
+            bs: Math.max(0.2, comp.b.s + j(0.25)).toFixed(2),
+            starX: Math.round(comp.star.x + j(25)), starY: Math.round(comp.star.y + j(25)), starR: Math.round(comp.star.r + j(20)),
+            starS: Math.max(0.2, comp.star.s + j(0.3)).toFixed(2),
+            earthX: Math.round(comp.earth.x + j(25)), earthY: Math.round(comp.earth.y + j(25)), earthR: Math.round(comp.earth.r + j(20)),
+            earthS: Math.max(0.2, comp.earth.s + j(0.25)).toFixed(2),
+            starCount: Math.floor(20 + Math.random() * 60)
+        };
+    }
+
+    function getRandomShapeState() {
+      return {
+          starT: -(25 + Math.random() * 30), starB: 25 + Math.random() * 30,
+          starL: -(100 + Math.random() * 90), starR: 50 + Math.random() * 80,
+          swirls: [
+            {rx: 150 + Math.random()*100, ry: 80 + Math.random()*80, rot: (Math.random()-0.5)*180},
+            {rx: 200 + Math.random()*100, ry: 120 + Math.random()*80, rot: (Math.random()-0.5)*180},
+            {rx: 250 + Math.random()*100, ry: 80 + Math.random()*60, rot: (Math.random()-0.5)*180}
+          ]
+      };
+    }
+
+    function adjustColor(color, amount) {
+      return '#' + color.replace(/^#/, '').replace(/../g, color => 
+        ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2)
+      );
+    }
+
+    function renderStars(container, count) {
+      const sparkle = container.querySelector('path');
+      container.innerHTML = '';
+      if(sparkle) container.appendChild(sparkle);
+
+      for(let i = 0; i < count; i++) {
+        const cx = Math.random() * 500;
+        const cy = Math.random() * 500;
+        if (cx > 100 && cx < 420 && cy > 80 && cy < 400 && Math.random() > 0.1) continue;
+        
+        const r = Math.random() * 1.5 + 1;
+        const speed = 0.001 + Math.random() * 0.003;
+        const offset = Math.random() * Math.PI * 2;
+
+        if (Math.random() > 0.9) {
+          const sp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          sp.setAttribute("d", `M ${cx} ${cy-r*3} Q ${cx+r} ${cy-r} ${cx+r*3} ${cy} Q ${cx+r} ${cy+r} ${cx} ${cy+r*3} Q ${cx-r} ${cy+r} ${cx-r*3} ${cy} Q ${cx-r} ${cy-r} ${cx} ${cy-r*3} Z`);
+          sp.setAttribute("fill", "#ffffff");
+          sp.setAttribute("data-twinkle-speed", speed);
+          sp.setAttribute("data-twinkle-offset", offset);
+          container.appendChild(sp);
+        } else {
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", cx);
+          circle.setAttribute("cy", cy);
+          circle.setAttribute("r", r);
+          circle.setAttribute("fill", "#ffffff");
+          circle.setAttribute("data-twinkle-speed", speed);
+          circle.setAttribute("data-twinkle-offset", offset);
+          container.appendChild(circle);
+        }
+      }
+    }
+
+    function generateStars() {
+      renderStars(layerStars, layout.starCount);
+      if (layerStarsFront) renderStars(layerStarsFront, Math.floor(layout.starCount * 0.6));
+      syncSmallCanvas();
+    }
+
+    function updatePatch() {
+      txtTop.textContent = inTextTop.value.toUpperCase();
+      txtBottom.textContent = inTextBottom.value.toUpperCase();
+      
+      layout.textLayout = inTextLayout.value;
+      txtTop.setAttribute('href', '#path_' + layout.textLayout + '_top');
+      txtBottom.setAttribute('href', '#path_' + layout.textLayout + '_bot');
+      
+      decorCircular.setAttribute('display', layout.textLayout === 'circular' ? 'block' : 'none');
+      decorHorizontal.setAttribute('display', layout.textLayout === 'horizontal' ? 'block' : 'none');
+      decorSides.setAttribute('display', layout.textLayout === 'sides' ? 'block' : 'none');
+      
+      layout.bs = parseFloat(inBS.value);
+      layout.bX = parseFloat(inBX.value);
+      layout.bY = parseFloat(inBY.value);
+      layout.bR = parseFloat(inBR.value);
+      
+      document.getElementById('lblBS').textContent = layout.bs + 'x';
+      document.getElementById('lblBX').textContent = layout.bX;
+      document.getElementById('lblBY').textContent = layout.bY;
+      document.getElementById('lblBR').textContent = layout.bR + '°';
+
+      const tx = layout.bX + 270 * (1 - layout.bs);
+      const ty = layout.bY + 240 * (1 - layout.bs);
+      layerB.setAttribute('transform', `translate(${tx}, ${ty}) scale(${layout.bs}) rotate(${layout.bR}, 250, 250)`);
+      
+      layout.starS = parseFloat(inStarS.value);
+      layout.starX = parseFloat(inStarX.value);
+      layout.starY = parseFloat(inStarY.value);
+      layout.starR = parseFloat(inStarR.value);
+      
+      document.getElementById('lblStarS').textContent = layout.starS + 'x';
+      document.getElementById('lblStarX').textContent = layout.starX;
+      document.getElementById('lblStarY').textContent = layout.starY;
+      document.getElementById('lblStarR').textContent = layout.starR + '°';
+
+      layerStarGrp.setAttribute('transform', `translate(${layout.starX}, ${layout.starY}) scale(${layout.starS}) rotate(${layout.starR})`);
+      
+      layout.earthS = parseFloat(inEarthS.value);
+      layout.earthX = parseFloat(inEarthX.value);
+      layout.earthY = parseFloat(inEarthY.value);
+      layout.earthR = parseFloat(inEarthR.value);
+      
+      document.getElementById('lblEarthS').textContent = layout.earthS + 'x';
+      document.getElementById('lblEarthX').textContent = layout.earthX;
+      document.getElementById('lblEarthY').textContent = layout.earthY;
+      document.getElementById('lblEarthR').textContent = layout.earthR + '°';
+
+      layerEarth.setAttribute('transform', `translate(${layout.earthX}, ${layout.earthY}) scale(${layout.earthS}) rotate(${layout.earthR})`);
+
+      applyShapesToSvg(layout, document);
+      
+      shapeB.setAttribute('fill', 'none');
+      shapeB.setAttribute('stroke', colB.value);
+      shapeB.setAttribute('stroke-width', '8');
+      
+      shapeStar.setAttribute('fill', colStar.value);
+      shapeStar.setAttribute('stroke', adjustColor(colStar.value, -50));
+
+      bgBase.setAttribute('fill', colBg.value);
+      if(borderBase) borderBase.setAttribute('stroke', colBorder.value);
+
+      if (chkTexture.checked) {
+        textureOverlay.style.display = 'block';
+      } else {
+        textureOverlay.style.display = 'none';
+      }
+      
+      syncSmallCanvas();
+    }
+    
+    function applyStateToSvgNode(state, svgNode) {
+        const lB = svgNode.querySelector('[id="layer-letter-b"]');
+        const lStar = svgNode.querySelector('[id="starGroup"]');
+        const lEarth = svgNode.querySelector('[id="earthGroup"]');
+        const sB = svgNode.querySelector('[id="b-shape"]');
+        const sStar = svgNode.querySelector('[id="shape-star"]');
+        const bBase = svgNode.querySelector('[id="bgBase"]');
+        const bordBase = svgNode.querySelector('[id="border-base"]');
+        
+        const tx = state.bX + 270 * (1 - state.bs);
+        const ty = state.bY + 240 * (1 - state.bs);
+        if(lB) lB.setAttribute('transform', `translate(${tx}, ${ty}) scale(${state.bs}) rotate(${state.bR}, 250, 250)`);
+
+        if(lStar) lStar.setAttribute('transform', `translate(${state.starX}, ${state.starY}) scale(${state.starS}) rotate(${state.starR})`);
+        if(lEarth) lEarth.setAttribute('transform', `translate(${state.earthX}, ${state.earthY}) scale(${state.earthS}) rotate(${state.earthR})`);
+
+        applyShapesToSvg(state, svgNode);
+        
+        if(sB) { sB.setAttribute('fill', 'none'); sB.setAttribute('stroke', state.colB); sB.setAttribute('stroke-width', '8'); }
+        if(sStar) { sStar.setAttribute('fill', state.colStar); sStar.setAttribute('stroke', adjustColor(state.colStar, -50)); }
+
+        const pTop = svgNode.querySelector('#txt-top-path');
+        const pBot = svgNode.querySelector('#txt-bottom-path');
+        if(pTop) pTop.setAttribute('href', '#path_' + state.textLayout + '_top');
+        if(pBot) pBot.setAttribute('href', '#path_' + state.textLayout + '_bot');
+        
+        const dCirc = svgNode.querySelector('#decor-circular');
+        const dHorz = svgNode.querySelector('#decor-horizontal');
+        const dSides = svgNode.querySelector('#decor-sides');
+        if(dCirc) dCirc.setAttribute('display', state.textLayout === 'circular' ? 'block' : 'none');
+        if(dHorz) dHorz.setAttribute('display', state.textLayout === 'horizontal' ? 'block' : 'none');
+        if(dSides) dSides.setAttribute('display', state.textLayout === 'sides' ? 'block' : 'none');
+        
+        if(bBase) bBase.setAttribute('fill', state.colBg);
+        if(bordBase) bordBase.setAttribute('stroke', state.colBorder);
+        
+        const lStars = svgNode.querySelector('[id="layer-stars"]');
+        if (lStars) renderStars(lStars, state.starCount);
+        const lStarsFront = svgNode.querySelector('[id="layer-stars-front"]');
+        if (lStarsFront) renderStars(lStarsFront, Math.floor(state.starCount * 0.6));
+    }
+
+    const variantsView = document.getElementById('variantsView');
+    const btnCloseVariants = document.getElementById('btnCloseVariants');
+    btnCloseVariants.addEventListener('click', () => { variantsView.classList.remove('active'); });
+
+    document.getElementById('btnExploreVariants').addEventListener('click', () => {
+        const grid = document.getElementById('variantsGrid');
+        grid.innerHTML = '';
+        variantsView.classList.add('active');
+
+        for (let i = 0; i < 9; i++) {
+            const state = {
+              ...getComposition(), ...getRandomShapeState(),
+              colB: colB.value, colStar: colStar.value, colBg: colBg.value, colBorder: colBorder.value
+            };
+
+            const card = document.createElement('div');
+            card.className = 'variant-card';
+            
+            const clone = patchSvg.cloneNode(true);
+            clone.removeAttribute('id');
+            applyStateToSvgNode(state, clone);
+            card.appendChild(clone);
+            grid.appendChild(card);
+
+            card.addEventListener('click', () => {
+                inBS.value = state.bs; inBX.value = state.bX; inBY.value = state.bY; inBR.value = state.bR;
+                inStarS.value = state.starS; inStarX.value = state.starX; inStarY.value = state.starY; inStarR.value = state.starR;
+                inEarthS.value = state.earthS; inEarthX.value = state.earthX; inEarthY.value = state.earthY; inEarthR.value = state.earthR;
+                colB.value = state.colB; colStar.value = state.colStar; colBg.value = state.colBg; colBorder.value = state.colBorder;
+
+                layout.bX = state.bX; layout.bY = state.bY; layout.bs = state.bs; layout.bR = state.bR;
+                layout.starX = state.starX; layout.starY = state.starY; layout.starS = state.starS; layout.starR = state.starR;
+                layout.earthX = state.earthX; layout.earthY = state.earthY; layout.earthS = state.earthS; layout.earthR = state.earthR;
+
+                layout.starCount = state.starCount; inTextLayout.value = state.textLayout;
+                layout.starT = state.starT; layout.starB = state.starB; layout.starL = state.starL; layout.swirls = state.swirls;
+                
+                generateStars();
+                updatePatch();
+                variantsView.classList.remove('active');
+            });
+        }
+    });
+
+    document.getElementById('btnRandomize').addEventListener('click', () => {
+      Object.assign(layout, getComposition());
+      Object.assign(layout, getRandomShapeState());
+      inTextLayout.value = layout.textLayout;
+      inBS.value = layout.bs; inBX.value = layout.bX; inBY.value = layout.bY; inBR.value = layout.bR;
+      inStarS.value = layout.starS; inStarX.value = layout.starX; inStarY.value = layout.starY; inStarR.value = layout.starR;
+      inEarthS.value = layout.earthS; inEarthX.value = layout.earthX; inEarthY.value = layout.earthY; inEarthR.value = layout.earthR;
+      generateStars();
+      updatePatch();
+    });
+
+    const inputs = [
+        inTextTop, inTextBottom, inBS, inBX, inBY, inBR, inStarS, inStarX, inStarY, inStarR,
+        inEarthS, inEarthX, inEarthY, inEarthR, inTextLayout, chkTexture, colB, colStar, colBg, colBorder
+    ];
+    inputs.forEach(input => input.addEventListener('input', updatePatch));
+
+    // --- EXPORT FUNCTIONS ---
+    function captureSvgToCanvas(canvas, ctx, callback) {
+        const serializer = new XMLSerializer();
+        let source = serializer.serializeToString(patchSvg);
+        if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+            source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+        }
+        const img = new Image();
+        const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        
+        img.onload = () => {
+            ctx.fillStyle = colBg.value || "#050505";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            callback();
+        };
+        img.src = url;
+    }
+
+    document.getElementById('btnExportSVG').addEventListener('click', () => {
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(patchSvg);
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'SSEP-Mission-Patch.svg';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btnExportPNG').addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 2000; canvas.height = 2000;
+      const ctx = canvas.getContext('2d');
+      captureSvgToCanvas(canvas, ctx, () => {
+          const a = document.createElement('a');
+          a.download = 'SSEP-Mission-Patch.png';
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+      });
+    });
+
+    // 1. Export WebM Video
+    document.getElementById('btnExportWebM').addEventListener('click', () => {
+        const btn = document.getElementById('btnExportWebM');
+        const originalText = btn.textContent;
+        btn.textContent = 'Recording WebM...';
+        btn.disabled = true;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 1000; canvas.height = 1000;
+        const ctx = canvas.getContext('2d');
+
+        const stream = canvas.captureStream(30);
+        const recorder = new MediaRecorder(stream, {mimeType: 'video/webm'});
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+        recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'SSEP-Animated-Patch.webm';
+            a.click(); URL.revokeObjectURL(url);
+            btn.textContent = originalText; btn.disabled = false;
+        };
+
+        recorder.start();
+        let frames = 0;
+        const maxFrames = 90; // 3 seconds at 30fps
+
+        function renderFrame() {
+            captureSvgToCanvas(canvas, ctx, () => {
+                frames++;
+                if (frames >= maxFrames) recorder.stop();
+                else requestAnimationFrame(renderFrame);
+            });
+        }
+        renderFrame();
+    });
+
+    // 2. Export GIF Helper
+    async function getGifWorkerBlobUrl() {
+        const response = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');
+        const text = await response.text();
+        const blob = new Blob([text], { type: 'application/javascript' });
+        return URL.createObjectURL(blob);
+    }
+
+    document.getElementById('btnExportGIF').addEventListener('click', async () => {
+        if (typeof GIF === 'undefined') { alert("GIF library still loading. Try again."); return; }
+        
+        const btn = document.getElementById('btnExportGIF');
+        const originalText = btn.textContent;
+        btn.textContent = 'Rendering GIF...';
+        btn.disabled = true;
+
+        try {
+            const workerUrl = await getGifWorkerBlobUrl();
+            const gif = new GIF({ workers: 2, quality: 10, width: 500, height: 500, workerScript: workerUrl });
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 500; canvas.height = 500;
+            const ctx = canvas.getContext('2d');
+
+            let frames = 0;
+            const maxFrames = 60; // 2 seconds
+
+            function addGifFrame() {
+                captureSvgToCanvas(canvas, ctx, () => {
+                    gif.addFrame(ctx, {copy: true, delay: 33}); // ~30fps delay
+                    frames++;
+                    
+                    if (frames >= maxFrames) {
+                        gif.on('finished', function(blob) {
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob); a.download = 'SSEP-Animated-Patch.gif';
+                            a.click();
+                            btn.textContent = originalText; btn.disabled = false;
+                        });
+                        gif.render();
+                    } else {
+                        requestAnimationFrame(addGifFrame);
+                    }
+                });
+            }
+            addGifFrame();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to render GIF. See console for details.");
+            btn.textContent = originalText; btn.disabled = false;
+        }
+    });
+
+    // Init
+    generateStars();
+    updatePatch();
+  </script>
+</body>
+</html>
