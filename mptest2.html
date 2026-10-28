@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSEP Mission Patch Generator</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap');
+
+    :root {
+      --bg-dark: #121212;
+      --bg-panel: #1e1e1e;
+      --border-color: #333333;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- Stage --- */
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2rem;
+      background: #e5e7eb;
+      background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+      background-size: 20px 20px;
+      overflow: auto;
+    }
+
+    .canvas-container {
+      width: 3.5in;  
+      height: 3.5in; 
+      flex-shrink: 0;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .canvas-container svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+      filter: drop-shadow(0 25px 35px rgba(0,0,0,0.4));
+    }
+    
+    .canvas-small {
+      display: none;
+      width: 150px;
+      height: 150px;
+      aspect-ratio: 1 / 1;
+      position: relative;
+    }
+    .canvas-small svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+    }
+    
+    .size-check-active .canvas-container {
+      max-width: 450px;
+    }
+    .size-check-active .canvas-small {
+      display: block;
+    }
+
+    /* --- Variations Grid View --- */
+    .variants-view {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      z-index: 500;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    .variants-view.active { display: flex; }
+    
+    .variants-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .variants-header h2 { font-size: 1.5rem; color: var(--text-main); }
+    .btn-close-variants {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-close-variants:hover { background: #333; }
+    
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2.5rem;
+      padding-bottom: 4rem;
+    }
+    .variant-card {
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: #000;
+      border-radius: 16px;
+      aspect-ratio: 1/1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .variant-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    }
+    .variant-card svg {
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* --- Sidebar UI --- */
+    .sidebar {
+      width: 380px; 
+      background-color: var(--bg-panel);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background-color: #171717;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .sidebar-header h1 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+    .sidebar-header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4; }
+
+    .panel-section {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .panel-section h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+
+    .control-row { display: flex; flex-direction: column; gap: 0.4rem; }
+    .control-row label { font-size: 0.75rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); text-transform: uppercase;}
+    
+    .val-badge { background: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: var(--text-main); }
+
+    input[type="text"], select {
+      width: 100%; padding: 0.6rem; background-color: #000; border: 1px solid var(--border-color);
+      color: var(--text-main); border-radius: 6px; outline: none; transition: border-color 0.2s; font-family: inherit; font-size: 0.85rem;
+    }
+    input[type="text"]:focus, select:focus { border-color: var(--accent); }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    
+    .color-picker { display: flex; align-items: center; gap: 0.5rem; background: #000; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color);}
+    input[type="color"] { -webkit-appearance: none; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; background: none; padding: 0; flex-shrink: 0;}
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+    .color-picker span { font-size: 0.7rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+    .btn-group { display: flex; gap: 0.5rem; }
+    button {
+      flex: 1; padding: 0.8rem; background-color: var(--accent); color: #fff; border: none; border-radius: 6px;
+      font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s;
+    }
+    button:hover { background-color: var(--accent-hover); }
+    button:active { transform: scale(0.98); }
+    .btn-secondary { background-color: var(--border-color); color: var(--text-main); }
+    .btn-secondary:hover { background-color: #444; }
+    .btn-primary-large { padding: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Accordion Custom Styles */
+    .accordion {
+      background-color: #000;
+      color: var(--text-main);
+      cursor: pointer;
+      padding: 0.8rem;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      outline: none;
+      transition: 0.2s;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .accordion:hover { background-color: #111; }
+    .accordion:after {
+      content: '\002B';
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+    .active-accordion:after {
+      content: "\2212";
+    }
+    .panel-accordion {
+      padding: 0 1rem;
+      background-color: var(--bg-panel);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out, padding 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .panel-accordion.show {
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+    }
+    .accordion-container {
+      margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 800px) {
+      body { flex-direction: column; }
+      .sidebar { width: 100%; height: 50vh; border-left: none; border-top: 1px solid var(--border-color); }
+      .stage { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT: Stage & SVG Generator -->
+  <main class="stage" id="stageMain">
+    <div class="canvas-container" id="poster">
+      <svg id="patchSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="3.5in" height="3.5in">
+        <defs>
+          <filter id="globalSatin" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.4 0.02" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+            <feSpecularLighting in="blur" surfaceScale="2.5" specularConstant="1.2" specularExponent="20" lighting-color="#ffffff" result="spec">
+              <feDistantLight azimuth="135" elevation="45" />
+            </feSpecularLighting>
+            <feComposite in="spec" in2="SourceAlpha" operator="in" result="specMasked" />
+            <feComposite in="displaced" in2="specMasked" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="lit" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.35 0" in="noise" result="coloredNoise" />
+            <feBlend mode="multiply" in="lit" in2="coloredNoise" result="final" />
+          </filter>
+
+          <clipPath id="patchBorderClip">
+            <rect width="490" height="490" x="5" y="5" rx="16" ry="16"/>
+          </clipPath>
+        
+          <!-- Paths for Typography Layouts -->
+          <!-- Circular -->
+          <path id="path_circular_top" d="M 60 250 A 190 190 0 0 1 440 250" />
+          <path id="path_circular_bot" d="M 60 250 A 190 190 0 0 0 440 250" />
+          <!-- Horizontal -->
+          <path id="path_horizontal_top" d="M 20 65 L 480 65" />
+          <path id="path_horizontal_bot" d="M 20 445 L 480 445" />
+          <!-- Sides (Vertical Arcs) -->
+          <path id="path_sides_top" d="M 250 440 A 190 190 0 0 1 250 60" /> 
+          <path id="path_sides_bot" d="M 250 60 A 190 190 0 0 1 250 440" /> 
+          <!-- Hybrid (Arch Top, Straight Bottom) -->
+          <path id="path_hybrid_top" d="M 40 250 A 210 210 0 0 1 460 250" />
+          <path id="path_hybrid_bot" d="M 20 460 L 480 460" />
+        </defs>
+
+        <g clip-path="url(#patchBorderClip)">
+          
+          <rect width="500" height="500" fill="#050505" id="bgBase" />
+          
+          <g id="layer-stars"></g>
+          
+          <g id="masterEmbroideryGroup">
+              
+              <!-- New Orbital Ring replacing Swirls/Planets -->
+              <g id="layer-orbital-base">
+                  <ellipse cx="0" cy="0" rx="220" ry="70" fill="none" stroke="#ffffff" stroke-width="6" class="orbit-stroke" />
+                  <!-- Left Diamond -->
+                  <polygon points="-220,0 -235,-20 -250,0 -235,20" fill="none" stroke="#ffffff" stroke-width="4" class="orbit-stroke" stroke-linejoin="round" />
+                  <!-- Right Diamond -->
+                  <polygon points="220,0 235,-20 250,0 235,20" fill="none" stroke="#ffffff" stroke-width="4" class="orbit-stroke" stroke-linejoin="round" />
+              </g>
+
+              <!-- Blocky Stencil Letter B -->
+              <g id="layer-letter-b">
+                <!-- Main Spine -->
+                <path d="M -100 -140 L -100 160" fill="none" stroke="#2563eb" stroke-width="12" stroke-linecap="square" class="b-stroke" />
+                <circle cx="-85" cy="-170" r="7" fill="#2563eb" class="b-fill" />
+                
+                <!-- Top Lobe -->
+                <path d="M -70 -155 L 40 -155 L 100 -115 L 100 -40 L 50 -10 L -100 -10" fill="none" stroke="#2563eb" stroke-width="12" stroke-linejoin="miter" class="b-stroke" />
+                
+                <!-- Bottom Lobe -->
+                <path d="M -110 20 L 60 20 L 130 70 L 130 170 L 40 220 L -100 220" fill="none" stroke="#2563eb" stroke-width="12" stroke-linejoin="miter" class="b-stroke" />
+                <circle cx="100" cy="210" r="7" fill="#2563eb" class="b-fill" />
+                
+                <!-- Negative Space Dash -->
+                <path d="M -30 -95 L 30 -95" fill="none" stroke="#2563eb" stroke-width="8" stroke-linecap="square" class="b-stroke" />
+              </g>
+
+              <!-- Central Star -->
+              <g id="layer-central-star">
+                  <polygon points="-10,-20 160,-140 20,10 80,90 10,20 -160,140 -20,-10 -80,-90" fill="none" stroke="#fef08a" stroke-width="10" stroke-linejoin="miter" class="star-stroke"/>
+              </g>
+
+              <g id="layer-stars-front"></g>
+              
+              <g id="layer-typography">
+                  <text font-family="'Montserrat', sans-serif" font-weight="900" font-size="34" fill="#ffffff" letter-spacing="4" class="text-fill">
+                    <textPath id="txt-top-path" href="#path_circular_top" startOffset="50%" text-anchor="middle" dominant-baseline="central">BARUCH COLLEGE</textPath>
+                  </text>
+                  <text font-family="'Montserrat', sans-serif" font-weight="900" font-size="44" fill="#ffffff" letter-spacing="8" class="text-fill">
+                    <textPath id="txt-bottom-path" href="#path_circular_bot" startOffset="50%" text-anchor="middle" dominant-baseline="central">ISS</textPath>
+                  </text>
+                  
+                  <g id="decor-circular">
+                      <polygon points="50,240 60,255 50,270 40,255" fill="none" stroke="#ffffff" stroke-width="2" class="decor-stroke" />
+                      <polygon points="450,240 460,255 450,270 440,255" fill="none" stroke="#ffffff" stroke-width="2" class="decor-stroke" />
+                      <circle cx="250" cy="250" r="225" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.2" class="decor-stroke" />
+                      <circle cx="250" cy="250" r="155" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.2" class="decor-stroke" />
+                  </g>
+                  <g id="decor-horizontal" display="none">
+                      <line x1="30" y1="90" x2="470" y2="90" stroke="#ffffff" stroke-width="2" opacity="0.4" stroke-dasharray="8 8" class="decor-stroke"/>
+                      <line x1="30" y1="420" x2="470" y2="420" stroke="#ffffff" stroke-width="2" opacity="0.4" stroke-dasharray="8 8" class="decor-stroke"/>
+                  </g>
+                  <g id="decor-sides" display="none">
+                      <circle cx="250" cy="250" r="215" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.2" stroke-dasharray="4 12" class="decor-stroke" />
+                  </g>
+              </g>
+          </g>
+
+          <rect width="500" height="500" fill="transparent" id="textureOverlay" filter="url(#globalSatin)" pointer-events="none" style="mix-blend-mode: hard-light; opacity: 0.8;" />
+
+        </g>
+        
+        <g id="outerBorder">
+            <rect width="484" height="484" x="8" y="8" rx="12" ry="12" fill="none" stroke="#ffffff" stroke-width="6" stroke-dasharray="24 16" opacity="0.9" id="border-base" />
+        </g>
+      </svg>
+    </div>
+    <div class="canvas-small" id="posterSmall"></div>
+  </main>
+
+  <div class="variants-view" id="variantsView">
+    <div class="variants-header">
+      <h2>Select a Variation</h2>
+      <button class="btn-close-variants" id="btnCloseVariants">Cancel / Go Back</button>
+    </div>
+    <div class="variants-grid" id="variantsGrid"></div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Patch Studio</h1>
+      <p>Simplified customization dashboard.</p>
+    </div>
+
+    <div class="panel-section">
+      <button class="btn-primary-large" id="btnExploreVariants" style="margin-bottom: 0.5rem;">✨ Explore Variations (x9)</button>
+      <button class="btn-secondary" id="btnRandomize" style="padding: 0.8rem; font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color); color: var(--text-main);">🎲 Randomize Current</button>
+    </div>
+
+    <!-- TYPOGRAPHY -->
+    <div class="panel-section">
+      <h2>1. Typography</h2>
+      <div class="control-row">
+        <label>Top Text</label>
+        <input type="text" id="inTextTop" value="BARUCH COLLEGE">
+      </div>
+      <div class="control-row" style="margin-top: 0.5rem;">
+        <label>Bottom Text</label>
+        <input type="text" id="inTextBottom" value="ISS">
+      </div>
+      <div class="control-row" style="margin-top: 0.75rem;">
+        <label>Text Layout</label>
+        <select id="inTextLayout">
+            <option value="hybrid">Sketch Match (Arch & Flat)</option>
+            <option value="circular">Circular (Arch)</option>
+            <option value="horizontal">Horizontal (Straight)</option>
+            <option value="sides">Vertical (Sides)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TRANSFORMATIONS ACCORDION -->
+    <div class="panel-section">
+      <h2>2. Object Layout</h2>
+
+      <!-- B Accordion -->
+      <div class="accordion-container">
+        <button class="accordion">Letter 'B'</button>
+        <div class="panel-accordion">
+          <div class="control-row">
+            <label>Scale <span class="val-badge" id="lblBS">1x</span></label>
+            <input type="range" id="inBS" min="0.1" max="3.0" step="0.05" value="1">
+          </div>
+          <div class="control-row">
+            <label>X Position <span class="val-badge" id="lblBX">250</span></label>
+            <input type="range" id="inBX" min="-100" max="600" step="1" value="250">
+          </div>
+          <div class="control-row">
+            <label>Y Position <span class="val-badge" id="lblBY">250</span></label>
+            <input type="range" id="inBY" min="-100" max="600" step="1" value="250">
+          </div>
+          <div class="control-row">
+            <label>Rotation <span class="val-badge" id="lblBR">0°</span></label>
+            <input type="range" id="inBR" min="-180" max="180" step="1" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Star Accordion -->
+      <div class="accordion-container">
+        <button class="accordion">Central Star</button>
+        <div class="panel-accordion">
+          <div class="control-row">
+            <label>Scale <span class="val-badge" id="lblStarS">1x</span></label>
+            <input type="range" id="inStarS" min="0.1" max="3.0" step="0.05" value="1">
+          </div>
+          <div class="control-row">
+            <label>X Position <span class="val-badge" id="lblStarX">250</span></label>
+            <input type="range" id="inStarX" min="-100" max="600" step="1" value="250">
+          </div>
+          <div class="control-row">
+            <label>Y Position <span class="val-badge" id="lblStarY">250</span></label>
+            <input type="range" id="inStarY" min="-100" max="600" step="1" value="250">
+          </div>
+          <div class="control-row">
+            <label>Rotation <span class="val-badge" id="lblStarR">0°</span></label>
+            <input type="range" id="inStarR" min="-180" max="180" step="1" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Orbit Accordion -->
+      <div class="accordion-container">
+        <button class="accordion">Orbital Ring</button>
+        <div class="panel-accordion">
+          <div class="control-row">
+            <label>Scale <span class="val-badge" id="lblOrbitS">1x</span></label>
+            <input type="range" id="inOrbitS" min="0.1" max="3.0" step="0.05" value="1">
+          </div>
+          <div class="control-row">
+            <label>X Position <span class="val-badge" id="lblOrbitX">250</span></label>
+            <input type="range" id="inOrbitX" min="-100" max="600" step="1" value="250">
+          </div>
+          <div class="control-row">
+            <label>Y Position <span class="val-badge" id="lblOrbitY">250</span></label>
+            <input type="range" id="inOrbitY" min="-100" max="600" step="1" value="250">
+          </div>
+          <div class="control-row">
+            <label>Rotation <span class="val-badge" id="lblOrbitR">0°</span></label>
+            <input type="range" id="inOrbitR" min="-180" max="180" step="1" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLORS & THEME -->
+    <div class="panel-section">
+      <h2>3. Colors & Theme</h2>
+      <div class="grid-2">
+        <div class="color-picker"><input type="color" id="colB" value="#2563eb"><span>Letter 'B'</span></div>
+        <div class="color-picker"><input type="color" id="colStar" value="#fef08a"><span>Star Outline</span></div>
+        <div class="color-picker"><input type="color" id="colOutline" value="#ffffff"><span>Orbit Outline</span></div>
+        <div class="color-picker"><input type="color" id="colBg" value="#050505"><span>Outer Space</span></div>
+      </div>
+      
+      <div class="control-row" style="margin-top: 1rem; flex-direction: row; align-items: center; justify-content: space-between;">
+        <label style="margin:0;">Enable 3D Embroidery FX</label>
+        <input type="checkbox" id="chkTexture" checked style="width:auto; height: 16px; width: 16px; accent-color: var(--accent);">
+      </div>
+    </div>
+
+    <!-- VIEW & EXPORT -->
+    <div class="panel-section" style="border-bottom: none;">
+      <h2>4. View & Export</h2>
+      <div class="control-row" style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <label style="margin:0; font-size: 0.85rem; color: var(--accent);">🔍 Enable Size Check</label>
+        <input type="checkbox" id="chkSizeCheck" style="width:auto; height: 18px; width: 18px; accent-color: var(--accent);">
+      </div>
+      <div class="btn-group">
+        <button id="btnExportPNG">Export PNG (1000+ px)</button>
+        <button id="btnExportSVG">Export SVG</button>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    // Accordion Logic
+    const accordions = document.getElementsByClassName("accordion");
+    for (let i = 0; i < accordions.length; i++) {
+      accordions[i].addEventListener("click", function() {
+        this.classList.toggle("active-accordion");
+        let panel = this.nextElementSibling;
+        if (panel.style.maxHeight) {
+          panel.style.maxHeight = null;
+          panel.classList.remove("show");
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + 30 + "px";
+          panel.classList.add("show");
+        }
+      });
+    }
+
+    const stageMain = document.getElementById('stageMain');
+    const chkSizeCheck = document.getElementById('chkSizeCheck');
+    const posterSmall = document.getElementById('posterSmall');
+    const patchSvg = document.getElementById('patchSvg');
+
+    chkSizeCheck.addEventListener('change', () => {
+      if(chkSizeCheck.checked) {
+        stageMain.classList.add('size-check-active');
+        posterSmall.innerHTML = patchSvg.outerHTML; 
+      } else {
+        stageMain.classList.remove('size-check-active');
+        posterSmall.innerHTML = '';
+      }
+    });
+
+    function syncSmallCanvas() {
+        if(chkSizeCheck.checked) {
+            posterSmall.innerHTML = patchSvg.outerHTML;
+            posterSmall.querySelector('svg').removeAttribute('id');
+        }
+    }
+
+    // DOM Elements
+    const layerOrbital = document.getElementById('layer-orbital-base');
+    const layerStar = document.getElementById('layer-central-star');
+    const layerB = document.getElementById('layer-letter-b');
+    
+    const textureOverlay = document.getElementById('textureOverlay');
+    const borderBase = document.getElementById('border-base');
+    const bgBase = document.getElementById('bgBase');
+    
+    const txtTop = document.getElementById('txt-top-path');
+    const txtBottom = document.getElementById('txt-bottom-path');
+    const decorCircular = document.getElementById('decor-circular');
+    const decorHorizontal = document.getElementById('decor-horizontal');
+    const decorSides = document.getElementById('decor-sides');
+    const inTextLayout = document.getElementById('inTextLayout');
+    
+    // UI Inputs
+    const inTextTop = document.getElementById('inTextTop');
+    const inTextBottom = document.getElementById('inTextBottom');
+    
+    const inBS = document.getElementById('inBS');
+    const inBX = document.getElementById('inBX');
+    const inBY = document.getElementById('inBY');
+    const inBR = document.getElementById('inBR');
+
+    const inStarS = document.getElementById('inStarS');
+    const inStarX = document.getElementById('inStarX');
+    const inStarY = document.getElementById('inStarY');
+    const inStarR = document.getElementById('inStarR');
+
+    const inOrbitS = document.getElementById('inOrbitS');
+    const inOrbitX = document.getElementById('inOrbitX');
+    const inOrbitY = document.getElementById('inOrbitY');
+    const inOrbitR = document.getElementById('inOrbitR');
+    
+    const chkTexture = document.getElementById('chkTexture');
+    const colB = document.getElementById('colB');
+    const colStar = document.getElementById('colStar');
+    const colOutline = document.getElementById('colOutline');
+    const colBg = document.getElementById('colBg');
+    
+    // Compositions
+    const compositions = [
+        { name: "Sketch Match", textLayout: "hybrid",
+          b: {x: 250, y: 250, s: 1.0, r: 0}, 
+          star: {x: 250, y: 250, s: 1.0, r: 0}, 
+          orbit: {x: 250, y: 250, s: 1.0, r: -15} },
+        { name: "Centered Placement & Symmetry", textLayout: "circular",
+          b: {x: 250, y: 250, s: 0.85, r: 0}, 
+          star: {x: 250, y: 250, s: 0.85, r: 0}, 
+          orbit: {x: 250, y: 250, s: 0.85, r: 0} },
+        { name: "Circular Eye Movement", textLayout: "sides",
+          b: {x: 250, y: 230, s: 0.75, r: 15}, 
+          star: {x: 350, y: 280, s: 0.8, r: 45}, 
+          orbit: {x: 150, y: 180, s: 0.9, r: -20} },
+        { name: "Rule of Thirds & Soft Asymmetry", textLayout: "horizontal",
+          b: {x: 190, y: 250, s: 0.85, r: -5}, 
+          star: {x: 320, y: 220, s: 1.0, r: 15}, 
+          orbit: {x: 250, y: 250, s: 0.8, r: 0} },
+        { name: "Negative-Space Dominance", textLayout: "horizontal",
+          b: {x: 150, y: 150, s: 0.35, r: 0}, 
+          star: {x: 350, y: 150, s: 0.45, r: 45}, 
+          orbit: {x: 250, y: 350, s: 0.4, r: 0} },
+        { name: "Strong Geometries & Shapes", textLayout: "circular",
+          b: {x: 250, y: 250, s: 1.1, r: 0}, 
+          star: {x: 250, y: 250, s: 1.5, r: 90}, 
+          orbit: {x: 250, y: 250, s: 1.3, r: 45} }
+    ];
+
+    function getComposition() {
+        const comp = compositions[Math.floor(Math.random() * compositions.length)];
+        const j = (range) => (Math.random() - 0.5) * range;
+        
+        return {
+            textLayout: comp.textLayout,
+            bX: Math.round(comp.b.x + j(20)),
+            bY: Math.round(comp.b.y + j(20)),
+            bR: Math.round(comp.b.r + j(10)),
+            bs: Math.max(0.1, comp.b.s + j(0.2)).toFixed(2),
+            
+            starX: Math.round(comp.star.x + j(30)),
+            starY: Math.round(comp.star.y + j(30)),
+            starR: Math.round(comp.star.r + j(20)),
+            starS: Math.max(0.1, comp.star.s + j(0.3)).toFixed(2),
+            
+            orbitX: Math.round(comp.orbit.x + j(30)),
+            orbitY: Math.round(comp.orbit.y + j(30)),
+            orbitR: Math.round(comp.orbit.r + j(20)),
+            orbitS: Math.max(0.1, comp.orbit.s + j(0.2)).toFixed(2)
+        };
+    }
+
+    function generateStarData(count) {
+        let stars = [];
+        for(let i=0; i<count; i++) {
+            stars.push({
+                cx: Math.random() * 500,
+                cy: Math.random() * 500,
+                r: Math.random() * 1.5 + 1,
+                sparkle: Math.random() > 0.9,
+                front: Math.random() > 0.6
+            });
+        }
+        return stars;
+    }
+
+    // Master State
+    let layout = {
+      textLayout: 'hybrid',
+      bX: 250, bY: 250, bs: 1.0, bR: 0,
+      starX: 250, starY: 250, starS: 1.0, starR: 0,
+      orbitX: 250, orbitY: 250, orbitS: 1.0, orbitR: -15,
+      stars: generateStarData(40)
+    };
+
+    function renderStarsFromData(svgNode, state) {
+        const backContainer = svgNode.querySelector('#layer-stars');
+        const frontContainer = svgNode.querySelector('#layer-stars-front');
+        if(!backContainer) return;
+        
+        backContainer.innerHTML = '';
+        if(frontContainer) frontContainer.innerHTML = '';
+
+        state.stars.forEach(s => {
+            if (s.cx > 100 && s.cx < 420 && s.cy > 80 && s.cy < 400 && Math.random() > 0.2) return;
+            
+            const target = (s.front && frontContainer) ? frontContainer : backContainer;
+            if (s.sparkle) {
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M ${s.cx} ${s.cy-s.r*3} Q ${s.cx+s.r} ${s.cy-s.r} ${s.cx+s.r*3} ${s.cy} Q ${s.cx+s.r} ${s.cy+s.r} ${s.cx} ${s.cy+s.r*3} Q ${s.cx-s.r} ${s.cy+s.r} ${s.cx-s.r*3} ${s.cy} Q ${s.cx-s.r} ${s.cy-s.r} ${s.cx} ${s.cy-s.r*3} Z`);
+                path.setAttribute("fill", state.colOutline);
+                target.appendChild(path);
+            } else {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", s.cx);
+                circle.setAttribute("cy", s.cy);
+                circle.setAttribute("r", s.r);
+                circle.setAttribute("fill", state.colOutline);
+                target.appendChild(circle);
+            }
+        });
+    }
+    
+    function applyStateToSvgNode(state, svgNode) {
+        const lB = svgNode.querySelector('#layer-letter-b');
+        const lStar = svgNode.querySelector('#layer-central-star');
+        const lOrbital = svgNode.querySelector('#layer-orbital-base');
+        
+        if(lB) lB.setAttribute('transform', `translate(${state.bX}, ${state.bY}) scale(${state.bs}) rotate(${state.bR})`);
+        if(lStar) lStar.setAttribute('transform', `translate(${state.starX}, ${state.starY}) scale(${state.starS}) rotate(${state.starR})`);
+        if(lOrbital) lOrbital.setAttribute('transform', `translate(${state.orbitX}, ${state.orbitY}) scale(${state.orbitS}) rotate(${state.orbitR})`);
+
+        svgNode.querySelectorAll('.b-stroke').forEach(el => el.setAttribute('stroke', state.colB));
+        svgNode.querySelectorAll('.b-fill').forEach(el => el.setAttribute('fill', state.colB));
+        
+        svgNode.querySelectorAll('.star-stroke').forEach(el => el.setAttribute('stroke', state.colStar));
+        
+        svgNode.querySelectorAll('.orbit-stroke').forEach(el => el.setAttribute('stroke', state.colOutline));
+        svgNode.querySelectorAll('.decor-stroke').forEach(el => el.setAttribute('stroke', state.colOutline));
+        svgNode.querySelectorAll('.text-fill').forEach(el => el.setAttribute('fill', state.colOutline));
+
+        const pTop = svgNode.querySelector('#txt-top-path');
+        const pBot = svgNode.querySelector('#txt-bottom-path');
+        if(pTop) pTop.setAttribute('href', '#path_' + state.textLayout + '_top');
+        if(pBot) pBot.setAttribute('href', '#path_' + state.textLayout + '_bot');
+        
+        const dCirc = svgNode.querySelector('#decor-circular');
+        const dHorz = svgNode.querySelector('#decor-horizontal');
+        const dSides = svgNode.querySelector('#decor-sides');
+        if(dCirc) dCirc.setAttribute('display', state.textLayout === 'circular' ? 'block' : 'none');
+        if(dHorz) dHorz.setAttribute('display', state.textLayout === 'horizontal' ? 'block' : 'none');
+        if(dSides) dSides.setAttribute('display', state.textLayout === 'sides' ? 'block' : 'none');
+        if(state.textLayout === 'hybrid' && dCirc) dCirc.setAttribute('display', 'block');
+        
+        const bBase = svgNode.querySelector('#bgBase');
+        if(bBase) bBase.setAttribute('fill', state.colBg);
+        
+        renderStarsFromData(svgNode, state);
+    }
+
+    function updatePatch() {
+      txtTop.textContent = inTextTop.value.toUpperCase();
+      txtBottom.textContent = inTextBottom.value.toUpperCase();
+      
+      layout.textLayout = inTextLayout.value;
+      
+      layout.bs = parseFloat(inBS.value);
+      layout.bX = parseFloat(inBX.value);
+      layout.bY = parseFloat(inBY.value);
+      layout.bR = parseFloat(inBR.value);
+      
+      document.getElementById('lblBS').textContent = layout.bs + 'x';
+      document.getElementById('lblBX').textContent = layout.bX;
+      document.getElementById('lblBY').textContent = layout.bY;
+      document.getElementById('lblBR').textContent = layout.bR + '°';
+
+      layout.starS = parseFloat(inStarS.value);
+      layout.starX = parseFloat(inStarX.value);
+      layout.starY = parseFloat(inStarY.value);
+      layout.starR = parseFloat(inStarR.value);
+      
+      document.getElementById('lblStarS').textContent = layout.starS + 'x';
+      document.getElementById('lblStarX').textContent = layout.starX;
+      document.getElementById('lblStarY').textContent = layout.starY;
+      document.getElementById('lblStarR').textContent = layout.starR + '°';
+      
+      layout.orbitS = parseFloat(inOrbitS.value);
+      layout.orbitX = parseFloat(inOrbitX.value);
+      layout.orbitY = parseFloat(inOrbitY.value);
+      layout.orbitR = parseFloat(inOrbitR.value);
+      
+      document.getElementById('lblOrbitS').textContent = layout.orbitS + 'x';
+      document.getElementById('lblOrbitX').textContent = layout.orbitX;
+      document.getElementById('lblOrbitY').textContent = layout.orbitY;
+      document.getElementById('lblOrbitR').textContent = layout.orbitR + '°';
+
+      layout.colB = colB.value;
+      layout.colStar = colStar.value;
+      layout.colOutline = colOutline.value;
+      layout.colBg = colBg.value;
+
+      applyStateToSvgNode(layout, document);
+
+      if (chkTexture.checked) {
+        textureOverlay.style.display = 'block';
+      } else {
+        textureOverlay.style.display = 'none';
+      }
+      
+      syncSmallCanvas();
+    }
+
+    const variantsView = document.getElementById('variantsView');
+    const btnCloseVariants = document.getElementById('btnCloseVariants');
+    
+    btnCloseVariants.addEventListener('click', () => {
+        variantsView.classList.remove('active');
+    });
+
+    const btnExploreVariants = document.getElementById('btnExploreVariants');
+    btnExploreVariants.addEventListener('click', () => {
+        const grid = document.getElementById('variantsGrid');
+        grid.innerHTML = '';
+        variantsView.classList.add('active');
+
+        for (let i = 0; i < 9; i++) {
+            const state = {
+              ...getComposition(),
+              stars: generateStarData(40),
+              colB: colB.value,
+              colStar: colStar.value,
+              colOutline: colOutline.value,
+              colBg: colBg.value
+            };
+
+            const card = document.createElement('div');
+            card.className = 'variant-card';
+            
+            const clone = patchSvg.cloneNode(true);
+            clone.removeAttribute('id');
+            
+            applyStateToSvgNode(state, clone);
+            
+            card.appendChild(clone);
+            grid.appendChild(card);
+
+            card.addEventListener('click', () => {
+                inTextLayout.value = state.textLayout;
+                
+                inBS.value = state.bs;
+                inBX.value = state.bX;
+                inBY.value = state.bY;
+                inBR.value = state.bR;
+
+                inStarS.value = state.starS;
+                inStarX.value = state.starX;
+                inStarY.value = state.starY;
+                inStarR.value = state.starR;
+
+                inOrbitS.value = state.orbitS;
+                inOrbitX.value = state.orbitX;
+                inOrbitY.value = state.orbitY;
+                inOrbitR.value = state.orbitR;
+                
+                layout.stars = state.stars;
+                
+                updatePatch();
+                variantsView.classList.remove('active');
+            });
+        }
+    });
+
+    const btnRandomize = document.getElementById('btnRandomize');
+    btnRandomize.addEventListener('click', () => {
+      const compState = getComposition();
+      Object.assign(layout, compState);
+      layout.stars = generateStarData(40);
+      
+      inTextLayout.value = layout.textLayout;
+      
+      inBS.value = layout.bs;
+      inBX.value = layout.bX;
+      inBY.value = layout.bY;
+      inBR.value = layout.bR;
+      
+      inStarS.value = layout.starS;
+      inStarX.value = layout.starX;
+      inStarY.value = layout.starY;
+      inStarR.value = layout.starR;
+
+      inOrbitS.value = layout.orbitS;
+      inOrbitX.value = layout.orbitX;
+      inOrbitY.value = layout.orbitY;
+      inOrbitR.value = layout.orbitR;
+      
+      updatePatch();
+    });
+
+    const inputs = [
+        inTextTop, inTextBottom, inTextLayout,
+        inBS, inBX, inBY, inBR,
+        inStarS, inStarX, inStarY, inStarR,
+        inOrbitS, inOrbitX, inOrbitY, inOrbitR,
+        chkTexture, colB, colStar, colOutline, colBg
+    ];
+    
+    inputs.forEach(input => input.addEventListener('input', updatePatch));
+
+    document.getElementById('btnExportSVG').addEventListener('click', () => {
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(patchSvg);
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'SSEP-Mission-Patch.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btnExportPNG').addEventListener('click', () => {
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(patchSvg);
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      
+      const img = new Image();
+      const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2000;
+        canvas.height = 2000;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = colBg.value; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, 2000, 2000);
+        
+        const a = document.createElement('a');
+        a.download = 'SSEP-Mission-Patch.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+
+    // Init
+    updatePatch();
+  </script>
+</body>
+</html>
