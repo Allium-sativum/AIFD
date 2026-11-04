@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Guide | Nostalgic Memories</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courgette&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FFFFFF;
+            --panel-bg: #F9F9F9;
+            --text-color: #000000;
+            --accent: #D4AF37;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 40px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 {
+            font-family: Arial, sans-serif;
+            color: var(--text-color);
+            margin-bottom: 0.5em;
+            font-weight: 900;
+        }
+        h1 {
+            text-align: center;
+            font-size: 3.5rem; 
+            margin-bottom: 40px;
+            border-bottom: 3px solid var(--text-color);
+            padding-bottom: 20px;
+        }
+        h2 {
+            font-size: 2.5rem;
+            margin-top: 40px;
+        }
+        h3 {
+            font-size: 1.8rem;
+        }
+        .section {
+            background: var(--panel-bg);
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #E0E0E0;
+        }
+        .brief-text {
+            font-size: 1.15rem;
+            color: #222222;
+        }
+        .image-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .logomark-container img {
+            max-width: 300px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        .palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .color-swatch {
+            flex: 1;
+            min-width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-end;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #fff;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+            box-shadow: inset 0 -40px 40px rgba(0,0,0,0.2);
+        }
+        .color-orange { background-color: #F28500; }
+        .color-blue { background-color: #5B92E5; }
+        .color-green { background-color: #4C9A2A; }
+        
+        .typography-sample {
+            font-family: 'Courgette', cursive;
+            font-size: 3rem;
+            margin-top: 20px;
+            color: #000;
+        }
+        .font-name {
+            display: inline-block;
+            background: #E0E0E0;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .handoff-list {
+            font-size: 1.1rem;
+            background-color: #EFEFEF;
+            padding: 40px;
+            border-left: 8px solid #000;
+            border-radius: 8px;
+            list-style-position: outside;
+            margin-left: 20px;
+        }
+        .handoff-list li {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .handoff-list strong {
+            display: inline-block;
+            margin-bottom: 4px;
+            color: #000;
+            font-size: 1.15rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Creative Director Pt. 1: Style Guide</h1>
+    
+    <div class="section">
+        <h2>Campaign: Nostalgic Memories</h2>
+        <h3>Brief</h3>
+        <p class="brief-text">A collaboration between Uniqlo’s UT (Uniqlo T-shirt) and いつか (Itsuka/ituka_e), a Japanese freelance illustrator who specializes in creating illustrations that feel nostalgic and bittersweet.</p>
+    </div>
+
+    <div class="section">
+        <h2>Moodboard</h2>
+        <div class="image-container">
+            <img src="moodboard.png" alt="Nostalgic Memories Moodboard">
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Brand Campaign Color Palette</h2>
+        <p>A mix of warm and cool tones designed to evoke a bittersweet, sunset-like nostalgia.</p>
+        <div class="palette">
+            <div class="color-swatch color-orange">Orange (#F28500)</div>
+            <div class="color-swatch color-blue">Blue (#5B92E5)</div>
+            <div class="color-swatch color-green">Green (#4C9A2A)</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Typography</h2>
+        <p>Headings Font: <span class="font-name">Arial (Large)</span></p>
+        <p>Campaign Font: <span class="font-name">Courgette</span></p>
+        <div class="typography-sample">
+            Nostalgic Memories<br>
+            いつか
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Logomark</h2>
+        <div class="logomark-container">
+            <img src="logomark.png" alt="Uniqlo UT and Itsuka Collaboration Logomark">
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Style Handoff: A.I. System Instructions</h2>
+        <ol class="handoff-list">
+            <li><strong>Minimalist E-Commerce Canvas:</strong> 
+                Every iteration of this page must use a stark white background (`#FFFFFF`) with solid black text (`#000000`), mirroring the clean, utilitarian UI of Uniqlo's online storefront. 
+            </li>
+            <li><strong>Uniqlo Text Structuring & Hierarchy:</strong> 
+                Format headings (`h1`, `h2`, `h3`) exclusively in 'Arial' with a heavy font-weight (`900`) and deliberately oversized scaling (e.g., `3.5rem` for H1). Body text should be blocky, left-aligned, and cleanly separated by ample whitespace, just like Uniqlo's product descriptions and category headers.
+            </li>
+            <li><strong>Interactive Accents & Link Functionality:</strong> 
+                When incorporating hyperlinks or interactive UI elements, mimic Uniqlo's clear accent functionality. Clickable text should stand out from the black body copy by utilizing the campaign's accent colors (Orange `#F28500` or Blue `#5B92E5`). Furthermore, ensure all links feature a clean, immediate underline transition on `:hover` to indicate interactivity.
+            </li>
+            <li><strong>Grid-Based Layout Modules:</strong> 
+                Structure all content in sharp, modular, block-level containers (`.section`). Maintain strict `40px` padding and subtle `1px solid #E0E0E0` borders to separate content blocks, reflecting the rigid grid systems used for Uniqlo's apparel lineups.
+            </li>
+            <li><strong>Campaign-Specific Typography:</strong> 
+                The Google Font 'Courgette' is reserved strictly for decorative stylistic elements directly related to the "Nostalgic Memories" identity. Do not use 'Courgette' for standard UI text, structural headings, or navigational accents.
+            </li>
+            <li><strong>Asset Management:</strong> 
+                The specific files "moodboard.png" and "logomark.png" must remain explicitly referenced by these exact filenames. The logomark must be placed on a white background to ensure high-contrast visibility against any container.
+            </li>
+        </ol>
+    </div>
+
+</body>
+</html>
