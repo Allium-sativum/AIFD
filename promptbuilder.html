@@ -179,7 +179,7 @@
         </p>
 
         <div class="grid-layout">
-            <!-- Left Column: Medium, Motif, Watermark -->
+            <!-- Left Column: Medium, Motif, People Amount, Watermark -->
             <div>
                 <div class="form-group">
                     <label for="visualStyle">Visual Style / Medium</label>
@@ -210,6 +210,16 @@
                         <option value="Snowy Morning at Koishikawa (a quiet, pristine winter landscape blanketed in fresh white snow with birds in flight)">Winter Snow: Snow-Covered Landscape & Clear Air</option>
                         <option value="Poppies in the Wind (vibrant scarlet, azure, and gold poppy blossoms swaying rhythmically in an intense summer gale)">Poppies: Windblown Wildflowers</option>
                         <option value="Bullfinch and Weeping Cherry (delicate pale-pink weeping sakura blossom sprays against deep Prussian blue sky)">Sakura: Weeping Cherry Blossoms</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="peopleCount">Number of People in Ad</label>
+                    <select id="peopleCount" onchange="generatePrompt()">
+                        <option value="random" selected>🎲 Random Number of People (Default)</option>
+                        <option value="1">1 Person (Solo Model)</option>
+                        <option value="2">2 People (Duo / Group)</option>
+                        <option value="3">3 People (Ensemble Group)</option>
                     </select>
                 </div>
 
@@ -279,7 +289,7 @@
             <textarea id="promptOutput" readonly></textarea>
         </div>
         <div class="btn-row">
-            <button onclick="randomizeAndGenerate()" class="btn-secondary">🎲 Randomize Motif</button>
+            <button onclick="randomizeAndGenerate()" class="btn-secondary">🎲 Randomize Motif & People</button>
             <button onclick="copyPrompt()" id="copyBtn">Copy to Clipboard</button>
         </div>
     </div>
@@ -299,57 +309,124 @@
             "Bullfinch and Weeping Cherry (delicate pale-pink weeping sakura blossom sprays against deep Prussian blue sky)"
         ];
 
+        const tShirtColors = [
+            "classic off-white",
+            "washed vintage black",
+            "sage green",
+            "slate grey",
+            "ecru",
+            "navy blue",
+            "warm beige"
+        ];
+
         const styleDescriptors = {
             photo: {
                 name: "Editorial Photography",
-                lead: "A professional commercial fashion advertisement photograph capturing a fashion model wearing an oversized, heavyweight Uniqlo UT graphic t-shirt.",
-                render: "Minimalist Uniqlo lookbook aesthetic, natural cotton cloth drape and weave texture, 8k resolution, authentic commercial fashion photography, sharp focus"
+                lead: "A professional commercial fashion advertisement photograph capturing",
+                render: "Minimalist Uniqlo lookbook aesthetic, natural cotton cloth drape and weave texture, 350 dpi high-resolution print ready, authentic commercial fashion photography, sharp focus"
             },
             woodblock: {
                 name: "Edo Ukiyo-e Woodblock Print",
-                lead: "A traditional Japanese ukiyo-e woodblock print advertisement illustrating a modern figure wearing an oversized Uniqlo UT graphic t-shirt.",
-                render: "Fine black keyline linework, authentic washi mulberry paper texture, mineral pigment color grading, Prussian blue bokashi gradient shading, hand-carved woodblock printing effect"
+                lead: "A traditional Japanese ukiyo-e woodblock print advertisement illustrating",
+                render: "Fine black keyline linework, authentic washi mulberry paper texture, 350 dpi high-resolution print ready, mineral pigment color grading, Prussian blue bokashi gradient shading, hand-carved woodblock printing effect"
             },
             flat_illustration: {
                 name: "Flat Graphic Illustration",
-                lead: "A crisp, minimalist graphic advertisement illustration depicting a figure wearing an oversized Uniqlo UT graphic tee.",
-                render: "Modern Swiss-Japanese graphic design sensibility, bold geometric color blocking, generous negative space, crisp vector lines"
+                lead: "A crisp, minimalist graphic advertisement illustration depicting",
+                render: "Modern Swiss-Japanese graphic design sensibility, bold geometric color blocking, 350 dpi high-resolution print ready, generous negative space, crisp vector lines"
             },
             risograph: {
                 name: "Risograph Spot-Color Print",
-                lead: "A stylized commercial ad created as an authentic multi-color risograph print of a model in an oversized Uniqlo UT nature t-shirt.",
-                render: "Tactile fibrous paper grain, subtle color layer misregistration, fine halftone dot pattern, vibrant spot inks in indigo, vermilion, and moss green"
+                lead: "A stylized commercial ad created as an authentic multi-color risograph print of",
+                render: "Tactile fibrous paper grain, subtle color layer misregistration, 350 dpi high-resolution print ready, fine halftone dot pattern, vibrant spot inks in indigo, vermilion, and moss green"
             },
             "3d_render": {
                 name: "Modern 3D Studio Render",
-                lead: "A high-end 3D architectural fashion render of a styled model wearing an oversized Uniqlo UT graphic t-shirt.",
-                render: "Photorealistic fabric physics, soft ambient occlusion, subsurface light scattering, crisp Octane studio render quality"
+                lead: "A high-end 3D architectural fashion render of",
+                render: "Photorealistic fabric physics, soft ambient occlusion, 350 dpi high-resolution print ready, subsurface light scattering, crisp Octane studio render quality"
             },
             paper_collage: {
                 name: "Layered Paper Collage",
-                lead: "A tactile mixed-media paper collage advertisement displaying a figure wearing an oversized Uniqlo UT graphic t-shirt.",
-                render: "Torn deckled paper edges, layered Japanese washi and textured paper cutouts, subtle cast paper drop shadows, mixed gouache and archival print elements"
+                lead: "A tactile mixed-media paper collage advertisement displaying",
+                render: "Torn deckled paper edges, layered Japanese washi and textured paper cutouts, 350 dpi high-resolution print ready, subtle cast paper drop shadows, mixed gouache and archival print elements"
             },
             mta_poster: {
                 name: "Vintage 1970s Modernist Transit Poster",
-                lead: "A vintage 1970s modernist transit poster advertisement featuring a commuter wearing an oversized Uniqlo UT graphic t-shirt.",
-                render: "Disciplined modular grid layout, bold modernist typographic sensitivity, muted retro print reproduction, authentic vintage paper aging"
+                lead: "A vintage 1970s modernist transit poster advertisement featuring",
+                render: "Disciplined modular grid layout, bold modernist typographic sensitivity, 350 dpi high-resolution print ready, muted retro print reproduction, authentic vintage paper aging"
             }
         };
 
-        const watermarkCore = "In the bottom right corner of the image, the red square Uniqlo logo and the black Japanese calligraphy kanji '北斎' are printed directly over the background with no white box, no white card, no border, and zero background fill behind them.";
+        // Updated wording to strictly enforce transparent cutout lettering directly on the photo/scene without any bounding shape or background block
+        const watermarkCore = "In the bottom right corner of the image, the standalone red square Uniqlo logo and the black Japanese calligraphy kanji '北斎' are cleanly stenciled directly onto the background scenery with completely transparent negative space around them, absolutely no white box, no white card, no border, and zero background block.";
         const moodCore = "Evokes a timeless reverence for the raw, elemental beauty of the natural world, balancing serene minimalism with elemental power.";
 
-        function getRandomMotif() {
-            return artworkPool[Math.floor(Math.random() * artworkPool.length)];
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
         }
 
-        function buildSinglePrompt(styleKey, motif, angle, setting, lighting, format, includeWatermark) {
+        function buildPeopleDescription(countOption) {
+            let count = countOption;
+            if (count === "random") {
+                const randomCounts = ["1", "2", "3"];
+                count = getRandomItem(randomCounts);
+            }
+
+            const numCount = parseInt(count, 10);
+            
+            if (numCount === 1) {
+                const color = getRandomItem(tShirtColors);
+                return {
+                    subject: `a fashion model wearing an oversized, heavyweight ${color} Uniqlo UT graphic t-shirt`,
+                    artRule: null
+                };
+            } else {
+                const sameArt = Math.random() < 0.5;
+                const sharedMotif = getRandomItem(artworkPool);
+                
+                let descriptions = [];
+                let usedColors = [];
+
+                for (let i = 0; i < numCount; i++) {
+                    let color;
+                    do {
+                        color = getRandomItem(tShirtColors);
+                    } while (usedColors.includes(color) && usedColors.length < tShirtColors.length);
+                    usedColors.push(color);
+
+                    let motif = sameArt ? sharedMotif : getRandomItem(artworkPool);
+                    descriptions.push(`model ${i + 1} wearing an oversized, heavyweight ${color} Uniqlo UT graphic t-shirt featuring ${motif}`);
+                }
+
+                if (numCount === 2) {
+                    return {
+                        subject: `two fashion models standing together, ${descriptions[0]} and ${descriptions[1]}`,
+                        artRule: "multiple"
+                    };
+                } else {
+                    return {
+                        subject: `a group of three fashion models posing together, ${descriptions[0]}, ${descriptions[1]}, and ${descriptions[2]}`,
+                        artRule: "multiple"
+                    };
+                }
+            }
+        }
+
+        function buildSinglePrompt(styleKey, motifSelection, angle, setting, lighting, format, includeWatermark, peopleOption) {
             const spec = styleDescriptors[styleKey];
-            const activeMotif = (motif === "random") ? getRandomMotif() : motif;
-            const teeArt = `The front of the t-shirt prominently displays authentic Edo-period woodblock nature artwork by master artist Katsushika Hokusai, featuring ${activeMotif}.`;
+            const peopleInfo = buildPeopleDescription(peopleOption);
+
+            let leadText = `${spec.lead} ${peopleInfo.subject}.`;
+
+            if (peopleInfo.artRule === null) {
+                const activeMotif = (motifSelection === "random") ? getRandomItem(artworkPool) : motifSelection;
+                leadText += ` The front of the t-shirt prominently displays authentic Edo-period woodblock nature artwork by master artist Katsushika Hokusai, featuring ${activeMotif}.`;
+            } else {
+                leadText += ` Each t-shirt prominently displays authentic Edo-period woodblock nature artwork by master artist Katsushika Hokusai.`;
+            }
+
             const watermarkSegment = includeWatermark ? ` ${watermarkCore}` : "";
-            return `${spec.lead} ${teeArt}${watermarkSegment} ${angle} set against ${setting}. ${lighting}. ${moodCore} ${spec.render} ${format} --v 6.0 --style raw`;
+            return `${leadText}${watermarkSegment} ${angle} set against ${setting}. ${lighting}. ${moodCore} ${spec.render} ${format} --v 6.0 --style raw --testp`;
         }
 
         function generatePrompt() {
@@ -360,6 +437,7 @@
             const setting = document.getElementById('setting').value;
             const format = document.getElementById('format').value;
             const includeWatermark = document.getElementById('watermarkOption').value === "include";
+            const peopleOption = document.getElementById('peopleCount').value;
 
             let outputText = "";
 
@@ -374,11 +452,11 @@
                 ];
 
                 outputText = mixStyles.map((item, idx) => {
-                    const prompt = buildSinglePrompt(item.style, shuffled[idx], angle, setting, lighting, format, includeWatermark);
+                    const prompt = buildSinglePrompt(item.style, shuffled[idx], angle, setting, lighting, format, includeWatermark, peopleOption);
                     return `${item.title}:\n${prompt}`;
                 }).join("\n\n---\n\n");
             } else {
-                outputText = buildSinglePrompt(visualStyle, motifSelection, angle, setting, lighting, format, includeWatermark);
+                outputText = buildSinglePrompt(visualStyle, motifSelection, angle, setting, lighting, format, includeWatermark, peopleOption);
             }
 
             document.getElementById('promptOutput').value = outputText;
@@ -391,6 +469,7 @@
 
         function randomizeAndGenerate() {
             document.getElementById('artworkMotif').value = "random";
+            document.getElementById('peopleCount').value = "random";
             generatePrompt();
         }
 
