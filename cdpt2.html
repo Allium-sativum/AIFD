@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Director Pt. 2: Logo + Dynamic Hero | Brian Lau</title>
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --panel: rgba(0,0,0,0.85);
+            --head: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+            --body: "Ink Free", "Segoe Print", "Bradley Hand", cursive;
+        }
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background: #000;
+            color: #fff;
+            font: 1rem/1.6 var(--body);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: min(100%, 1100px);
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        .back-link {
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            align-self: flex-start;
+            margin-bottom: -20px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        header h1 {
+            font-family: var(--head);
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin: 0 0 10px 0;
+            color: #fff;
+            text-align: center;
+        }
+        .subtitle {
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.75rem;
+            font-family: var(--head);
+            text-align: center;
+            margin: 0;
+        }
+        .section-card {
+            background: var(--panel);
+            border: 1px solid rgba(212,175,55,0.6);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+        }
+        .section-card h2 {
+            font-family: var(--head);
+            font-size: 1.2rem;
+            color: var(--gold);
+            margin-top: 0;
+            margin-bottom: 20px;
+            letter-spacing: 0.05em;
+        }
+        .logo-preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #111;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+        }
+        .logo-preview img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .hero-iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #fff;
+        }
+        .hero-iframe-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">&larr; Back to Portfolio Index</a>
+    
+    <header>
+        <p class="subtitle">ART 3041 &middot; Creative Director Assignment</p>
+        <h1>Creative Director Pt. 2: Logo + Dynamic Hero</h1>
+    </header>
+
+    <!-- Logo Section -->
+    <section class="section-card">
+        <h2>1. Campaign Logomark</h2>
+        <div class="logo-preview">
+            <img src="logotest.jpg" alt="Campaign Logo Mark">
+        </div>
+    </section>
+
+    <!-- Dynamic Hero Section -->
+    <section class="section-card">
+        <h2>2. Animated Hero Section</h2>
+        <div class="hero-iframe-wrapper">
+            <iframe src="hero.html" title="Dynamic Hero Animation"></iframe>
+        </div>
+    </section>
+</div>
+
+</body>
+</html>
