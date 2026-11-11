@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Prompt Builder | Hokusai: Forces of Nature</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Noto+Serif+JP:wght@600;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FFFFFF;
+            --text-color: #000000;
+            --accent-indigo: #1A365D;
+            --accent-vermilion: #C8321B;
+            --accent-gold: #C59B27;
+            --border-color: #E0E0E0;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 40px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            font-weight: 900;
+            margin-bottom: 35px;
+            border-bottom: 3px solid var(--text-color);
+            padding-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .campaign-header {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .kanji-title {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--accent-vermilion);
+        }
+
+        .decorative-text {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4rem;
+            color: var(--text-color);
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .section {
+            padding: 40px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 900;
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--text-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: Arial, sans-serif;
+            font-size: 1rem;
+            appearance: none;
+            border-radius: 0;
+        }
+
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-indigo);
+        }
+
+        textarea {
+            height: 230px;
+            resize: vertical;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            border: 2px solid var(--text-color);
+            padding: 16px 30px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.15s ease-in-out;
+            width: 100%;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background-color: var(--bg-color);
+            color: var(--accent-vermilion);
+            border-color: var(--accent-vermilion);
+            text-decoration: underline;
+        }
+
+        button.btn-secondary {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        button.btn-secondary:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            border-color: var(--text-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="campaign-header">
+        <span class="kanji-title">北斎 自然の力</span>
+        <span class="decorative-text">Hokusai: Nature Collection</span>
+    </div>
+    <h1>Ad Prompt Builder</h1>
+    
+    <div class="section">
+        <p style="font-size: 1.15rem; margin-bottom: 30px;">
+            Configure parameters across artistic mediums, Hokusai nature motifs, lighting atmospheres, and ad dimensions. Generates commercial advertisement prompts for the <strong>Uniqlo UT × Katsushika Hokusai: Forces of Nature</strong> campaign.
+        </p>
+
+        <div class="grid-layout">
+            <!-- Left Column: Medium, Motif, Watermark -->
+            <div>
+                <div class="form-group">
+                    <label for="visualStyle">Visual Style / Medium</label>
+                    <select id="visualStyle" onchange="generatePrompt()">
+                        <option value="photo">Photo (Editorial Commercial Fashion, Default)</option>
+                        <option value="woodblock">Edo Woodblock Print (Ukiyo-e Inspired)</option>
+                        <option value="flat_illustration">Minimalist Flat Graphic Illustration</option>
+                        <option value="risograph">Risograph Multi-Color Spot Print</option>
+                        <option value="3d_render">Modern 3D Studio Fabric Render</option>
+                        <option value="paper_collage">Mixed-Media Layered Paper Collage</option>
+                        <option value="mta_poster">Vintage 1970s Modernist Transit Poster</option>
+                        <option value="mix">Mix (Complete 5-Ad Multi-Style Series)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="artworkMotif">Hokusai Nature Artwork Motif</label>
+                    <select id="artworkMotif" onchange="generatePrompt()">
+                        <option value="random" selected>🎲 Random Artwork (Default)</option>
+                        <option value="The Great Wave off Kanagawa (surging Prussian blue cresting ocean waves, foam claws, Mount Fuji framed in the distance)">Great Wave: Crashing Ocean Waves & Foam</option>
+                        <option value="Fine Wind, Clear Morning / Red Fuji (volcanic red Mount Fuji slopes under a serene stippled cloud sky at dawn)">Red Fuji: Mountain Sunrise & Stratus Clouds</option>
+                        <option value="Thunderstorm Beneath the Summit / Black Fuji (dark volcanic slopes split by a jagged flash of lightning under dark summer thunderclouds)">Black Fuji: Lightning Storm & Dark Peak</option>
+                        <option value="Kirifuri Waterfall at Kurokami Mountain (cascading split turquoise water currents plunging down sheer jagged granite rock faces)">Kirifuri Falls: Plunging Blue Mountain Waterfall</option>
+                        <option value="Yoro Waterfall in Mino Province (a roaring vertical ribbon of white water cutting through steep misty cedar-covered gorges)">Yoro Falls: Misty Mountain Torrent</option>
+                        <option value="Ejiri in Suruga Province / A Sudden Gust of Wind (a powerful wind blast scattering white paper sheets and bending marsh reeds across open fields)">A Sudden Gust of Wind: Swirling Breezes & Reeds</option>
+                        <option value="Cushion Pine at Aoyama (sprawling architectural green pine boughs overlooking mountain mist)">Cushion Pine: Weathered Pines & Distant Peaks</option>
+                        <option value="Fuji from the Plum Garden at Kamata (gnarled blossoming plum branches framing Mount Fuji)">Spring Plum Blossoms & Snow-Capped Peak</option>
+                        <option value="Snowy Morning at Koishikawa (a quiet, pristine winter landscape blanketed in fresh white snow with birds in flight)">Winter Snow: Snow-Covered Landscape & Clear Air</option>
+                        <option value="Poppies in the Wind (vibrant scarlet, azure, and gold poppy blossoms swaying rhythmically in an intense summer gale)">Poppies: Windblown Wildflowers</option>
+                        <option value="Bullfinch and Weeping Cherry (delicate pale-pink weeping sakura blossom sprays against deep Prussian blue sky)">Sakura: Weeping Cherry Blossoms</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="watermarkOption">Watermark / Branding Lockup</label>
+                    <select id="watermarkOption" onchange="generatePrompt()">
+                        <option value="include" selected>Include Watermark (Transparent Overlay)</option>
+                        <option value="none">No Watermark (Clean Image / Post-Production Overlay)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="angle">Camera Angle / Perspective</label>
+                    <select id="angle" onchange="generatePrompt()">
+                        <option value="Eye-level medium shot framing the model and apparel details">Eye-Level Medium Shot</option>
+                        <option value="High-angle downward close-up focusing on graphic chest print drape">High-Angle Close-Up (From Above)</option>
+                        <option value="Low-angle heroic shot looking upward at the model against the skyline">Low-Angle Heroic Shot (From Below)</option>
+                        <option value="Dynamic 3/4 side profile angle with natural posture">3/4 Side Profile Angle</option>
+                        <option value="High-altitude drone perspective capturing model within vast landscape">Overhead Drone / Landscape Perspective</option>
+                        <option value="Wide panoramic establishing shot balancing figure and environment">Wide Establishing Landscape Shot</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Right Column: Lighting, Setting & Ad Format -->
+            <div>
+                <div class="form-group">
+                    <label for="lighting">Lighting Atmosphere</label>
+                    <select id="lighting" onchange="generatePrompt()">
+                        <option value="Warm natural sunlight streaming through natural foliage">Warm Natural Daylight</option>
+                        <option value="Cool, moody coastal twilight with deep indigo ambient tones">Cool Coastal Twilight</option>
+                        <option value="Golden hour low-sun directional light casting long soft shadows">Golden Hour Sunrise/Sunset</option>
+                        <option value="Crisp, balanced commercial studio lighting with soft fill on cotton fabric">Clean High-End Studio Lighting</option>
+                        <option value="Misty overcast diffused light evoking mountain morning dew">Misty Mountain Fog & Diffused Light</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="setting">Setting / Environment</label>
+                    <select id="setting" onchange="generatePrompt()">
+                        <option value="a rugged coastal shoreline with crashing sea spray and dark rocks">Coastal Ocean Shoreline & Spray</option>
+                        <option value="a lush, windswept green mountain plateau overlooking distant peaks">Windswept Mountain Plateau</option>
+                        <option value="a serene, mossy Japanese bamboo and cedar forest trail">Bamboo & Cedar Forest Trail</option>
+                        <option value="a calm, minimalist open-air wooden architectural pavilion">Minimalist Open-Air Wood Pavilion</option>
+                        <option value="a sleek, contemporary transit station with clean stone and glass architecture">Modern Transit Architecture</option>
+                        <option value="a sun-drenched, uncluttered minimalist modern interior with natural light">Sunlit Minimalist Living Space</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="format">Ad Placement / Aspect Ratio</label>
+                    <select id="format" onchange="generatePrompt()">
+                        <option value="--ar 4:5">Instagram Feed Ad / Carousel (4:5)</option>
+                        <option value="--ar 9:16">Instagram Story / TikTok Reel (9:16)</option>
+                        <option value="--ar 16:9">Digital Billboard / Web Hero Banner (16:9)</option>
+                        <option value="--ar 3:4">Magazine Full-Page Print Ad (3:4)</option>
+                        <option value="--ar 2:3">Subway / Transit Shelter Poster (2:3)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Generated Ad Prompt</h2>
+        <div class="form-group">
+            <textarea id="promptOutput" readonly></textarea>
+        </div>
+        <div class="btn-row">
+            <button onclick="randomizeAndGenerate()" class="btn-secondary">🎲 Randomize Motif</button>
+            <button onclick="copyPrompt()" id="copyBtn">Copy to Clipboard</button>
+        </div>
+    </div>
+
+    <script>
+        const artworkPool = [
+            "The Great Wave off Kanagawa (surging Prussian blue cresting ocean waves, foam claws, Mount Fuji framed in the distance)",
+            "Fine Wind, Clear Morning / Red Fuji (volcanic red Mount Fuji slopes under a serene stippled cloud sky at dawn)",
+            "Thunderstorm Beneath the Summit / Black Fuji (dark volcanic slopes split by a jagged flash of lightning under dark summer thunderclouds)",
+            "Kirifuri Waterfall at Kurokami Mountain (cascading split turquoise water currents plunging down sheer jagged granite rock faces)",
+            "Yoro Waterfall in Mino Province (a roaring vertical ribbon of white water cutting through steep misty cedar-covered gorges)",
+            "Ejiri in Suruga Province / A Sudden Gust of Wind (a powerful wind blast scattering white paper sheets and bending marsh reeds across open fields)",
+            "Cushion Pine at Aoyama (sprawling architectural green pine boughs overlooking mountain mist)",
+            "Fuji from the Plum Garden at Kamata (gnarled blossoming plum branches framing Mount Fuji)",
+            "Snowy Morning at Koishikawa (a quiet, pristine winter landscape blanketed in fresh white snow with birds in flight)",
+            "Poppies in the Wind (vibrant scarlet, azure, and gold poppy blossoms swaying rhythmically in an intense summer gale)",
+            "Bullfinch and Weeping Cherry (delicate pale-pink weeping sakura blossom sprays against deep Prussian blue sky)"
+        ];
+
+        const styleDescriptors = {
+            photo: {
+                name: "Editorial Photography",
+                lead: "A professional commercial fashion advertisement photograph capturing a fashion model wearing an oversized, heavyweight Uniqlo UT graphic t-shirt.",
+                render: "Minimalist Uniqlo lookbook aesthetic, natural cotton cloth drape and weave texture, 8k resolution, authentic commercial fashion photography, sharp focus"
+            },
+            woodblock: {
+                name: "Edo Ukiyo-e Woodblock Print",
+                lead: "A traditional Japanese ukiyo-e woodblock print advertisement illustrating a modern figure wearing an oversized Uniqlo UT graphic t-shirt.",
+                render: "Fine black keyline linework, authentic washi mulberry paper texture, mineral pigment color grading, Prussian blue bokashi gradient shading, hand-carved woodblock printing effect"
+            },
+            flat_illustration: {
+                name: "Flat Graphic Illustration",
+                lead: "A crisp, minimalist graphic advertisement illustration depicting a figure wearing an oversized Uniqlo UT graphic tee.",
+                render: "Modern Swiss-Japanese graphic design sensibility, bold geometric color blocking, generous negative space, crisp vector lines"
+            },
+            risograph: {
+                name: "Risograph Spot-Color Print",
+                lead: "A stylized commercial ad created as an authentic multi-color risograph print of a model in an oversized Uniqlo UT nature t-shirt.",
+                render: "Tactile fibrous paper grain, subtle color layer misregistration, fine halftone dot pattern, vibrant spot inks in indigo, vermilion, and moss green"
+            },
+            "3d_render": {
+                name: "Modern 3D Studio Render",
+                lead: "A high-end 3D architectural fashion render of a styled model wearing an oversized Uniqlo UT graphic t-shirt.",
+                render: "Photorealistic fabric physics, soft ambient occlusion, subsurface light scattering, crisp Octane studio render quality"
+            },
+            paper_collage: {
+                name: "Layered Paper Collage",
+                lead: "A tactile mixed-media paper collage advertisement displaying a figure wearing an oversized Uniqlo UT graphic t-shirt.",
+                render: "Torn deckled paper edges, layered Japanese washi and textured paper cutouts, subtle cast paper drop shadows, mixed gouache and archival print elements"
+            },
+            mta_poster: {
+                name: "Vintage 1970s Modernist Transit Poster",
+                lead: "A vintage 1970s modernist transit poster advertisement featuring a commuter wearing an oversized Uniqlo UT graphic t-shirt.",
+                render: "Disciplined modular grid layout, bold modernist typographic sensitivity, muted retro print reproduction, authentic vintage paper aging"
+            }
+        };
+
+        const watermarkCore = "In the bottom right corner of the image, the red square Uniqlo logo and the black Japanese calligraphy kanji '北斎' are printed directly over the background with no white box, no white card, no border, and zero background fill behind them.";
+        const moodCore = "Evokes a timeless reverence for the raw, elemental beauty of the natural world, balancing serene minimalism with elemental power.";
+
+        function getRandomMotif() {
+            return artworkPool[Math.floor(Math.random() * artworkPool.length)];
+        }
+
+        function buildSinglePrompt(styleKey, motif, angle, setting, lighting, format, includeWatermark) {
+            const spec = styleDescriptors[styleKey];
+            const activeMotif = (motif === "random") ? getRandomMotif() : motif;
+            const teeArt = `The front of the t-shirt prominently displays authentic Edo-period woodblock nature artwork by master artist Katsushika Hokusai, featuring ${activeMotif}.`;
+            const watermarkSegment = includeWatermark ? ` ${watermarkCore}` : "";
+            return `${spec.lead} ${teeArt}${watermarkSegment} ${angle} set against ${setting}. ${lighting}. ${moodCore} ${spec.render} ${format} --v 6.0 --style raw`;
+        }
+
+        function generatePrompt() {
+            const visualStyle = document.getElementById('visualStyle').value;
+            const motifSelection = document.getElementById('artworkMotif').value;
+            const angle = document.getElementById('angle').value;
+            const lighting = document.getElementById('lighting').value;
+            const setting = document.getElementById('setting').value;
+            const format = document.getElementById('format').value;
+            const includeWatermark = document.getElementById('watermarkOption').value === "include";
+
+            let outputText = "";
+
+            if (visualStyle === "mix") {
+                const shuffled = [...artworkPool].sort(() => 0.5 - Math.random());
+                const mixStyles = [
+                    { style: "photo", title: "Ad 1/5 [Style: Editorial Photography]" },
+                    { style: "woodblock", title: "Ad 2/5 [Style: Traditional Ukiyo-e Woodblock]" },
+                    { style: "flat_illustration", title: "Ad 3/5 [Style: Minimalist Flat Illustration]" },
+                    { style: "risograph", title: "Ad 4/5 [Style: Risograph Spot-Color Print]" },
+                    { style: "mta_poster", title: "Ad 5/5 [Style: Vintage 1970s Modernist Transit Poster]" }
+                ];
+
+                outputText = mixStyles.map((item, idx) => {
+                    const prompt = buildSinglePrompt(item.style, shuffled[idx], angle, setting, lighting, format, includeWatermark);
+                    return `${item.title}:\n${prompt}`;
+                }).join("\n\n---\n\n");
+            } else {
+                outputText = buildSinglePrompt(visualStyle, motifSelection, angle, setting, lighting, format, includeWatermark);
+            }
+
+            document.getElementById('promptOutput').value = outputText;
+
+            const copyBtn = document.getElementById('copyBtn');
+            copyBtn.innerText = 'Copy to Clipboard';
+            copyBtn.style.borderColor = 'var(--text-color)';
+            copyBtn.style.color = 'var(--bg-color)';
+        }
+
+        function randomizeAndGenerate() {
+            document.getElementById('artworkMotif').value = "random";
+            generatePrompt();
+        }
+
+        function copyPrompt() {
+            const promptText = document.getElementById('promptOutput');
+            promptText.select();
+            promptText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(promptText.value).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.innerText = 'Copied to Clipboard!';
+                btn.style.backgroundColor = 'var(--bg-color)';
+                btn.style.color = 'var(--accent-vermilion)';
+                btn.style.borderColor = 'var(--accent-vermilion)';
+            });
+        }
+
+        window.onload = generatePrompt;
+    </script>
+</body>
+</html>
