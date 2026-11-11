@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5 sample posters + evolution paragraph</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.25rem;
+            margin-bottom: 40px;
+            color: #f1f5f9;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 50px;
+        }
+        .poster-card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            transition: transform 0.2s ease;
+        }
+        .poster-card:hover {
+            transform: translateY(-4px);
+        }
+        .poster-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            background-color: #334155;
+        }
+        .poster-caption {
+            padding: 16px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+        .evolution-section {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 36px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+        }
+        .evolution-section h2 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #38bdf8;
+            font-weight: 600;
+        }
+        .evolution-section p {
+            margin: 0 0 16px 0;
+            color: #cbd5e1;
+            font-size: 1.05rem;
+        }
+        .evolution-section p:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>5 Sample Posters + Evolution</h1>
+        
+        <div class="gallery">
+            <div class="poster-card">
+                <img src="postersample1.png" alt="Poster Sample 1">
+                <div class="poster-caption">Poster Sample 1</div>
+            </div>
+            <div class="poster-card">
+                <img src="postersample2.png" alt="Poster Sample 2">
+                <div class="poster-caption">Poster Sample 2</div>
+            </div>
+            <div class="poster-card">
+                <img src="postersample3.png" alt="Poster Sample 3">
+                <div class="poster-caption">Poster Sample 3</div>
+            </div>
+            <div class="poster-card">
+                <img src="postersample4.png" alt="Poster Sample 4">
+                <div class="poster-caption">Poster Sample 4</div>
+            </div>
+            <div class="poster-card">
+                <img src="postersample5.png" alt="Poster Sample 5">
+                <div class="poster-caption">Poster Sample 5</div>
+            </div>
+        </div>
+
+        <div class="evolution-section">
+            <h2>Evolution & Reflections</h2>
+            <p>Compared to the first version of the Poster Generator, I think the current version definitely looks a lot better in terms of the UI and the outputs that are generated. I’ve kept most of the features in the first version and only added some that I think will enhance the user’s experience: canvas zoom in/out, exporting, exploring variations of their current poster, color changes/palettes, canvas sizes, and image file uploads. I think the most difficult process was to get the image file to be set as the canvas if desired. Apparently, the code only pasted the image that was set as its preview size instead of fitting to canvas size or becoming the canvas; only after a long conversation with Gemini was I able to get a satisfactory result.</p>
+            <p>If I ask AI to create, or generate something, AI only understands it at a vague level. In order to get it to create something that is satisfactory with what you desire, you have to be more specific or at least provide some examples of what you want it to do. This is the situation of the “How to create a peanut butter sandwich” experiment - with the person (as an ai) accomplishing the user’s commands at the simplest level. I believe there can be some more work to be done. In regards to a “poster generator,” I think the current version satisfies the concept quite well and the only improvements that can be made are mostly niche or based on my preference(s). As a custom tool, there can be infinitely much “work” that can be done to the generator. Although the idea has to come to mind first, the generator has great potential to accomplish multiple things.</p>
+            <p>Concluding my thoughts about the overall process of creating a generator using AI, I believe that it has great potential to do amazing things. What AI has shown me so far was beyond my expectations, especially when comparing it to what it could accomplish just a few years ago. It has made the process of building a custom software so much easier, yet also very frustrating, and quicker compared to when done by hard coding. AI has taught me that as long as there is a thought or desire, AI can probably generate/produce it, if not resemble the idea to an extent. The only limit of creating custom software is the user’s imagination - and probably the AI’s understanding of the idea.</p>
+        </div>
+    </div>
+</body>
+</html>
