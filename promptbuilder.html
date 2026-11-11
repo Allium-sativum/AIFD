@@ -179,7 +179,7 @@
         </p>
 
         <div class="grid-layout">
-            <!-- Left Column: Medium, Motif, People Amount, Watermark -->
+            <!-- Left Column: Medium, Motif, People Amount, Pose Style, Watermark -->
             <div>
                 <div class="form-group">
                     <label for="visualStyle">Visual Style / Medium</label>
@@ -198,7 +198,7 @@
                 <div class="form-group">
                     <label for="artworkMotif">Hokusai Nature Artwork Motif</label>
                     <select id="artworkMotif" onchange="generatePrompt()">
-                        <option value="random" selected>🎲 Random Artwork (Default)</option>
+                        <option value="random" selected>🎲 Random / Mixed Artworks (Default)</option>
                         <option value="The Great Wave off Kanagawa (surging Prussian blue cresting ocean waves, foam claws, Mount Fuji framed in the distance)">Great Wave: Crashing Ocean Waves & Foam</option>
                         <option value="Fine Wind, Clear Morning / Red Fuji (volcanic red Mount Fuji slopes under a serene stippled cloud sky at dawn)">Red Fuji: Mountain Sunrise & Stratus Clouds</option>
                         <option value="Thunderstorm Beneath the Summit / Black Fuji (dark volcanic slopes split by a jagged flash of lightning under dark summer thunderclouds)">Black Fuji: Lightning Storm & Dark Peak</option>
@@ -220,6 +220,25 @@
                         <option value="1">1 Person (Solo Model)</option>
                         <option value="2">2 People (Duo / Group)</option>
                         <option value="3">3 People (Ensemble Group)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="poseStyle">Editorial & High-Fashion Pose Style</label>
+                    <select id="poseStyle" onchange="generatePrompt()">
+                        <option value="random" selected>🎲 Random Editorial Mix (Default)</option>
+                        <option value="zara_chic">Zara High-Fashion Evening Stride (Confident urban walk, piercing gaze, fluid coat/shirt drape)</option>
+                        <option value="loewe_surreal">Loewe Avant-Garde Architectural Pose (Sculptural weight-shifting, striking angular body geometry)</option>
+                        <option value="ganni_playful">Ganni Nordic Cool Candid (Spontaneous kinetic motion, joyful unposed energy, relaxed casual stance)</option>
+                        <option value="uniqlo_lookbook">Uniqlo Stylingbook Minimalist Lookbook (Clean relaxed everyday stance, hands in pockets, natural street-style comfort)</option>
+                        <option value="wind_elemental">Hokusai Element-Blown Motion (Captured mid-action with clothing reacting to intense natural gusts and atmosphere)</option>
+                        <option value="group_synergy">Ensemble Lookbook Interaction (Asymmetrical group staging, varying sightlines, balanced modern styling layout)</option>
+                        <option value="backshot_stride">Dynamic Backshot Stride (Rear-view walking away, showcasing fabric drape and back silhouette)</option>
+                        <option value="backshot_gaze">Over-the-Shoulder Backshot Gaze (Striking back view with head turned back toward camera)</option>
+                        <option value="interactive_vessel">Interactive Ceramic Vessel (Interacting naturally with a minimalist craft vessel on an architectural ledge)</option>
+                        <option value="interactive_bottle">Interactive Glass Bottle (Holding a sleek frosted glass designer water bottle with effortless styling)</option>
+                        <option value="interactive_railing">Interactive Architectural Railing (Leaning casually with one hand resting on a sleek architectural railing)</option>
+                        <option value="interactive_prop">Interactive Wooden Chair/Prop (Interacting thoughtfully with a minimalist wooden chair or sculptural prop)</option>
                     </select>
                 </div>
 
@@ -260,12 +279,14 @@
                 <div class="form-group">
                     <label for="setting">Setting / Environment</label>
                     <select id="setting" onchange="generatePrompt()">
-                        <option value="a rugged coastal shoreline with crashing sea spray and dark rocks">Coastal Ocean Shoreline & Spray</option>
-                        <option value="a lush, windswept green mountain plateau overlooking distant peaks">Windswept Mountain Plateau</option>
-                        <option value="a serene, mossy Japanese bamboo and cedar forest trail">Bamboo & Cedar Forest Trail</option>
-                        <option value="a calm, minimalist open-air wooden architectural pavilion">Minimalist Open-Air Wood Pavilion</option>
-                        <option value="a sleek, contemporary transit station with clean stone and glass architecture">Modern Transit Architecture</option>
-                        <option value="a sun-drenched, uncluttered minimalist modern interior with natural light">Sunlit Minimalist Living Space</option>
+                        <option value="the sleek glass-and-steel architecture of the Oculus at Westfield World Trade Center in Lower Manhattan">The Oculus at World Trade Center</option>
+                        <option value="the elevated minimalist concrete walkways and wild plantings of the High Line in Chelsea">The High Line Elevated Park</option>
+                        <option value="the monumental granite steps and neoclassical colonnade of the Metropolitan Museum of Art on Fifth Avenue">The Met Museum Steps on Fifth Avenue</option>
+                        <option value="the serene stone pathways and weeping willow trees surrounding the Conservatory Water in Central Park">Central Park Conservatory Water</option>
+                        <option value="the brutalist concrete curves and open-air sculpture garden of the Whitney Museum in the Meatpacking District">The Whitney Museum Sculpture Terrace</option>
+                        <option value="a sun-drenched industrial-chic DUMBO loft with massive factory windows overlooking the Brooklyn Bridge">DUMBO Industrial-Chic Loft</option>
+                        <option value="the sleek cantilevered glass pavilion and waterfront promenade at Little Island in the Hudson River">Little Island Hudson River Park</option>
+                        <option value="the grand Beaux-Arts marble concourse and soaring celestial ceiling of Grand Central Terminal">Grand Central Terminal Main Concourse</option>
                     </select>
                 </div>
 
@@ -289,7 +310,7 @@
             <textarea id="promptOutput" readonly></textarea>
         </div>
         <div class="btn-row">
-            <button onclick="randomizeAndGenerate()" class="btn-secondary">🎲 Randomize Motif & People</button>
+            <button onclick="randomizeAndGenerate()" class="btn-secondary">🎲 Randomize All Parameters</button>
             <button onclick="copyPrompt()" id="copyBtn">Copy to Clipboard</button>
         </div>
     </div>
@@ -319,11 +340,28 @@
             "warm beige"
         ];
 
+        const poseStylesMap = {
+            zara_chic: "captured in a confident high-fashion editorial stride with intense direct gaze and fluid garment movement inspired by luxury evening lookbooks",
+            loewe_surreal: "posing with avant-garde sculptural body geometry, angular weight-shifting, and striking artistic framing",
+            ganni_playful: "caught in a spontaneous, joyful Nordic street-culture motion with relaxed kinetic energy and unforced cool",
+            uniqlo_lookbook: "posed in a clean, effortless everyday stylingbook posture with natural casual comfort and hands casually pocketed",
+            wind_elemental: "frozen mid-action with heavyweight cotton fabric swirling and reacting dynamically to powerful natural wind currents",
+            group_synergy: "arranged in an asymmetrical high-fashion ensemble layout with contrasting sightlines and dynamic relational positioning",
+            backshot_stride: "captured in a striking rear-view backshot walking away from the camera, showcasing the back graphic placement and beautiful fabric drape",
+            backshot_gaze: "dynamic over-the-shoulder backshot pose with the model facing away while turning head back toward the camera with a piercing expression",
+            interactive_vessel: "interacting naturally with a minimalist ceramic craft vessel placed on a nearby architectural ledge",
+            interactive_bottle: "holding a sleek frosted glass designer water bottle with effortless minimalist styling",
+            interactive_railing: "leaning casually with one hand resting gracefully on a sleek architectural railing",
+            interactive_prop: "sitting or interacting thoughtfully with a minimalist wooden chair and sculptural architectural props"
+        };
+
+        const poseKeys = ["zara_chic", "loewe_surreal", "ganni_playful", "uniqlo_lookbook", "wind_elemental", "group_synergy", "backshot_stride", "backshot_gaze", "interactive_vessel", "interactive_bottle", "interactive_railing", "interactive_prop"];
+
         const styleDescriptors = {
             photo: {
                 name: "Editorial Photography",
                 lead: "A professional commercial fashion advertisement photograph capturing",
-                render: "Minimalist Uniqlo lookbook aesthetic, natural cotton cloth drape and weave texture, 350 dpi high-resolution print ready, authentic commercial fashion photography, sharp focus"
+                render: "Shot on Hasselblad X2D 100C, 85mm prime lens f/2.8, tack sharp focus, crisp micro-contrast and crystal-clear fabric weave textures, professional editorial lighting, zero motion blur, completely empty background, absolutely zero background crowds, zero bystanders, no random people in the distance, minimalist Uniqlo lookbook aesthetic, 350 dpi high-resolution print ready, authentic commercial fashion photography"
             },
             woodblock: {
                 name: "Edo Ukiyo-e Woodblock Print",
@@ -357,15 +395,22 @@
             }
         };
 
-        // Updated wording to strictly enforce transparent cutout lettering directly on the photo/scene without any bounding shape or background block
-        const watermarkCore = "In the bottom right corner of the image, the standalone red square Uniqlo logo and the black Japanese calligraphy kanji '北斎' are cleanly stenciled directly onto the background scenery with completely transparent negative space around them, absolutely no white box, no white card, no border, and zero background block.";
+        const watermarkCore = "In the bottom right corner of the image, the standalone red square Uniqlo logo and the black Japanese calligraphy kanji '北斎' are overlaid seamlessly directly onto the background with absolute transparency, zero white box, zero background fill, and no bounding card.";
         const moodCore = "Evokes a timeless reverence for the raw, elemental beauty of the natural world, balancing serene minimalism with elemental power.";
 
         function getRandomItem(arr) {
             return arr[Math.floor(Math.random() * arr.length)];
         }
 
-        function buildPeopleDescription(countOption) {
+        function resolvePose(poseSelection) {
+            if (poseSelection === "random") {
+                const randomKey = getRandomItem(poseKeys);
+                return poseStylesMap[randomKey];
+            }
+            return poseStylesMap[poseSelection];
+        }
+
+        function buildPeopleDescription(countOption, poseSelection, motifSelection) {
             let count = countOption;
             if (count === "random") {
                 const randomCounts = ["1", "2", "3"];
@@ -376,14 +421,14 @@
             
             if (numCount === 1) {
                 const color = getRandomItem(tShirtColors);
+                const poseDesc = resolvePose(poseSelection);
+                const activeMotif = (motifSelection === "random") ? getRandomItem(artworkPool) : motifSelection;
                 return {
-                    subject: `a fashion model wearing an oversized, heavyweight ${color} Uniqlo UT graphic t-shirt`,
-                    artRule: null
+                    subject: `a fashion model ${poseDesc}, wearing an oversized, heavyweight ${color} Uniqlo UT graphic t-shirt featuring ${activeMotif}`,
+                    artRule: "single"
                 };
             } else {
-                const sameArt = Math.random() < 0.5;
-                const sharedMotif = getRandomItem(artworkPool);
-                
+                // When motifSelection is "random", default behavior allows each model to wear a different/mixed artwork from the pool. If a specific motif is chosen, all models share it unless randomized.
                 let descriptions = [];
                 let usedColors = [];
 
@@ -394,33 +439,46 @@
                     } while (usedColors.includes(color) && usedColors.length < tShirtColors.length);
                     usedColors.push(color);
 
-                    let motif = sameArt ? sharedMotif : getRandomItem(artworkPool);
-                    descriptions.push(`model ${i + 1} wearing an oversized, heavyweight ${color} Uniqlo UT graphic t-shirt featuring ${motif}`);
+                    let motif;
+                    if (motifSelection === "random") {
+                        motif = getRandomItem(artworkPool);
+                    } else {
+                        // If user specifically picked one motif, give a 50% chance for variety in multi-person groups or follow selection, but default to allowing distinct mix when random is selected.
+                        motif = (Math.random() < 0.4) ? getRandomItem(artworkPool) : motifSelection;
+                    }
+
+                    // If multiple models, mix up distinct poses from poseKeys so each model has a unique mixed pose and object interaction
+                    let specificPoseKey = poseSelection;
+                    if (poseSelection === "random" || numCount > 1) {
+                        // Pick a random unique pose from poseKeys for each model to ensure varied combinations
+                        specificPoseKey = getRandomItem(poseKeys);
+                    }
+                    let modelPose = resolvePose(specificPoseKey);
+                    descriptions.push(`model ${i + 1} (${modelPose}) wearing an oversized, heavyweight ${color} Uniqlo UT graphic t-shirt featuring ${motif}`);
                 }
 
                 if (numCount === 2) {
                     return {
-                        subject: `two fashion models standing together, ${descriptions[0]} and ${descriptions[1]}`,
+                        subject: `two fashion models posing together with editorial synergy, ${descriptions[0]} and ${descriptions[1]}`,
                         artRule: "multiple"
                     };
                 } else {
                     return {
-                        subject: `a group of three fashion models posing together, ${descriptions[0]}, ${descriptions[1]}, and ${descriptions[2]}`,
+                        subject: `an ensemble group of three fashion models posing together, ${descriptions[0]}, ${descriptions[1]}, and ${descriptions[2]}`,
                         artRule: "multiple"
                     };
                 }
             }
         }
 
-        function buildSinglePrompt(styleKey, motifSelection, angle, setting, lighting, format, includeWatermark, peopleOption) {
+        function buildSinglePrompt(styleKey, motifSelection, angle, setting, lighting, format, includeWatermark, peopleOption, poseSelection) {
             const spec = styleDescriptors[styleKey];
-            const peopleInfo = buildPeopleDescription(peopleOption);
+            const peopleInfo = buildPeopleDescription(peopleOption, poseSelection, motifSelection);
 
             let leadText = `${spec.lead} ${peopleInfo.subject}.`;
 
-            if (peopleInfo.artRule === null) {
-                const activeMotif = (motifSelection === "random") ? getRandomItem(artworkPool) : motifSelection;
-                leadText += ` The front of the t-shirt prominently displays authentic Edo-period woodblock nature artwork by master artist Katsushika Hokusai, featuring ${activeMotif}.`;
+            if (peopleInfo.artRule === "single") {
+                leadText += ` The front of the t-shirt prominently displays authentic Edo-period woodblock nature artwork by master artist Katsushika Hokusai.`;
             } else {
                 leadText += ` Each t-shirt prominently displays authentic Edo-period woodblock nature artwork by master artist Katsushika Hokusai.`;
             }
@@ -438,6 +496,7 @@
             const format = document.getElementById('format').value;
             const includeWatermark = document.getElementById('watermarkOption').value === "include";
             const peopleOption = document.getElementById('peopleCount').value;
+            const poseSelection = document.getElementById('poseStyle').value;
 
             let outputText = "";
 
@@ -452,11 +511,11 @@
                 ];
 
                 outputText = mixStyles.map((item, idx) => {
-                    const prompt = buildSinglePrompt(item.style, shuffled[idx], angle, setting, lighting, format, includeWatermark, peopleOption);
+                    const prompt = buildSinglePrompt(item.style, shuffled[idx], angle, setting, lighting, format, includeWatermark, peopleOption, poseSelection);
                     return `${item.title}:\n${prompt}`;
                 }).join("\n\n---\n\n");
             } else {
-                outputText = buildSinglePrompt(visualStyle, motifSelection, angle, setting, lighting, format, includeWatermark, peopleOption);
+                outputText = buildSinglePrompt(visualStyle, motifSelection, angle, setting, lighting, format, includeWatermark, peopleOption, poseSelection);
             }
 
             document.getElementById('promptOutput').value = outputText;
@@ -470,6 +529,7 @@
         function randomizeAndGenerate() {
             document.getElementById('artworkMotif').value = "random";
             document.getElementById('peopleCount').value = "random";
+            document.getElementById('poseStyle').value = "random";
             generatePrompt();
         }
 
