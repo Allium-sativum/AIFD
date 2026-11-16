@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Director Pt. 5: Digital Ads | Uniqlo x Hokusai</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        uniqlo: {
+                            red: '#DE1C22',
+                            dark: '#0B0B0B',
+                            card: '#161616',
+                            border: '#2A2A2A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-uniqlo-dark text-gray-100 min-h-screen selection:bg-uniqlo-red selection:text-white">
+
+    <!-- Hero Section -->
+    <section class="py-16 md:py-24 px-6 max-w-7xl mx-auto text-center">
+        <span class="inline-block text-xs uppercase tracking-widest bg-uniqlo-red/10 text-uniqlo-red px-3 py-1 rounded-full mb-4 font-semibold border border-uniqlo-red/20">ART-3041 Portfolio Assignment</span>
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">Creative Director Pt. 5: Digital Ads</h1>
+        <p class="max-w-3xl mx-auto text-gray-400 text-base md:text-lg leading-relaxed mb-12">
+            A complete omnichannel digital advertising campaign for the <strong>Uniqlo UT x Katsushika Hokusai</strong> collaboration. Fusing timeless Edo-period woodblock nature masterpieces with minimalist urban streetwear aesthetics across social feeds, smartphone app mockups, and animated banner media.
+        </p>
+
+        <!-- Animated Carousel Display (Mockups Only) -->
+        <div id="hero-carousel" class="relative max-w-4xl mx-auto bg-uniqlo-card border border-uniqlo-border rounded-2xl p-4 md:p-8 shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                    <span class="text-xs text-gray-500 ml-2 font-mono">Campaign Digital Mockups Carousel</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="togglePlayPause()" id="play-pause-btn" class="text-xs bg-uniqlow-border bg-zinc-800 hover:bg-zinc-700 text-gray-300 px-3 py-1 rounded transition">Pause</button>
+                    <div id="carousel-indicator" class="text-xs font-semibold tracking-wider text-uniqlo-red">1 / 5</div>
+                </div>
+            </div>
+
+            <!-- Carousel Slides Wrapper -->
+            <div class="relative overflow-hidden rounded-xl aspect-[4/5] max-h-[600px] bg-black flex items-center justify-center">
+                
+                <!-- Slide 1: Ad 1 Animated Mockup -->
+                <div class="carousel-slide absolute inset-0 transition-opacity duration-700 opacity-100 flex items-center justify-center bg-black">
+                    <video autoplay loop muted playsinline class="max-h-full max-w-full object-contain">
+                        <source src="ad1.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 text-left">
+                        <span class="text-xs text-uniqlo-red font-semibold uppercase tracking-wider block">Mockup 01 • Video Format</span>
+                        <span class="text-sm font-medium text-white">Instagram Reel / Video Ad Mockup</span>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Ad 2 YouTube Preroll Mockup -->
+                <div class="carousel-slide absolute inset-0 transition-opacity duration-700 opacity-0 flex items-center justify-center bg-black">
+                    <img src="ad2mockup.jpg" alt="Ad 2 YouTube Mockup" class="max-h-full max-w-full object-contain">
+                    <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 text-left">
+                        <span class="text-xs text-uniqlo-red font-semibold uppercase tracking-wider block">Mockup 02 • Preroll Format</span>
+                        <span class="text-sm font-medium text-white">YouTube Preroll iPhone Mockup</span>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Ad 3 Instagram Sponsored Post -->
+                <div class="carousel-slide absolute inset-0 transition-opacity duration-700 opacity-0 flex items-center justify-center bg-black">
+                    <img src="ad3mockup.jpg" alt="Ad 3 Instagram Mockup" class="max-h-full max-w-full object-contain">
+                    <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 text-left">
+                        <span class="text-xs text-uniqlo-red font-semibold uppercase tracking-wider block">Mockup 03 • Social Feed</span>
+                        <span class="text-sm font-medium text-white">Instagram Sponsored Feed Post</span>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Ad 4 Facebook Sponsored Post -->
+                <div class="carousel-slide absolute inset-0 transition-opacity duration-700 opacity-0 flex items-center justify-center bg-black">
+                    <img src="ad4mockup.jpg" alt="Ad 4 Facebook Mockup" class="max-h-full max-w-full object-contain">
+                    <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 text-left">
+                        <span class="text-xs text-uniqlo-red font-semibold uppercase tracking-wider block">Mockup 04 • Social Feed</span>
+                        <span class="text-sm font-medium text-white">Facebook Sponsored Ad Post</span>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Ad 5 Twitter Promoted Card -->
+                <div class="carousel-slide absolute inset-0 transition-opacity duration-700 opacity-0 flex items-center justify-center bg-black">
+                    <img src="ad5mockup.jpg" alt="Ad 5 Twitter Mockup" class="max-h-full max-w-full object-contain">
+                    <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 text-left">
+                        <span class="text-xs text-uniqlo-red font-semibold uppercase tracking-wider block">Mockup 05 • Promoted Card</span>
+                        <span class="text-sm font-medium text-white">Twitter / X Promoted Card</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Carousel Controls -->
+            <div class="flex items-center justify-between mt-6">
+                <button onclick="prevSlide()" class="bg-uniqlo-border hover:bg-zinc-700 text-white px-4 py-2 rounded text-sm font-medium transition flex items-center space-x-2">
+                    <span>← Previous</span>
+                </button>
+                <div id="carousel-dots" class="flex space-x-2 overflow-x-auto max-w-xs px-2 hide-scrollbar">
+                    <span class="w-3 h-3 rounded-full bg-uniqlo-red cursor-pointer inline-block flex-shrink-0 transition-all" onclick="currentSlide(0)"></span>
+                    <span class="w-3 h-3 rounded-full bg-zinc-700 cursor-pointer inline-block flex-shrink-0 transition-all" onclick="currentSlide(1)"></span>
+                    <span class="w-3 h-3 rounded-full bg-zinc-700 cursor-pointer inline-block flex-shrink-0 transition-all" onclick="currentSlide(2)"></span>
+                    <span class="w-3 h-3 rounded-full bg-zinc-700 cursor-pointer inline-block flex-shrink-0 transition-all" onclick="currentSlide(3)"></span>
+                    <span class="w-3 h-3 rounded-full bg-zinc-700 cursor-pointer inline-block flex-shrink-0 transition-all" onclick="currentSlide(4)"></span>
+                </div>
+                <button onclick="nextSlide()" class="bg-uniqlo-border hover:bg-zinc-700 text-white px-4 py-2 rounded text-sm font-medium transition flex items-center space-x-2">
+                    <span>Next →</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Side-by-Side Ad & Mockup Pairs Section -->
+    <section id="campaign-pairs" class="py-20 px-6 max-w-7xl mx-auto border-t border-uniqlo-border">
+        <div class="text-center mb-16">
+            <span class="text-xs uppercase tracking-widest text-uniqlo-red font-semibold mb-2 block">Comparative Analysis</span>
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Original Ad Campaigns & Mockup Pairings</h2>
+            <p class="text-gray-400 mt-3 max-w-2xl mx-auto">Explore each raw high-resolution commercial asset paired directly with its finalized digital placement mockup across platforms.</p>
+        </div>
+
+        <div class="space-y-24">
+
+            <!-- Pair 1: The Met -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-uniqlo-card border border-uniqlo-border rounded-2xl p-6 md:p-10">
+                <div class="space-y-4">
+                    <div class="inline-flex items-center space-x-2 bg-uniqlo-red/10 text-uniqlo-red px-3 py-1 rounded text-xs font-semibold border border-uniqlo-red/20">
+                        <span>Pair 01</span>
+                        <span>•</span>
+                        <span>Animated Video Ad & Dynamic Island Mockup</span>
+                    </div>
+                    <h3 class="text-2xl font-bold">Metropolitan Museum of Art</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Featuring <strong>Snowy Morning at Koishikawa</strong> and <strong>Kirifuri Waterfall at Kurokami Mountain</strong> by Katsushika Hokusai. Shot on Hasselblad X2D 100C against the monumental granite steps and neoclassical colonnade of Fifth Avenue.
+                    </p>
+                    <div class="border-t border-uniqlo-border pt-4 grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-500 block mb-1">Model 1 Apparel</span>
+                            <span class="font-medium text-gray-200">Sage Green - Snowy Morning at Koishikawa</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 block mb-1">Model 2 & 3 Apparel</span>
+                            <span class="font-medium text-gray-200">Slate Grey & Navy - Kirifuri Waterfall</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2 block">Original Ad Asset (ad1.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad1.jpg" alt="Ad 1 Original" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-uniqlo-red font-semibold mb-2 block">Animated Mockup (ad1.mp4)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
+                            <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                                <source src="ad1.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pair 2: The High Line -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-uniqlo-card border border-uniqlo-border rounded-2xl p-6 md:p-10">
+                <div class="space-y-4">
+                    <div class="inline-flex items-center space-x-2 bg-uniqlo-red/10 text-uniqlo-red px-3 py-1 rounded text-xs font-semibold border border-uniqlo-red/20">
+                        <span>Pair 02</span>
+                        <span>•</span>
+                        <span>YouTube Preroll Format</span>
+                    </div>
+                    <h3 class="text-2xl font-bold">The High Line in Chelsea</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Featuring <strong>Bullfinch and Weeping Cherry</strong> and <strong>Kirifuri Waterfall at Kurokami Mountain</strong> under cool moody coastal twilight tones with deep indigo ambient lighting.
+                    </p>
+                    <div class="border-t border-uniqlo-border pt-4 grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-500 block mb-1">Model 1 Apparel</span>
+                            <span class="font-medium text-gray-200">Warm Beige - Bullfinch & Weeping Cherry</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 block mb-1">Model 2 Apparel</span>
+                            <span class="font-medium text-gray-200">Classic Off-White - Kirifuri Waterfall</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2 block">Original Campaign Asset (ad2.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad2.jpg" alt="Ad 2 Original" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-uniqlo-red font-semibold mb-2 block">YouTube Preroll Mockup (ad2mockup.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad2mockup.jpg" alt="Ad 2 Mockup" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pair 3: DUMBO Loft -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-uniqlo-card border border-uniqlo-border rounded-2xl p-6 md:p-10">
+                <div class="space-y-4">
+                    <div class="inline-flex items-center space-x-2 bg-uniqlo-red/10 text-uniqlo-red px-3 py-1 rounded text-xs font-semibold border border-uniqlo-red/20">
+                        <span>Pair 03</span>
+                        <span>•</span>
+                        <span>Instagram Carousel Feed</span>
+                    </div>
+                    <h3 class="text-2xl font-bold">DUMBO Industrial-Chic Loft</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Featuring <strong>Fine Wind, Clear Morning / Red Fuji</strong> and <strong>Ejiri in Suruga Province / A Sudden Gust of Wind</strong>. Showcasing spontaneous Nordic street-culture motion and rear-view graphic back placements against the Brooklyn Bridge view.
+                    </p>
+                    <div class="border-t border-uniqlo-border pt-4 grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-500 block mb-1">Model 1 Front Graphic</span>
+                            <span class="font-medium text-gray-200">Red Fuji - Warm Beige Oversized Tee</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 block mb-1">Model 2 Back Graphic</span>
+                            <span class="font-medium text-gray-200">A Sudden Gust of Wind - Off-White Tee</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2 block">Original Campaign Asset (ad3.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad3.jpg" alt="Ad 3 Original" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-uniqlo-red font-semibold mb-2 block">Instagram Ad Mockup (ad3mockup.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad3mockup.jpg" alt="Ad 3 Mockup" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pair 4: Oculus World Trade Center -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-uniqlo-card border border-uniqlo-border rounded-2xl p-6 md:p-10">
+                <div class="space-y-4">
+                    <div class="inline-flex items-center space-x-2 bg-uniqlo-red/10 text-uniqlo-red px-3 py-1 rounded text-xs font-semibold border border-uniqlo-red/20">
+                        <span>Pair 04</span>
+                        <span>•</span>
+                        <span>Facebook Sponsored Post</span>
+                    </div>
+                    <h3 class="text-2xl font-bold">The Oculus at Westfield WTC</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Featuring <strong>Thunderstorm Beneath the Summit / Black Fuji</strong> in a striking rear-view backshot walking away from the camera, highlighting crisp fabric weave textures under golden hour directional light.
+                    </p>
+                    <div class="border-t border-uniqlo-border pt-4 grid grid-cols-1 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-500 block mb-1">Apparel & Artwork Detail</span>
+                            <span class="font-medium text-gray-200">Sage Green Heavyweight Tee - Black Fuji Lightning Graphic</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2 block">Original Campaign Asset (ad4.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad4.jpg" alt="Ad 4 Original" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-uniqlo-red font-semibold mb-2 block">Facebook Ad Mockup (ad4mockup.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad4mockup.jpg" alt="Ad 4 Mockup" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pair 5: Whitney Museum -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-uniqlo-card border border-uniqlo-border rounded-2xl p-6 md:p-10">
+                <div class="space-y-4">
+                    <div class="inline-flex items-center space-x-2 bg-uniqlo-red/10 text-uniqlo-red px-3 py-1 rounded text-xs font-semibold border border-uniqlo-red/20">
+                        <span>Pair 05</span>
+                        <span>•</span>
+                        <span>Twitter / X Promoted Card</span>
+                    </div>
+                    <h3 class="text-2xl font-bold">Whitney Museum Sculpture Garden</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Featuring <strong>Cushion Pine at Aoyama</strong> set against brutalist concrete curves in the Meatpacking District. Editorial styling with effortless minimalist props and warm afternoon sun.
+                    </p>
+                    <div class="border-t border-uniqlo-border pt-4 grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-500 block mb-1">Model 1 Apparel</span>
+                            <span class="font-medium text-gray-200">Ecru Oversized Tee - Cushion Pine</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 block mb-1">Model 2 Apparel</span>
+                            <span class="font-medium text-gray-200">Sage Green Oversized Tee - Cushion Pine</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2 block">Original Campaign Asset (ad5.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad5.jpg" alt="Ad 5 Original" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    <div class="bg-black rounded-xl p-3 border border-uniqlo-border text-center">
+                        <span class="text-[10px] uppercase tracking-wider text-uniqlo-red font-semibold mb-2 block">Twitter Card Mockup (ad5mockup.jpg)</span>
+                        <div class="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img src="ad5mockup.jpg" alt="Ad 5 Mockup" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black border-t border-uniqlo-border py-12 px-6 text-center text-xs text-gray-500">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+            <div class="flex items-center space-x-2">
+                <span class="bg-uniqlo-red text-white font-bold px-2 py-1 text-xs rounded">UNIQLO</span>
+                <span>© 2026 Uniqlo Co., Ltd. & The Metropolitan Museum of Art. ART-3041 Class Assignment.</span>
+            </div>
+            <div class="flex space-x-6">
+                <a href="#hero-carousel" class="hover:text-gray-300 transition">Back to Top</a>
+                <a href="#campaign-pairs" class="hover:text-gray-300 transition">Portfolio Pairs</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Carousel Script -->
+    <script>
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('#carousel-dots span');
+        const indicator = document.getElementById('carousel-indicator');
+        let isPlaying = true;
+        let slideInterval = setInterval(nextSlide, 6000);
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.style.opacity = i === index ? '1' : '0';
+            });
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.remove('bg-zinc-700');
+                    dot.classList.add('bg-uniqlo-red', 'w-6');
+                } else {
+                    dot.classList.remove('bg-uniqlo-red', 'w-6');
+                    dot.classList.add('bg-zinc-700', 'w-3');
+                }
+            });
+            if (indicator) {
+                indicator.textContent = `${index + 1} / ${slides.length}`;
+            }
+        }
+
+        function nextSlide() {
+            currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+            showSlide(currentSlideIndex);
+        }
+
+        function prevSlide() {
+            currentSlideIndex = (currentSlideIndex - 1 + slides.length) % slides.length;
+            showSlide(currentSlideIndex);
+        }
+
+        function currentSlide(index) {
+            currentSlideIndex = index;
+            showSlide(currentSlideIndex);
+            resetTimer();
+        }
+
+        function togglePlayPause() {
+            const btn = document.getElementById('play-pause-btn');
+            if (isPlaying) {
+                clearInterval(slideInterval);
+                btn.textContent = 'Play';
+                isPlaying = false;
+            } else {
+                slideInterval = setInterval(nextSlide, 6000);
+                btn.textContent = 'Pause';
+                isPlaying = true;
+            }
+        }
+
+        function resetTimer() {
+            if (isPlaying) {
+                clearInterval(slideInterval);
+                slideInterval = setInterval(nextSlide, 6000);
+            }
+        }
+    </script>
+</body>
+</html>
