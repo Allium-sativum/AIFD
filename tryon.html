@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spirit of Nature — Virtual Fitting Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Courgette&display=swap" rel="stylesheet">
+<style>
+:root{--orange:#F28500;--blue:#5B92E5;--green:#4C9A2A;--ink:#111;--line:#e4e4e4;--muted:#777;--paper:#fff;--soft:#f5f5f2}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font-family:Arial,Helvetica,sans-serif}button,input,select{font:inherit}button{cursor:pointer}.topline{height:5px;background:linear-gradient(90deg,var(--orange),var(--blue),var(--green))}.nav{height:70px;padding:0 clamp(18px,5vw,76px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.brand{font-size:20px;font-weight:900;letter-spacing:-1px}.brand span{font-weight:400;color:#777;font-size:12px;letter-spacing:1px;margin-left:10px}.nav a{color:#111;text-decoration:none;font-size:12px;border-bottom:1px solid #aaa;padding-bottom:4px}.hero{padding:44px clamp(18px,5vw,76px) 28px;display:flex;justify-content:space-between;gap:24px;align-items:end}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:700;color:var(--green)}h1{font-size:clamp(38px,6vw,76px);line-height:.92;letter-spacing:-4px;margin:14px 0 10px;font-weight:900}.script{font-family:Courgette,cursive;color:var(--green);font-size:clamp(18px,2vw,25px)}.hero p{max-width:480px;color:#666;font-size:14px;line-height:1.65;margin:0 0 4px}.layout{padding:0 clamp(18px,5vw,76px) 64px;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:22px}.stage{background:#f3f2ed;border:1px solid var(--line);min-height:680px;position:relative;overflow:hidden}.stage-head{position:absolute;z-index:5;left:22px;right:22px;top:18px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}.tag{font-size:9px;letter-spacing:1.4px;font-weight:700;background:#fff;padding:9px 11px;border:1px solid #ddd}.stage-title{font-size:10px;letter-spacing:1.5px;font-weight:700}.scene{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 38%,#fff 0,#f5f4ef 48%,#e7e5dd 100%)}.scene:after{content:"";position:absolute;bottom:0;left:0;right:0;height:25%;background:linear-gradient(0deg,rgba(70,68,60,.09),transparent);pointer-events:none}#threeView{position:absolute;inset:0;width:100%;height:100%;z-index:2}#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;transform:scaleX(-1);z-index:1}#photoPreview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;z-index:1}#photoTryonCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none}#poseCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;display:none}.stage-bottom{position:absolute;z-index:6;bottom:17px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:center;gap:10px}.hint{font-size:10px;color:#666;background:rgba(255,255,255,.88);padding:9px 11px}.round-btn{border:0;background:#111;color:#fff;padding:12px 17px;font-size:10px;font-weight:700;letter-spacing:1px}.panel{border:1px solid var(--line);padding:22px 22px 20px;display:flex;flex-direction:column;gap:20px}.section-label{font-size:10px;font-weight:800;letter-spacing:1.6px;margin:0 0 12px}.mode-switch{display:grid;grid-template-columns:1fr 1fr;border:1px solid #111}.mode-switch button{background:#fff;border:0;padding:13px 8px;font-size:10px;font-weight:800;letter-spacing:.8px}.mode-switch button.active{background:#111;color:#fff}.mode-note{font-size:11px;line-height:1.5;color:#777;margin:9px 0 0}.designs{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.design{border:1px solid var(--line);padding:7px;background:#fff;text-align:left;transition:.2s}.design.active{border:2px solid var(--green);padding:6px}.swatch{height:104px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}.tee-mini{width:70px;height:77px;position:relative;filter:drop-shadow(0 5px 5px #0002)}.tee-mini:before{content:"";position:absolute;inset:13px 8px 0;background:var(--shirt,#d6d6c8);clip-path:polygon(18% 0,82% 0,100% 15%,88% 31%,80% 24%,80% 100%,20% 100%,20% 24%,12% 31%,0 15%)}.tee-mini:after{content:"";position:absolute;top:28px;left:25px;width:20px;height:28px;background-image:var(--art);background-size:cover;background-position:center;box-shadow:0 1px 4px #0003}.design-name{font-size:11px;font-weight:700;margin-top:8px}.design-color{font-size:9px;color:#888;margin-top:3px}.controls{display:flex;gap:8px}.control-btn{flex:1;border:1px solid #ccc;background:#fff;padding:11px 7px;font-size:10px;font-weight:700}.control-btn.primary{background:#111;color:#fff;border-color:#111}.upload{display:block;border:1px dashed #bbb;padding:15px;text-align:center;font-size:10px;color:#555;cursor:pointer}.upload input{display:none}.generate{width:100%;border:0;background:var(--green);color:#fff;padding:16px;font-weight:800;font-size:11px;letter-spacing:1.2px}.small{font-size:10px;color:#888;line-height:1.5}.status{padding:11px;background:#f5f5f2;font-size:10px;line-height:1.5;color:#555;min-height:40px}.result{display:none;border:1px solid var(--line);padding:10px}.result img{width:100%;display:block}.result-actions{display:flex;justify-content:space-between;margin-top:9px;font-size:10px}.result-actions a{color:#111}.divider{height:1px;background:var(--line)}.footer{padding:20px clamp(18px,5vw,76px);border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:#888}.modal{display:none;position:fixed;inset:0;background:#0008;z-index:20;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}.modal-card{background:#fff;max-width:540px;width:100%;padding:25px}.modal-card h2{font-size:22px;margin:0 0 10px}.modal-card p{font-size:12px;color:#666;line-height:1.6}.modal-card input{width:100%;padding:12px;border:1px solid #ccc;margin:8px 0 14px}.modal-card button{padding:12px 16px;border:0;background:#111;color:#fff;font-size:10px;font-weight:700}.close{float:right;background:#eee!important;color:#111!important}.hidden{display:none!important}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.stage{min-height:560px}.hero{display:block}.hero p{margin-top:18px}.panel{order:2}}@media(max-width:480px){.stage{min-height:490px}.panel{padding:16px}.nav{height:58px}.brand span{display:none}.designs{gap:6px}.swatch{height:86px}}
+</style>
+</head>
+<body>
+<div class="topline"></div>
+<nav class="nav"><div class="brand">UNIQLO <span>UT × HOKUSAI</span></div><a href="https://allium-sativum.github.io/AIFD/">BACK TO CAMPAIGN</a></nav>
+<header class="hero"><div><div class="eyebrow">A NEW WAY TO EXPERIENCE THE COLLECTION</div><h1>SPIRIT OF<br>NATURE.</h1><div class="script">Wear the art. Feel the nature.</div></div><p>Step into the world of Katsushika Hokusai. Explore the UT collection through a virtual fitting room, and discover how timeless nature-inspired artwork becomes everyday clothing.</p></header>
+<main class="layout">
+<section class="stage" id="stage"><div class="scene"></div><video id="video" autoplay playsinline muted></video><img id="photoPreview" alt="Your uploaded photo"><canvas id="photoTryonCanvas"></canvas><canvas id="poseCanvas"></canvas><canvas id="threeView"></canvas>
+<div class="stage-head"><div class="tag">VIRTUAL FITTING ROOM / 001</div><div class="stage-title" id="stageMode">3D GARMENT PREVIEW</div></div>
+<div class="stage-bottom"><div class="hint" id="stageHint">Drag to rotate · Scroll to zoom · Select a design</div><button class="round-btn" id="resetView">RESET VIEW</button></div></section>
+<aside class="panel">
+<section><div class="section-label">01 / CHOOSE YOUR EXPERIENCE</div><div class="mode-switch"><button class="active" data-mode="photo">PHOTO TRY-ON</button><button data-mode="ar">LIVE AR</button></div><p class="mode-note" id="modeNote">Upload a photo. The browser will detect your upper body and map the selected Hokusai shirt onto your pose locally. No photo is uploaded.</p></section>
+<div class="divider"></div>
+<section><div class="section-label">02 / SELECT YOUR UT DESIGN</div><div class="designs" id="designs"></div></section>
+<div class="divider"></div>
+<section id="photoControls"><div class="section-label">03 / ADD YOUR PHOTO</div><label class="upload">＋ &nbsp; CHOOSE A PHOTO<input id="personFile" type="file" accept="image/*"></label><p class="small">Use a clear, front-facing photo with shoulders and waist visible. Processing happens in this browser; your photo is not uploaded.</p><button class="generate" id="generatePhoto">FIT SELECTED SHIRT</button><p class="small">Free local preview: body landmarks position a textured, curved shirt overlay. This is an experimental visual mock-up, not generative AI or a guaranteed fit simulation. Arm occlusion and complex poses may be imperfect.</p></section>
+<section id="arControls" class="hidden"><div class="section-label">03 / LIVE CAMERA</div><div class="controls"><button class="control-btn primary" id="startCamera">START CAMERA</button><button class="control-btn" id="stopCamera">STOP</button></div><p class="small">Allow camera access. Stand back so your shoulders and waist are visible. The 3D shirt will follow your upper-body pose.</p><div class="status" id="arStatus">Camera is off. Start the camera to begin pose tracking.</div></section>
+<div class="result" id="result"><div class="section-label">YOUR GENERATED LOOK</div><img id="resultImage" alt="Generated virtual try-on result"><div class="result-actions"><a id="downloadResult" download="spirit-of-nature-tryon.png">DOWNLOAD IMAGE</a><span>SPIRIT OF NATURE</span></div></div>
+<div class="status" id="mainStatus">Select a design to preview the 3D garment.</div>
+</aside></main>
+<footer class="footer"><span>UNIQLO UT × KATSUSHIKA HOKUSAI</span><span>SPIRIT OF NATURE · VIRTUAL EXPERIENCE</span></footer>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+
+const BASE='https://allium-sativum.github.io/AIFD/';
+const designs=[
+ {id:'snow',name:'Snowy Morning',color:'SAGE GREEN',shirt:'#84917D',asset:'ad1.jpg',crop:[265,378,92,115],description:'Snowy Morning at Koishikawa'},
+ {id:'waterfall',name:'Kirifuri Waterfall',color:'SLATE GREY',shirt:'#626B70',asset:'ad1.jpg',crop:[458,374,95,126],description:'Kirifuri Waterfall at Kurokami Mountain'},
+ {id:'cherry',name:'Bullfinch & Cherry',color:'WARM BEIGE',shirt:'#C9B69D',asset:'ad2.jpg',crop:[239,299,101,150],description:'Bullfinch and Weeping Cherry'},
+ {id:'redfuji',name:'Red Fuji',color:'WARM BEIGE',shirt:'#C9B89F',asset:'ad3.jpg',crop:[242,365,118,105],description:'Fine Wind, Clear Morning / Red Fuji'},
+ {id:'gust',name:'A Sudden Gust',color:'OFF-WHITE',shirt:'#E7E2D8',asset:'ad3.jpg',crop:[495,369,101,136],description:'Ejiri in Suruga Province / A Sudden Gust of Wind'},
+ {id:'blackfuji',name:'Black Fuji',color:'SAGE GREEN',shirt:'#89967E',asset:'ad4.jpg',crop:[338,268,132,215],description:'Thunderstorm Beneath the Summit / Black Fuji'},
+ {id:'cushion',name:'Cushion Pine',color:'ECRU',shirt:'#DCD5C4',asset:'ad5.jpg',crop:[229,337,116,171],description:'Cushion Pine at Aoyama'}
+];
+let selected=designs[0], mode='photo', personFile=null, cameraStream=null, poseLandmarker=null, photoLandmarker=null, raf=0, loadedGlb=null, photoObjectUrl=null, photoImage=null;
+const $=id=>document.getElementById(id);
+const designsEl=$('designs');
+function renderDesigns(){designsEl.innerHTML='';designs.forEach((d,i)=>{const b=document.createElement('button');b.className='design'+(d.id===selected.id?' active':'');b.innerHTML=`<div class="swatch"><div class="tee-mini" style="--shirt:${d.shirt};--art:url('${BASE+d.asset}')"></div></div><div class="design-name">${d.name}</div><div class="design-color">${d.color}</div>`;b.onclick=()=>{selected=d;renderDesigns();applyArtwork();loadDesignModel();if(photoImage&&$('photoTryonCanvas').style.display==='block'){const lm=photoLandmarker?.detect(photoImage)?.landmarks?.[0];if(lm)drawPhotoTryOn(lm)}$('mainStatus').textContent=`Selected: ${d.description}. The preview updates with this artwork.`};designsEl.appendChild(b)})}
+renderDesigns();
+// Build a softly draped, oversized 3D cotton tee with mapped campaign artwork.
+const canvas=$('threeView'), renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(34,canvas.clientWidth/canvas.clientHeight,.1,100);camera.position.set(0,.05,6.3);
+scene.add(new THREE.HemisphereLight(0xffffff,0xc5c0b3,2));const key=new THREE.DirectionalLight(0xfff4df,3.1);key.position.set(-3,4,5);scene.add(key);const fill=new THREE.DirectionalLight(0xd9e6ff,1.2);fill.position.set(4,1,2);scene.add(fill);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=4.6;controls.maxDistance=8;controls.target.set(0,-.05,0);
+const garment=new THREE.Group();scene.add(garment);
+const fallbackGarment=[];const gltfLoader=new GLTFLoader();
+const shirtMat=new THREE.MeshPhysicalMaterial({color:selected.shirt,roughness:.91,metalness:0,side:THREE.DoubleSide});
+function makePanel(){const geo=new THREE.BufferGeometry(),pos=[],uv=[],idx=[];const rows=40,cols=36;for(let y=0;y<=rows;y++){let v=y/rows;for(let x=0;x<=cols;x++){let u=x/cols;let width=(1.5+0.12*Math.sin(v*Math.PI))*(.94+.06*Math.cos(v*6));let px=(u-.5)*width;let py=1.45-v*2.65;let depth=.11*Math.sin(u* Math.PI*8+v*9)*Math.sin(v*Math.PI)+.035*Math.sin(v*23+u*9);depth+=.035*Math.cos(u*18+v*7);pos.push(px,py,depth);uv.push(u,1-v)}}for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){let a=y*(cols+1)+x,b=a+1,c=a+cols+1,d=c+1;idx.push(a,c,b,b,c,d)}geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();return geo}
+const body=new THREE.Mesh(makePanel(),shirtMat);garment.add(body);fallbackGarment.push(body);
+// Back panel, offset slightly for thickness and realistic silhouette.
+const back=new THREE.Mesh(makePanel(),new THREE.MeshPhysicalMaterial({color:selected.shirt,roughness:.94,side:THREE.DoubleSide}));back.scale.x=.99;back.position.z=-.055;garment.add(back);fallbackGarment.push(back);
+function sleeve(side){const g=new THREE.CylinderGeometry(.48,.57,.82,40,12,true);const m=new THREE.Mesh(g,shirtMat);m.rotation.z=side===1?-Math.PI/3:Math.PI/3;m.position.set(side*.91,.82,0);m.scale.set(1,.9,.88);return m}const sleeveL=sleeve(-1),sleeveR=sleeve(1);garment.add(sleeveL,sleeveR);fallbackGarment.push(sleeveL,sleeveR);
+const collar=new THREE.Mesh(new THREE.TorusGeometry(.23,.075,12,48),new THREE.MeshPhysicalMaterial({color:'#b8b4a9',roughness:.8}));collar.position.set(0,1.38,.03);collar.rotation.x=Math.PI/2;collar.scale.set(1,.72,1);garment.add(collar);fallbackGarment.push(collar);
+// Hem and sleeve stitching lines.
+function line(points,mat){const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));const mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,80,.009,5,false),mat);garment.add(mesh);fallbackGarment.push(mesh)}const stitch=new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.45});line([[-.67,-1.2,.08],[-.35,-1.22,.11],[0,-1.21,.12],[.35,-1.22,.11],[.67,-1.2,.08]],stitch);
+// Fabric weave micro texture generated procedurally.
+const texCanvas=document.createElement('canvas');texCanvas.width=256;texCanvas.height=256;const tctx=texCanvas.getContext('2d');tctx.fillStyle='#bcbcbc';tctx.fillRect(0,0,256,256);for(let i=0;i<3600;i++){let x=Math.random()*256,y=Math.random()*256;tctx.fillStyle=`rgba(30,30,30,${Math.random()*.07})`;tctx.fillRect(x,y,1,1)}const weave=new THREE.CanvasTexture(texCanvas);weave.wrapS=weave.wrapT=THREE.RepeatWrapping;weave.repeat.set(3,4);shirtMat.bumpMap=weave;shirtMat.bumpScale=.018;
+let artworkTexture=null;
+function applyArtwork(){
+  shirtMat.color.set('#ffffff');
+  back.material.color.set(selected.shirt);
+  const img=new Image();img.crossOrigin='anonymous';
+  img.onload=()=>{
+    const c=document.createElement('canvas');c.width=768;c.height=1024;const ctx=c.getContext('2d');
+    ctx.fillStyle=selected.shirt;ctx.fillRect(0,0,c.width,c.height);
+    // The print is baked into the cloth texture, so it follows the curved and rippled mesh instead of floating as a decal.
+    const [x,y,w,h]=selected.crop;ctx.drawImage(img,x,y,w,h,248,220,272,430);
+    artworkTexture=new THREE.CanvasTexture(c);artworkTexture.colorSpace=THREE.SRGBColorSpace;artworkTexture.anisotropy=renderer.capabilities.getMaxAnisotropy();
+    shirtMat.map=artworkTexture;shirtMat.needsUpdate=true;
+  };
+  img.onerror=()=>{shirtMat.color.set(selected.shirt);shirtMat.map=null;shirtMat.needsUpdate=true};
+  img.src=BASE+selected.asset;
+}
+applyArtwork();
+async function loadDesignModel(){
+  const url=BASE+'assets/garments/'+selected.id+'.glb';
+  gltfLoader.load(url,gltf=>{
+    if(loadedGlb)garment.remove(loadedGlb);
+    fallbackGarment.forEach(o=>o.visible=false);
+    loadedGlb=gltf.scene;loadedGlb.scale.setScalar(.98);loadedGlb.position.set(0,0,0);garment.add(loadedGlb);
+    $('mainStatus').textContent='3D garment model loaded: '+selected.name+'.';
+  },undefined,()=>{if(loadedGlb){garment.remove(loadedGlb);loadedGlb=null}fallbackGarment.forEach(o=>o.visible=true)});
+}
+loadDesignModel();
+// Gentle fabric motion in the 3D preview; AR pose alignment is layered onto this group.
+const clock=new THREE.Clock();function animate(){raf=requestAnimationFrame(animate);const t=clock.getElapsedTime();body.rotation.z=.008*Math.sin(t*.7);garment.rotation.y=mode==='ar'?0:.035*Math.sin(t*.35);controls.update();renderer.render(scene,camera)}animate();
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe($('stage'));
+function setMode(next){mode=next;document.querySelectorAll('.mode-switch button').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));$('photoControls').classList.toggle('hidden',next!=='photo');$('arControls').classList.toggle('hidden',next!=='ar');$('modeNote').textContent=next==='photo'?'Upload a photo. The browser will detect your upper body and map the selected Hokusai shirt onto your pose locally. No photo is uploaded.':'Use your camera to align the 3D garment with your upper-body pose. This is a visual AR preview, not a body measurement or fit guarantee.';$('stageMode').textContent=next==='photo'?'3D GARMENT PREVIEW':'LIVE AR / BODY TRACKING';$('stageHint').textContent=next==='photo'?'Drag to rotate · Scroll to zoom · Select a design':'Stand back · Face the camera · Move naturally';$('video').style.display=next==='ar'&&cameraStream?'block':'none';if(next==='ar'){$('photoPreview').style.display='none';$('photoTryonCanvas').style.display='none';$('threeView').style.display='block'}else if(photoImage){const hasFit=$('photoTryonCanvas').dataset.fitted==='yes';$('photoPreview').style.display=hasFit?'none':'block';$('photoTryonCanvas').style.display=hasFit?'block':'none';$('threeView').style.display='none'}else{$('photoPreview').style.display='none';$('photoTryonCanvas').style.display='none';$('threeView').style.display='block'}garment.position.set(0,0,0);garment.scale.set(1,1,1);if(next==='ar')$('mainStatus').textContent='Live AR mode selected. Start your camera to track your pose.';else $('mainStatus').textContent='Photo mode selected. Upload a photo, then fit the selected shirt locally.'}
+document.querySelectorAll('.mode-switch button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));$('resetView').onclick=()=>{camera.position.set(0,.05,6.3);controls.target.set(0,-.05,0);garment.position.set(0,0,0);garment.scale.set(1,1,1);controls.update()};
+async function ensurePoseLandmarker(runningMode='IMAGE'){
+  if(photoLandmarker && runningMode==='IMAGE') return photoLandmarker;
+  const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm');
+  const fileset=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+  const lm=await vision.PoseLandmarker.createFromOptions(fileset,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',delegate:'GPU'},runningMode,numPoses:1});
+  if(runningMode==='IMAGE') photoLandmarker=lm;
+  return lm;
+}
+$('personFile').onchange=e=>{
+  personFile=e.target.files[0]; if(!personFile)return;
+  if(photoObjectUrl) URL.revokeObjectURL(photoObjectUrl);
+  photoObjectUrl=URL.createObjectURL(personFile); photoImage=new Image(); photoImage.onload=()=>{
+    $('photoPreview').src=photoObjectUrl; $('photoPreview').style.display='block'; $('threeView').style.display='none'; $('photoTryonCanvas').style.display='none'; $('photoTryonCanvas').dataset.fitted='no';
+    $('mainStatus').textContent='Photo ready. Select FIT SELECTED SHIRT to position the garment using body landmarks.';
+  }; photoImage.src=photoObjectUrl;
+};
+$('generatePhoto').onclick=async()=>{
+  if(!photoImage){$('mainStatus').textContent='Please choose a photo first.';return;}
+  const btn=$('generatePhoto');btn.disabled=true;btn.textContent='ANALYZING PHOTO…';$('mainStatus').textContent='Loading free browser-based body tracking…';
+  try{
+    const lm=await ensurePoseLandmarker('IMAGE'); const result=lm.detect(photoImage); const landmarks=result.landmarks?.[0];
+    if(!landmarks) throw new Error('No person detected. Try a front-facing photo with your upper body visible.');
+    drawPhotoTryOn(landmarks); $('photoTryonCanvas').dataset.fitted='yes'; $('photoPreview').style.display='none'; $('threeView').style.display='none'; $('photoTryonCanvas').style.display='block';
+    $('mainStatus').textContent='Your local try-on preview is ready. Select another design to change the shirt.';
+  }catch(err){$('mainStatus').textContent='Could not fit the shirt: '+err.message;}
+  finally{btn.disabled=false;btn.textContent='FIT SELECTED SHIRT';}
+};
+function drawPhotoTryOn(lm){
+  const canvas=$('photoTryonCanvas'), stage=$('stage'), ctx=canvas.getContext('2d');
+  const W=stage.clientWidth,H=stage.clientHeight,dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+  const scale=Math.min(W/photoImage.naturalWidth,H/photoImage.naturalHeight), iw=photoImage.naturalWidth*scale, ih=photoImage.naturalHeight*scale, ox=(W-iw)/2, oy=(H-ih)/2;
+  ctx.drawImage(photoImage,ox,oy,iw,ih);
+  const p=i=>({x:ox+lm[i].x*iw,y:oy+lm[i].y*ih,vis:lm[i].visibility??1});
+  const ls=p(11),rs=p(12),le=p(13),re=p(14),lh=p(23),rh=p(24), nose=p(0);
+  if([ls,rs,lh,rh].some(q=>q.vis<.25)) throw new Error('Shoulders or hips are hidden. Please use a clearer front-facing photo.');
+  // Body-aligned garment basis: shoulder axis and torso axis, with slightly flared hem.
+  const ax={x:rs.x-ls.x,y:rs.y-ls.y}, aw=Math.hypot(ax.x,ax.y), ux={x:ax.x/aw,y:ax.y/aw};
+  const top={x:(ls.x+rs.x)/2,y:(ls.y+rs.y)/2}, hip={x:(lh.x+rh.x)/2,y:(lh.y+rh.y)/2};
+  const down={x:hip.x-top.x,y:hip.y-top.y}, dh=Math.hypot(down.x,down.y), uy={x:down.x/dh,y:down.y/dh};
+  const width=aw*1.23, height=Math.max(dh*1.18,aw*1.15);
+  const point=(u,v)=>({x:top.x+ux.x*(u-.5)*width+uy.x*v*height,y:top.y+ux.y*(u-.5)*width+uy.y*v*height});
+  // Shirt silhouette includes broad dropped shoulders and short sleeves.
+  const leftShoulder=point(.12,.04),rightShoulder=point(.88,.04),leftSleeve=point(-.10,.18),rightSleeve=point(1.10,.18),leftUnder=point(.06,.34),rightUnder=point(.94,.34),leftHem=point(.12,1.05),rightHem=point(.88,1.05);
+  const poly=[leftShoulder,leftSleeve,leftUnder,leftHem,rightHem,rightUnder,rightSleeve,rightShoulder];
+  ctx.save();ctx.beginPath();ctx.moveTo(poly[0].x,poly[0].y);poly.slice(1).forEach(q=>ctx.lineTo(q.x,q.y));ctx.closePath();
+  const base=ctx.createLinearGradient(top.x-width*.5,top.y,top.x+width*.5,hip.y);base.addColorStop(0,selected.shirt);base.addColorStop(.5,selected.shirt);base.addColorStop(1,shade(selected.shirt,-12));ctx.fillStyle=base;ctx.shadowColor='rgba(0,0,0,.22)';ctx.shadowBlur=12;ctx.shadowOffsetY=5;ctx.fill();ctx.shadowColor='transparent';
+  // Fabric texture and subtle vertical folds clipped to the garment silhouette.
+  ctx.save();ctx.clip();
+  for(let i=0;i<17;i++){const x=top.x-width*.48+i*width*.06;const g=ctx.createLinearGradient(x-5,top.y,x+5,hip.y);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,i%2?'rgba(0,0,0,.075)':'rgba(255,255,255,.09)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.strokeStyle=g;ctx.lineWidth=width*.018;ctx.beginPath();ctx.moveTo(x,top.y+height*.12);ctx.bezierCurveTo(x-width*.025,top.y+height*.42,x+width*.025,top.y+height*.65,x,top.y+height);ctx.stroke();}
+  // Map the selected artwork image into a subdivided, gently rippled torso grid.
+  const artImg=artImages[selected.id];
+  if(artImg&&artImg.complete&&artImg.naturalWidth){
+    const [cx,cy,cw,ch]=selected.crop; const art=document.createElement('canvas');art.width=320;art.height=430;const ac=art.getContext('2d');ac.drawImage(artImg,cx,cy,cw,ch,0,0,320,430);
+    const cols=8,rows=12;
+    for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+      const u0=.25+x/cols*.5,u1=.25+(x+1)/cols*.5,v0=.22+y/rows*.62,v1=.22+(y+1)/rows*.62;
+      const wrinkle=(u,v)=>({x:Math.sin(v*19+u*8)*width*.008+Math.sin(u*26)*width*.004,y:Math.sin(u*18+v*7)*height*.006});
+      const dest=(u,v)=>{const q=point(u,v),w=wrinkle(u,v);return{x:q.x+w.x,y:q.y+w.y}};
+      const a=dest(u0,v0),b=dest(u1,v0),c=dest(u0,v1),d=dest(u1,v1);
+      const sx0=(u0-.25)/.5*320, sx1=(u1-.25)/.5*320, sy0=(v0-.22)/.62*430, sy1=(v1-.22)/.62*430;
+      drawTriangle(ctx,art,a,b,c,sx0,sy0,sx1,sy0,sx0,sy1);drawTriangle(ctx,art,b,d,c,sx1,sy0,sx1,sy1,sx0,sy1);
+    }
+  }
+  // Soft specular/fold shading across print and shirt, to keep it integrated with the fabric.
+  const shadeG=ctx.createLinearGradient(top.x-width*.5,top.y,top.x+width*.5,top.y);shadeG.addColorStop(0,'rgba(0,0,0,.13)');shadeG.addColorStop(.25,'rgba(255,255,255,.10)');shadeG.addColorStop(.52,'rgba(0,0,0,.07)');shadeG.addColorStop(.8,'rgba(255,255,255,.08)');shadeG.addColorStop(1,'rgba(0,0,0,.16)');ctx.fillStyle=shadeG;ctx.fillRect(top.x-width,top.y-height*.1,width*2,height*1.3);
+  // Neck opening, seam and hem.
+  ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.ellipse(top.x,top.y+height*.055,width*.105,height*.045,0,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation='source-over';
+  ctx.strokeStyle='rgba(255,255,255,.48)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(leftHem.x,leftHem.y);ctx.lineTo(rightHem.x,rightHem.y);ctx.stroke();
+  ctx.restore();ctx.restore();
+  // Note: the pose model estimates the torso only; arms are not segmented in this free build.
+  function drawTriangle(c,image,p0,p1,p2,s0x,s0y,s1x,s1y,s2x,s2y){c.save();c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.closePath();c.clip();const den=s0x*(s1y-s2y)+s1x*(s2y-s0y)+s2x*(s0y-s1y);if(Math.abs(den)<.001){c.restore();return;}const A=(p0.x*(s1y-s2y)+p1.x*(s2y-s0y)+p2.x*(s0y-s1y))/den;const B=(p0.y*(s1y-s2y)+p1.y*(s2y-s0y)+p2.y*(s0y-s1y))/den;const C=(p0.x*(s2x-s1x)+p1.x*(s0x-s2x)+p2.x*(s1x-s0x))/den;const D=(p0.y*(s2x-s1x)+p1.y*(s0x-s2x)+p2.y*(s1x-s0x))/den;const E=(p0.x*(s1x*s2y-s2x*s1y)+p1.x*(s2x*s0y-s0x*s2y)+p2.x*(s0x*s1y-s1x*s0y))/den;const F=(p0.y*(s1x*s2y-s2x*s1y)+p1.y*(s2x*s0y-s0x*s2y)+p2.y*(s0x*s1y-s1x*s0y))/den;c.transform(A,B,C,D,E,F);c.drawImage(image,0,0);c.restore();}
+  function shade(hex,amt){const n=parseInt(hex.slice(1),16);const r=Math.max(0,Math.min(255,(n>>16)+amt)),g=Math.max(0,Math.min(255,((n>>8)&255)+amt)),b=Math.max(0,Math.min(255,(n&255)+amt));return '#'+(1<<24|r<<16|g<<8|b).toString(16).slice(1)}
+}
+const artImages={};designs.forEach(d=>{const im=new Image();im.crossOrigin='anonymous';im.src=BASE+d.asset;artImages[d.id]=im;});
+async function getGarmentReference(){try{const r=await fetch(BASE+'assets/garments/'+selected.id+'_front.png',{cache:'no-store'});if(r.ok)return await r.blob()}catch(e){}return makeGarmentReference()}
+function makeGarmentReference(){
+  return new Promise((resolve,reject)=>{
+    // Render the actual 3D garment mesh as the product reference sent to the AI model.
+    // This avoids sending a flat/vector T-shirt graphic to the try-on service.
+    let exportRenderer;
+    try {
+      const exportCanvas=document.createElement('canvas');
+      exportRenderer=new THREE.WebGLRenderer({canvas:exportCanvas,antialias:true,alpha:false,preserveDrawingBuffer:true});
+      exportRenderer.setPixelRatio(1);exportRenderer.setSize(768,1024,false);
+      exportRenderer.outputColorSpace=THREE.SRGBColorSpace;
+      exportRenderer.toneMapping=THREE.ACESFilmicToneMapping;
+      const exportScene=new THREE.Scene();exportScene.background=new THREE.Color('#f3f2ed');
+      exportScene.add(new THREE.HemisphereLight(0xffffff,0xc5c0b3,2.2));
+      const key=new THREE.DirectionalLight(0xfff4df,3.2);key.position.set(-3,4,5);exportScene.add(key);
+      const fill=new THREE.DirectionalLight(0xd9e6ff,1.25);fill.position.set(4,1,2);exportScene.add(fill);
+      const product=garment.clone(true);product.position.set(0,0,0);product.rotation.set(0,0,0);product.scale.set(1,1,1);exportScene.add(product);
+      const exportCamera=new THREE.PerspectiveCamera(30,768/1024,.1,100);exportCamera.position.set(0,.08,7.8);exportCamera.lookAt(0,.05,0);
+      exportRenderer.render(exportScene,exportCamera);
+      exportCanvas.toBlob(blob=>{exportRenderer.dispose();if(blob)resolve(blob);else reject(new Error('Could not render the 3D garment reference.'))},'image/png');
+    } catch(err) { if(exportRenderer)exportRenderer.dispose(); reject(err); }
+  });
+}
+// MediaPipe Pose Landmarker, loaded only when the visitor explicitly starts camera mode.
+async function startCamera(){try{$('arStatus').textContent='Requesting camera permission…';cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:false});$('video').srcObject=cameraStream;$('video').style.display='block';$('photoPreview').style.display='none';$('threeView').style.display='block';$('arStatus').textContent='Loading body tracking…';const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm');const fileset=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');poseLandmarker=await vision.PoseLandmarker.createFromOptions(fileset,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',delegate:'GPU'},runningMode:'VIDEO',numPoses:1});$('arStatus').textContent='Tracking active. Keep your shoulders and waist in frame.';trackPose()}catch(err){$('arStatus').textContent='Could not start camera/body tracking: '+err.message+'. Use HTTPS and allow camera access.'}}
+let lastVideoTime=-1;function trackPose(){
+  if(!cameraStream||!poseLandmarker)return;
+  const video=$('video');
+  if(video.readyState>=2&&video.currentTime!==lastVideoTime){
+    lastVideoTime=video.currentTime;
+    const result=poseLandmarker.detectForVideo(video,performance.now());
+    const lm=result.landmarks?.[0];
+    if(lm){
+      const ls=lm[11],rs=lm[12],lh=lm[23],rh=lm[24];
+      if(ls&&rs&&lh&&rh){
+        // The preview is mirrored. Convert the shoulder midpoint into a world-space
+        // position on the garment's z=0 plane using the Three.js camera projection.
+        const shoulderX=(ls.x+rs.x)/2, shoulderY=(ls.y+rs.y)/2;
+        const hipY=(lh.y+rh.y)/2;
+        const mirroredX=1-shoulderX;
+        const ndcX=mirroredX*2-1, ndcY=1-((shoulderY+hipY)/2)*2;
+        const near=new THREE.Vector3(ndcX,ndcY,.5).unproject(camera);
+        const far=new THREE.Vector3(ndcX,ndcY,.9).unproject(camera);
+        const ray=far.sub(near);const t=(0-near.z)/ray.z;
+        const world=near.add(ray.multiplyScalar(t));
+        const shoulderWidth=Math.hypot(ls.x-rs.x,ls.y-rs.y);
+        const torsoHeight=Math.max(.12,Math.abs(hipY-shoulderY));
+        const visibleWorldWidth=2*camera.position.z*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect;
+        const visibleWorldHeight=2*camera.position.z*Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+        garment.position.x=world.x;
+        garment.position.y=world.y+.12;
+        garment.scale.x=Math.max(.45,Math.min(1.55,shoulderWidth*visibleWorldWidth/3.0));
+        garment.scale.y=Math.max(.48,Math.min(1.45,torsoHeight*visibleWorldHeight/2.65*1.18));
+        garment.scale.z=1;
+        // Correct for the mirrored preview when matching the shoulder line.
+        garment.rotation.z=Math.atan2(ls.y-rs.y,rs.x-ls.x);
+        garment.rotation.y=0;
+        $('arStatus').textContent='Tracking active. Move naturally; the shirt follows your shoulder and torso landmarks.';
+      }
+    } else {
+      $('arStatus').textContent='No person detected. Step back and keep your upper body in frame.';
+    }
+  }
+  requestAnimationFrame(trackPose);
+}
+$('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null}$('video').srcObject=null;$('video').style.display='none';$('threeView').style.display='block';poseLandmarker=null;garment.position.set(0,0,0);garment.scale.set(1,1,1);$('arStatus').textContent='Camera stopped.'};
+window.addEventListener('beforeunload',()=>{if(cameraStream)cameraStream.getTracks().forEach(t=>t.stop())});
+</script>
+</body></html>
